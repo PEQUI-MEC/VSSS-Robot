@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(VSSS C CXX ASM)
+set (CMAKE_CXX_STANDARD 11)
 
 set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)

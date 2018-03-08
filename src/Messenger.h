@@ -23,7 +23,7 @@ class Messenger {
 		void goToOrientation(std::string msg);
 		void send_battery();
 		std::string decode_strings(std::string msg);
-		bool get_tokens(std::string msg, int size);
+		bool get_tokens(std::string& msg, int size);
 
 	public:
 		Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee);

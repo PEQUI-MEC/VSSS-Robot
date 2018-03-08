@@ -188,7 +188,7 @@ int main() {
 	if (errTX) {
 		// Tratamento do erro se necessário algum dia
 	}
-//	t_rx.set_priority(osPriorityHigh);
+	t_rx.set_priority(osPriorityHigh);
 
 	messenger = new Messenger(robot->MY_ID, robot, xbee);
 	robot->init();

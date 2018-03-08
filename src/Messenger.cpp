@@ -1,3 +1,4 @@
+#include <sstream>
 #include "Messenger.h"
 
 #define PI 3.141592653589793238
@@ -7,11 +8,11 @@ using std::string;
 // ********************** SERIAL HANDLER AND MESSAGING FUNCTIONS *********************** //
 void Messenger::send_msg(string msg, uint16_t addr) {
 	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
-	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), msg.size());
+	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size());
 }
 
-bool Messenger::get_tokens(string msg, int size) {
-	size_t pos_atual = 0;
+bool Messenger::get_tokens(string& msg, int size) {
+	size_t pos_atual = 1;
 	for (int i = 0; i < size; ++i) {
 		size_t delim_pos = msg.find(';', pos_atual);
 
@@ -35,7 +36,7 @@ void Messenger::Update_PID_Pos(string msg) {
 }
 
 void Messenger::Update_PID_K(string msg) {
-	if (msg[0] == 'P') {
+	if (msg[1] == 'P') {
 		Update_PID_Pos(msg.substr(1));
 		return;
 	}
@@ -120,12 +121,12 @@ string Messenger::decode_strings(string msg) {
 }
 
 void Messenger::send_battery() {
-	mbed::AnalogIn vin_all_cells(ALL_CELLS);
+	AnalogIn vin_all_cells(ALL_CELLS);
 	double vbat = vin_all_cells.read() * (3.3 * 1470 / 470);
-	char buffer[10];
-	sprintf(buffer, "B%.2f", vbat);
-	string bat_msg(buffer);
-	send_msg(bat_msg);
+	char buffer[8];
+	gcvt(vbat,4,buffer);
+	string msg_bat = "B"+string(buffer);
+	send_msg(msg_bat);
 }
 
 void Messenger::decode_msg(string msg) {
@@ -138,23 +139,23 @@ void Messenger::decode_msg(string msg) {
 	switch (msg[0]) {
 		case 'K':
 			//MENSAGEM DE CALIBRACAO DO PID
-			Update_PID_K(msg.erase(0, 1));
+			Update_PID_K(msg);
 			return;
 		case 'A':
 			//MENSAGEM DE CALIBRACAO DA ACELERACAO
-			Update_ACC(msg.erase(0, 1));
+			Update_ACC(msg);
 			return;
 		case 'O':
 			//MENSAGEM DE COMANDO PARA CONTROLE DE ORIENTACAO
-			goToOrientation(msg.erase(0, 1));
+			goToOrientation(msg);
 			return;
 		case 'P':
 			//MODO DE NAVEGACAO POR PONTOS
-			GoToPoint(msg.erase(0, 1));
+			GoToPoint(msg);
 			return;
 		case 'V':
 			//MODO DE NAVEGACAO POR VETORES
-			GoToVector(msg.erase(0, 1));
+			GoToVector(msg);
 			return;
 		case 'D':
 			debug_mode = !debug_mode;
