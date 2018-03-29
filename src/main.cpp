@@ -2,6 +2,7 @@
 #include "mbed.h"
 #include "XBeeLib.h"
 #include "Messenger.h"
+#include "IMU.h"
 #include <cmath>
 #include <fstream>
 
@@ -24,10 +25,8 @@ using XBeeLib::RadioStatus;
 //*****************ENCODER HANDLER AND PID CONTROL FUNCTIONS******************//
 
 //LEDS DO MBED
-DigitalOut *led1;
-DigitalOut *led2;
-DigitalOut *led3;
-DigitalOut *led4;
+DigitalOut *led1, *led2, *led3, *led4;
+
 //ANALOG INPUT MBED
 
 AnalogIn *vin_all_cells;
@@ -60,7 +59,7 @@ double toDegrees(double rad) {
 void rx_thread() {
 	while (true) {
 		xbee->process_rx_frames();
-		wait_ms(20);
+		Thread::wait(20);
 	}
 }
 
@@ -119,33 +118,21 @@ void escrever_arquivo() {
 	fclose(fp);
 }
 
+void led_write(uint8_t num) {
+	*led1 = ((num >> 0) & 1);
+	*led2 = ((num >> 1) & 1);
+	*led3 = ((num >> 2) & 1);
+	*led4 = ((num >> 3) & 1);
+}
+
 void bat_watcher() {
-	float vbat = vin_all_cells->read() * (3.3 * 1470 / 470);
-	float threshold = (vbat - 6.6) / 1.4;
-//	if (messenger->bat_request) {
-//		messenger->bat_request = false;
-//	}
-	if (threshold >= 0.75f) {
-		led1->write(1);
-		led2->write(1);
-		led3->write(1);
-		led4->write(1);
-	} else if (threshold < 0.75f && threshold >= 0.5f) {
-		led1->write(0);
-		led2->write(1);
-		led3->write(1);
-		led4->write(1);
-	} else if (threshold < 0.5f && threshold >= 0.25f) {
-		led1->write(0);
-		led2->write(0);
-		led3->write(1);
-		led4->write(1);
-	} else if (threshold < 0.25f) {
-		led1->write(0);
-		led2->write(0);
-		led3->write(0);
-		led4->write(1);
-	}
+	double vbat = vin_all_cells->read() * (3.3 * 1470 / 470);
+	double threshold = (vbat - 6.6) / 1.4;
+
+	if (threshold >= 0.75) led_write(0b1111);
+	else if (threshold >= 0.5) led_write(0b0111);
+	else if (threshold >= 0.25) led_write(0b0011);
+	else led_write(0b0001);
 }
 
 static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_t *const data, uint16_t len) {
@@ -155,11 +142,17 @@ static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_
 	}
 }
 
+string str(double num) {
+	char buffer[10];
+	gcvt(num,8,buffer);
+	return string(buffer);
+}
+
 int main() {
-	led1 = new DigitalOut(LED4);
-	led2 = new DigitalOut(LED3);
-	led3 = new DigitalOut(LED2);
-	led4 = new DigitalOut(LED1);
+	led1 = new DigitalOut(LED1);
+	led2 = new DigitalOut(LED2);
+	led3 = new DigitalOut(LED3);
+	led4 = new DigitalOut(LED4);
 
 	vin_all_cells = new AnalogIn(ALL_CELLS);
 	vin_single_cell = new AnalogIn(SINGLE_CELL);
@@ -191,7 +184,7 @@ int main() {
 	t_rx.set_priority(osPriorityHigh);
 
 	messenger = new Messenger(robot->MY_ID, robot, xbee);
-	robot->init();
+	robot->init(messenger);
 
 	wait(0.5);
 	messenger->decode_msg("O45;1");
@@ -204,11 +197,10 @@ int main() {
 	wait(1);
 	while (1) {
 		bat_watcher();
-//		messenger->send_msg("testando\n");
 		if (messenger->debug_mode) {
 //        serial->printf("%.2f %.2f %.2f %.2f\n",
 //        10*robot.controllerA->currVel,10*robot.controllerB->currVel,10*(*(robot.controllerA->target_vel)),10*(*(robot.controllerB->target_vel)));
 		}
-		wait(1);
+		Thread::wait(1000);
 	}
 }

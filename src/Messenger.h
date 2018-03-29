@@ -6,6 +6,7 @@
 #include "Robot.h"
 #include "XBeeLib.h"
 #include <string>
+class Robot;
 
 class Messenger {
 

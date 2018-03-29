@@ -4,6 +4,8 @@
 #include "mbed.h"
 #include "Controller.h"
 #include "PIN_MAP.h"
+#include "Messenger.h"
+class Messenger;
 
 class Robot {
 	public:
@@ -34,12 +36,13 @@ class Robot {
 		float erro_ant;
 		float targetTheta;
 		float w, vlin, Vr, Vl;
+		Messenger* messenger;
 		bool backward;
 		Controller *controllerA;
 		Controller *controllerB;
 		Thread *t_ControlVel;
 		Thread *t_ControlPos;
-		void init();
+		void init(Messenger* msgr);
 		Timer Vector_msg_timeout;
 		Robot();
 		bool Vector_Control;

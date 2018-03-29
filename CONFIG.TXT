@@ -1,0 +1,6 @@
+addr:4444
+my_id:B
+msg_timeout:500
+acc_rate:1.000000
+kgz:1.000000
+max_theta_error:20.000000 

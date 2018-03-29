@@ -16,7 +16,8 @@ Robot::Robot() :
 }
 
 // ********************************* ********************
-void Robot::init() {
+void Robot::init(Messenger* msgr) {
+	messenger = msgr;
 	Vector_Control = false;
 	Vector_msg_timeout.start();
 	LOS_ant = 0;

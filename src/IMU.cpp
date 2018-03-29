@@ -16,7 +16,7 @@ void IMU::init(PinName sda, PinName scl) {
 	write_reg(addr_gyro_acc, CTRL10_C, 0x38);
 
 	// Gyro no modo de alta performance
-	write_reg(addr_gyro_acc, CTRL2_G, 0x60);
+	write_reg(addr_gyro_acc, CTRL2_G, 0x6C);
 
 	// Habilita bussola
 	write_reg(addr_comp, LIS3MDL_CTRL_REG2, 0x40);

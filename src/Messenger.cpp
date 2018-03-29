@@ -8,7 +8,7 @@ using std::string;
 // ********************** SERIAL HANDLER AND MESSAGING FUNCTIONS *********************** //
 void Messenger::send_msg(string msg, uint16_t addr) {
 	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
-	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size());
+	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), false);
 }
 
 bool Messenger::get_tokens(string& msg, int size) {
