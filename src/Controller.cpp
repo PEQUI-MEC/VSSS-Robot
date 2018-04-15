@@ -1,95 +1,119 @@
 #include "Controller.h"
+#include "PIN_MAP.h"
+#include <cmath>
 
-#define PI 3.14159265358
+#define PI 3.1415926f
+#define CONTROL_LOOP_MS 5
 
-void Controller::start_timer_new_msg() {
-	msg_timeout.reset();
+Controller::Controller() {
+	init_wheel(left_wheel, TACHPIN_LEFT_1, TACHPIN_LEFT_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
+	init_wheel(right_wheel, TACHPIN_RIGHT_1, TACHPIN_RIGHT_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
 }
 
-void Controller::set_target_velocity(float desired_vel) {
-	*target_vel = desired_vel;
-}
-
-void Controller::resetPos() {
-	*acc_pos = 0;
-}
-
-void Controller::reset() {
-	currVel = 0;
-	lastVel = 0;
-	currErr = 0;
-	*target_vel = 0;
-	accErr = 0;
-	PWM = 0;
-}
-
-void Controller::set_PID_constants(float KP, float KI, float KD) {
-	kp = KP;
-	ki = KI;
-	kd = KD;
-}
-
-void Controller::init(float *acc_position, float *desiredVel, PinName INTERRUPT_PIN_1, PinName INTERRUPT_PIN_2, int PR,
-					  int TO, int CL) {
-	debug_mode = false;
-	acc_pos = acc_position;
-	target_vel = desiredVel;
-	currVel = 0;
-	lastVel = 0;
-	currErr = 0;
-	*target_vel = 0;
-	*acc_pos = 0;
-	accErr = 0;
-	PWM = 0;
-	kp = 1.26;
-	ki = 0.0481;
-	kd = 0;
-
-	pulses_per_revolution = PR;
-	Control_DT = CL;
-	//QUADRATURE ENCODER INTERFACE PRONTA DO ARM
-	wheel = new QEI(INTERRUPT_PIN_1, INTERRUPT_PIN_2, NC, PR, QEI::X4_ENCODING);
-	wheel->reset();
+void Controller::start_thread() {
 	timer.start();
-	msg_timeout.start();
-	timeout = TO;
-	sampling_timer.start();
+	control_thread.start(callback(this, &Controller::control_loop));
 }
 
 void Controller::control_loop() {
-	if (msg_timeout.read_ms() > timeout && !debug_mode) {
-		// Mensagem expirada
-		this->reset();
+	while (true) {
+		update_wheel_velocity();
+
+		float pid_left  = get_pid_output(left_wheel);
+		float pid_right = get_pid_output(right_wheel);
+
+		set_pwm(left_wheel, pid_left);
+		set_pwm(right_wheel, pid_right);
+
+		if(stop) stop_and_wait();
+		Thread::wait(CONTROL_LOOP_MS);
 	}
-	if (sampling_timer.read_ms() < Control_DT) {
-		// Tempo de amostragem ainda não atingido
-		return;
+}
+
+void Controller::set_pwm(wheel &w, float pwm) {
+	if(pwm > 1) pwm = 1;
+	if(pwm < -1) pwm = -1;
+
+	if (pwm < 0) {
+		w.pwm_out1->write(1);
+		w.pwm_out2->write(1 + pwm);
+	} else if (pwm > 0) {
+		w.pwm_out1->write(1 - pwm);
+		w.pwm_out2->write(1);
 	} else {
-
-		int curr_pulses = wheel->getPulses();
-		DT = timer.read_ms();
-
-		//12        ->  NUMERO DE PULSOS POR VOLTA
-		//75.8126/1 ->  1 VOLTA DA RODA POR 75.8126 DO MOTOR ((NOMINAL 75/1))
-		//1000      ->  TRANSFORMAEM MILISEGUNDOS PARA SEGUNDOS
-		currVel = 1000 * float(curr_pulses) / (float(pulses_per_revolution) * 75.8126 * DT);
-		currVel *= 0.06 * PI; // conversao pra m/s
-		currErr = (*target_vel - currVel);
-		accErr += currErr;
-
-		//CALCULA P + I + D
-		PID = currErr * kp + accErr * ki + (lastVel - currVel) * kd;
-		lastVel = currVel;
-		PWM = PID;
-
-		//VALORES ACIMA DOS LIMITES SÃO ENQUADRADOS DENTRO DO LIMITE
-		if (PWM > 1) PWM = 1;
-		if (PWM < -1) PWM = -1;
-		// Reset de variáveis para o proximo ciclo de controle
-		timer.reset();
-		sampling_timer.reset();
-		wheel->reset();
-		// Persistencia do acumulo de ticks do tacometro para odometria
-		*acc_pos += 2 * PI * 3 * float(curr_pulses) / (float(pulses_per_revolution * 75.8126)); //em m
+		w.pwm_out1->write(1);
+		w.pwm_out2->write(1);
 	}
+}
+
+float Controller::get_pid_output(wheel& w) {
+	float error = w.target_velocity - w.velocity;
+	float error_deriv = error - w.last_error;
+	w.error_acc += error;
+	return error * pid.kp + w.error_acc * pid.ki + error_deriv * pid.kd;
+}
+
+void Controller::update_wheel_velocity() {
+	int left_pulses = left_wheel.encoder->getPulses();
+	int right_pulses = right_wheel.encoder->getPulses();
+	float time_ms = timer.read_us()/1000.0f;
+
+	left_wheel.encoder->reset();
+	right_wheel.encoder->reset();
+	timer.reset();
+
+	if(time_ms != 0) {
+		left_wheel.velocity = (1000*left_pulses*0.06f*PI)/(PULSES_REVOLUTION * 75.8126f * time_ms);
+		right_wheel.velocity = (1000*right_pulses*0.06f*PI)/(PULSES_REVOLUTION * 75.8126f * time_ms);
+	}
+
+	left_wheel.encoder_distance += (2*PI*3*left_pulses)/(PULSES_REVOLUTION * 75.8126f);
+	right_wheel.encoder_distance += (2*PI*3*right_pulses)/(PULSES_REVOLUTION * 75.8126f);
+}
+
+void Controller::set_target_velocity(float left, float right, float total) {
+	left_wheel.target_velocity = left * total;
+	right_wheel.target_velocity = right * total;
+};
+
+void Controller::continue_thread() {
+	if(control_thread.get_state() == Thread::WaitingThreadFlag) {
+		control_thread.signal_set(CONTINUE_SIGNAL);
+	}
+}
+
+void Controller::stop_and_wait() {
+	set_target_velocity(0, 0, 0);
+	set_pwm(left_wheel, 0);
+	set_pwm(right_wheel, 0);
+	reset(left_wheel);
+	reset(right_wheel);
+	stop = false;
+	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
+		Thread::signal_wait(CONTINUE_SIGNAL);
+		Thread::signal_clr(CONTINUE_SIGNAL);
+	}
+}
+
+void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {
+	w.encoder = new QEI(tach_pin1, tach_pin2, NC, PULSES_REVOLUTION, QEI::X4_ENCODING);
+	w.pwm_out1 = new PwmOut(motor_pin1);
+	w.pwm_out1->period_ms(2);
+	w.pwm_out2 = new PwmOut(motor_pin2);
+	w.pwm_out2->period_ms(2);
+	w.error_acc = 0;
+}
+
+void Controller::set_pid_constants(float kp, float ki, float kd) {
+	pid.kp = kp;
+	pid.ki = ki;
+	pid.kd = kd;
+	reset(right_wheel);
+	reset(left_wheel);
+}
+
+void Controller::reset(wheel& w) {
+	w.velocity = 0;
+	w.error_acc = 0;
+	w.last_error = 0;
 }

@@ -114,5 +114,8 @@
 #include "platform/FunctionPointer.h"
 
 using namespace mbed;
+#undef bool
+#undef true
+#undef false
 
 #endif

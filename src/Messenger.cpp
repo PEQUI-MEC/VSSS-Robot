@@ -1,18 +1,18 @@
 #include <sstream>
 #include "Messenger.h"
+#include "PIN_MAP.h"
 
 #define PI 3.141592653589793238
 
 using std::string;
 
-// ********************** SERIAL HANDLER AND MESSAGING FUNCTIONS *********************** //
 void Messenger::send_msg(string msg, uint16_t addr) {
 	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
 	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), false);
 }
 
-bool Messenger::get_tokens(string& msg, int size) {
-	size_t pos_atual = 1;
+bool Messenger::get_tokens(string &msg, int size, unsigned int first_char_position) {
+	unsigned int pos_atual = first_char_position;
 	for (int i = 0; i < size; ++i) {
 		size_t delim_pos = msg.find(';', pos_atual);
 
@@ -26,13 +26,12 @@ bool Messenger::get_tokens(string& msg, int size) {
 }
 
 void Messenger::Update_PID_Pos(string msg) {
-	if (!get_tokens(msg, 2)) return;
-	string kgz = tokens[0];
-	string max_theta_error = tokens[1];
+	if (!get_tokens(msg, 2, 1)) return;
+	float kgz = float(atof(tokens[0].c_str()));
+	float max_theta_error = float(atof(tokens[1].c_str()));
 
-	(*r).kgz = atof(kgz.c_str());
-	(*r).MAX_Theta_Error = atof(max_theta_error.c_str());
-//  s->printf("ROBO %c KGZ | %f ; MAX_THETA| %f \n",MY_ID,(*r).kgz,(*r).MAX_Theta_Error);
+	robot->kgz = kgz;
+	robot->set_max_theta_error(max_theta_error);
 }
 
 void Messenger::Update_PID_K(string msg) {
@@ -41,75 +40,43 @@ void Messenger::Update_PID_K(string msg) {
 		return;
 	}
 
-	if (!get_tokens(msg, 3)) return;
-	string kp = tokens[0];
-	string ki = tokens[1];
-	string kd = tokens[2];
+	if (!get_tokens(msg, 3, 1)) return;
+	float kp = float(atof(tokens[0].c_str()));
+	float ki = float(atof(tokens[1].c_str()));
+	float kd = float(atof(tokens[2].c_str()));
 
-//  CALIBRAR PID
-	KPID[0] = atof(kp.c_str());
-	KPID[1] = atof(ki.c_str());
-	KPID[2] = atof(kd.c_str());
-
-	(*r).controllerA->set_PID_constants(KPID[0], KPID[1], KPID[2]);
-	(*r).controllerB->set_PID_constants(KPID[0], KPID[1], KPID[2]);
-	//s->printf("KPID | %f | %f | %f\n",ctrlA->kp,ctrlA->ki,ctrlA->kd);
+	robot->controller.set_pid_constants(kp,ki,kd);
 }
 
 void Messenger::GoToPoint(string msg) {
-	if (!get_tokens(msg, 3)) return;
-	string px = tokens[0];
-	string py = tokens[1];
-	string v = tokens[2];
+	if (!get_tokens(msg, 3, 1)) return;
+	float px = float(atof(tokens[0].c_str()));
+	float py = float(atof(tokens[1].c_str()));
+	float v = float(atof(tokens[2].c_str()));
 
-	(*r).xr = 0;
-	(*r).yr = 0;
-	(*r).theta = 0;
-	(*r).acc_posA = 0;
-	(*r).acc_posB = 0;
-	(*r).desiredPos[0] = atof(px.c_str());
-	(*r).desiredPos[1] = atof(py.c_str());
-	(*r).desiredVlin = atof(v.c_str());
-	(*r).goToActive = true;
-//  s->printf("POS | %f | %f | %f\n",desiredPos[0],desiredPos[1],desiredVlin);
+	robot->start_position_control(px, py, v, true);
 }
 
 void Messenger::GoToVector(string msg) {
-	if (!get_tokens(msg, 2)) return;
-	string px = tokens[0];
-	string v = tokens[1];
+	if (!get_tokens(msg, 2, 1)) return;
+	float theta = float(atof(tokens[0].c_str()));
+	float v = float(atof(tokens[1].c_str()));
 
-	(*r).xr = 0;
-	(*r).yr = 0;
-	(*r).theta = 0;
-	(*r).acc_posA = 0;
-	(*r).acc_posB = 0;
-	(*r).desiredVlin = atof(v.c_str());
-	(*r).desiredPos[1] = 50 * sin(atof(px.c_str()) * PI / 180);
-	(*r).desiredPos[0] = 50 * cos(atof(px.c_str()) * PI / 180);
-	(*r).Vector_msg_timeout.reset();
-	(*r).Vector_Control = true;
-
-//  s->printf("POS | %f | %f \n",(*r).desiredOrientation,(*r).desiredVlin);
+	robot->start_vector_control(theta, v, true);
 }
 
 void Messenger::Update_ACC(string msg) {
-	if (!get_tokens(msg, 1)) return;
-	string acc = tokens[0];
-
-	(*r).ACC_RATE = atof(acc.c_str());
-//  s->printf("ROBO %c ACC_RATE | %f \n",(*r).MY_ID,(*r).ACC_RATE);
+	if (!get_tokens(msg, 1, 1)) return;
+	robot->acc_rate = float(atof(tokens[0].c_str()));
 }
 
 void Messenger::goToOrientation(string msg) {
-	if (!get_tokens(msg, 2)) return;
-	string desiredAng = tokens[0];
-	string vel = tokens[1];
+	if (!get_tokens(msg, 2, 1)) return;
 
-	(*r).desiredOrientation = atof(desiredAng.c_str());
-	(*r).desiredVang = atof(vel.c_str());
-	(*r).Orientation_Control = true;
-//  s->printf("ORIENTATION | %f | %f \n",msgToFloat[0],msgToFloat[1]);
+	float desiredAng = float(atof(tokens[0].c_str()));
+	float vel = float(atof(tokens[1].c_str()));
+
+	robot->start_orientation_control(desiredAng, vel, true);
 }
 
 string Messenger::decode_strings(string msg) {
@@ -159,8 +126,8 @@ void Messenger::decode_msg(string msg) {
 			return;
 		case 'D':
 			debug_mode = !debug_mode;
-			(*r).controllerA->debug_mode = debug_mode;
-			(*r).controllerB->debug_mode = debug_mode;
+//			(*r).controllerA->debug_mode = debug_mode;
+//			(*r).controllerB->debug_mode = debug_mode;
 //          s->printf("Debug mode %d \n",debug_mode);
 			return;
 		case 'B':
@@ -170,31 +137,15 @@ void Messenger::decode_msg(string msg) {
 			break;
 	}
 
-	if (!get_tokens(msg, 2)) return;
-	string vel1 = tokens[0];
-	string vel2 = tokens[1];
-
-	desiredVel[0] = atof(vel1.c_str());
-	desiredVel[1] = atof(vel2.c_str());
-//  s->printf("desiredVel | %f | %f \n",desiredVel[0],desiredVel[1]);
-	(*r).desiredVr = desiredVel[0];
-	(*r).desiredVl = desiredVel[1];
-	(*r).controllerA->start_timer_new_msg();
-	(*r).controllerB->start_timer_new_msg();
+	if (!get_tokens(msg, 2, 0)) return;
+	float vel_right = float(atof(tokens[0].c_str()));
+	float vel_left = float(atof(tokens[1].c_str()));
+	robot->start_velocity_control(vel_left, vel_right);
 }
 
 Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee) {
 	xbee = this_xbee;
-	bat_request = false;
-	ACC_RATE = 0.7;
-	reinforcement_learning_mode = false;
 	debug_mode = false;
-	goToActive = false;
-	r = robot;
+	this->robot = robot;
 	ID = id;
-	KPID[0] = 0;
-	KPID[1] = 0;
-	KPID[2] = 0;
-	desiredVel[0] = 0;
-	desiredVel[1] = 0;
 }
