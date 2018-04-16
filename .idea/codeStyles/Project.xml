@@ -4,6 +4,7 @@
       <option name="INDENT_CLASS_MEMBERS" value="8" />
       <option name="INDENT_VISIBILITY_KEYWORDS" value="4" />
       <option name="INDENT_DIRECTIVE_AS_CODE" value="true" />
+      <option name="ADD_BRIEF_TAG" value="true" />
     </Objective-C>
     <Objective-C-extensions>
       <file>
@@ -37,6 +38,7 @@
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="ObjectiveC">
+      <option name="BLOCK_COMMENT_AT_FIRST_COLUMN" value="false" />
       <option name="KEEP_BLANK_LINES_IN_DECLARATIONS" value="1" />
       <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
       <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="0" />

@@ -2,8 +2,6 @@
 #include "Messenger.h"
 #include "PIN_MAP.h"
 
-#define PI 3.141592653589793238
-
 using std::string;
 
 void Messenger::send_msg(string msg, uint16_t addr) {
@@ -11,72 +9,58 @@ void Messenger::send_msg(string msg, uint16_t addr) {
 	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), false);
 }
 
-bool Messenger::get_tokens(string &msg, int size, unsigned int first_char_position) {
-	unsigned int pos_atual = first_char_position;
+template<int size>
+msg_data<size> Messenger::get_values(const string &msg, unsigned int first_char_pos) {
+	std::array<float,size> values{};
+	unsigned int pos_atual = first_char_pos;
 	for (int i = 0; i < size; ++i) {
 		size_t delim_pos = msg.find(';', pos_atual);
 
-		if (delim_pos == string::npos && i != size - 1)
-			return false;
+		if (delim_pos == string::npos && i != size - 1) return {values,false};
 
-		tokens[i] = msg.substr(pos_atual, delim_pos - pos_atual);
+		string value_str = msg.substr(pos_atual, delim_pos - pos_atual);
+		values[i] = float(atof(value_str.c_str()));
 		pos_atual = delim_pos + 1;
 	}
-	return true;
+	return {values,true};
 }
 
 void Messenger::Update_PID_Pos(string msg) {
-	if (!get_tokens(msg, 2, 1)) return;
-	float kgz = float(atof(tokens[0].c_str()));
-	float max_theta_error = float(atof(tokens[1].c_str()));
-
-	robot->kgz = kgz;
-	robot->set_max_theta_error(max_theta_error);
+	msg_data<2> values = get_values<2>(msg, 2);
+	if(values.is_valid) {
+		robot->kgz = values[0];
+		robot->set_max_theta_error(values[1]);
+	}
 }
 
 void Messenger::Update_PID_K(string msg) {
-	if (msg[1] == 'P') {
-		Update_PID_Pos(msg.substr(1));
-		return;
-	}
-
-	if (!get_tokens(msg, 3, 1)) return;
-	float kp = float(atof(tokens[0].c_str()));
-	float ki = float(atof(tokens[1].c_str()));
-	float kd = float(atof(tokens[2].c_str()));
-
-	robot->controller.set_pid_constants(kp,ki,kd);
+	msg_data<3> values = get_values<3>(msg, 1);
+	if(values.is_valid)
+		robot->controller.set_pid_constants(values[0], values[1], values[2]);
 }
 
 void Messenger::GoToPoint(string msg) {
-	if (!get_tokens(msg, 3, 1)) return;
-	float px = float(atof(tokens[0].c_str()));
-	float py = float(atof(tokens[1].c_str()));
-	float v = float(atof(tokens[2].c_str()));
-
-	robot->start_position_control(px, py, v, true);
+	msg_data<3> values = get_values<3>(msg, 1);
+	if(values.is_valid)
+		robot->start_position_control(values[0], values[1], values[2]);
 }
 
 void Messenger::GoToVector(string msg) {
-	if (!get_tokens(msg, 2, 1)) return;
-	float theta = float(atof(tokens[0].c_str()));
-	float v = float(atof(tokens[1].c_str()));
-
-	robot->start_vector_control(theta, v, true);
+	msg_data<2> values = get_values<2>(msg, 1);
+	if(values.is_valid)
+		robot->start_vector_control(values[0], values[1]);
 }
 
 void Messenger::Update_ACC(string msg) {
-	if (!get_tokens(msg, 1, 1)) return;
-	robot->acc_rate = float(atof(tokens[0].c_str()));
+	msg_data<1> values = get_values<1>(msg, 1);
+	if(values.is_valid)
+		robot->acc_rate = values[0];
 }
 
 void Messenger::goToOrientation(string msg) {
-	if (!get_tokens(msg, 2, 1)) return;
-
-	float desiredAng = float(atof(tokens[0].c_str()));
-	float vel = float(atof(tokens[1].c_str()));
-
-	robot->start_orientation_control(desiredAng, vel, true);
+	msg_data<2> values = get_values<2>(msg, 1);
+	if(values.is_valid)
+		robot->start_orientation_control(values[0], values[1]);
 }
 
 string Messenger::decode_strings(string msg) {
@@ -106,7 +90,8 @@ void Messenger::decode_msg(string msg) {
 	switch (msg[0]) {
 		case 'K':
 			//MENSAGEM DE CALIBRACAO DO PID
-			Update_PID_K(msg);
+			if(msg[1] == 'P') Update_PID_Pos(msg);
+			else Update_PID_K(msg);
 			return;
 		case 'A':
 			//MENSAGEM DE CALIBRACAO DA ACELERACAO
@@ -128,7 +113,6 @@ void Messenger::decode_msg(string msg) {
 			debug_mode = !debug_mode;
 //			(*r).controllerA->debug_mode = debug_mode;
 //			(*r).controllerB->debug_mode = debug_mode;
-//          s->printf("Debug mode %d \n",debug_mode);
 			return;
 		case 'B':
 			send_battery();
@@ -137,10 +121,9 @@ void Messenger::decode_msg(string msg) {
 			break;
 	}
 
-	if (!get_tokens(msg, 2, 0)) return;
-	float vel_right = float(atof(tokens[0].c_str()));
-	float vel_left = float(atof(tokens[1].c_str()));
-	robot->start_velocity_control(vel_left, vel_right);
+	msg_data<2> values = get_values<2>(msg, 0);
+	if(values.is_valid)
+		robot->start_velocity_control(values[1], values[0]);
 }
 
 Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee) {
@@ -148,4 +131,14 @@ Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee) {
 	debug_mode = false;
 	this->robot = robot;
 	ID = id;
+}
+
+void Messenger::operator<<(const string &msg) {
+	send_msg(msg);
+}
+
+void Messenger::operator<<(float value) {
+	char buffer[10];
+	gcvt(value,8,buffer);
+	send_msg(string(buffer));
 }

@@ -196,13 +196,13 @@ int main() {
 	robot->messenger = messenger;
 
 	wait(0.5);
-	messenger->decode_msg("O45;1");
+	robot->start_orientation_control(45, 1);
 	wait(0.5);
-	messenger->decode_msg("O-45;1");
+	robot->start_orientation_control(-45, 1);
 	wait(0.5);
-	messenger->decode_msg("O-45;1");
+	robot->start_orientation_control(-45, 1);
 	wait(0.5);
-	messenger->decode_msg("O45;1");
+	robot->start_orientation_control(45, 1);
 	wait(0.5);
 
 	while (true) {
