@@ -6,8 +6,8 @@
 #define CONTROL_LOOP_MS 5
 
 Controller::Controller() {
-	init_wheel(left_wheel, TACHPIN_LEFT_1, TACHPIN_LEFT_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
-	init_wheel(right_wheel, TACHPIN_RIGHT_1, TACHPIN_RIGHT_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
+	init_wheel(left_wheel, ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
+	init_wheel(right_wheel, ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
 }
 
 void Controller::start_thread() {

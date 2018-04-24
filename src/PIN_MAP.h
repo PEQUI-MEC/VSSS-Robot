@@ -10,10 +10,10 @@
 #define PULSES_REVOLUTION 12
 
 //PINOS DE INTERRUPÇÃO DOS ENCODERS
-#define TACHPIN_LEFT_1 p7
-#define TACHPIN_LEFT_2 p8
-#define TACHPIN_RIGHT_1 p29
-#define TACHPIN_RIGHT_2 p30
+#define ENCODER_LEFT_PIN_1 p7
+#define ENCODER_LEFT_PIN_2 p8
+#define ENCODER_RIGHT_PIN_1 p29
+#define ENCODER_RIGHT_PIN_2 p30
 
 //PINOS DOS MOTORES
 #define MOTOR_RIGHT_PIN_1 p26   //MOTOR A -> MOTOR DA ((((DIREITA))))
@@ -44,4 +44,4 @@
 #define RXPIN p27
 #endif
 #endif
-#define G 9.81
+//#define G 9.81

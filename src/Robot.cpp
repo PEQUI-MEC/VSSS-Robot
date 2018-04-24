@@ -58,12 +58,11 @@ void Robot::vector_control() {
 	float theta_error = round_angle(target.theta - theta);
 
 	if (std::abs(theta_error) > max_theta_error) {
-		vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000;
+		vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
 	} else {
-		float velocity_difference = target.velocity - vel_acelerada;
-		if (velocity_difference > 0.2) {
-			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000;
-		} else if (velocity_difference < 0) {
+		if (vel_acelerada < target.velocity) {
+			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
+		} else {
 			vel_acelerada = target.velocity;
 		}
 	}
@@ -94,12 +93,12 @@ void Robot::position_control() {
 		if(vel_acelerada > 0.8) {
 			vel_acelerada = 0.8;
 		} else if (vel_acelerada > 0.3) {
-			vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000;
+			vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
 		}
 	} else {
 		float velocity_difference = target.velocity - vel_acelerada;
 		if (velocity_difference > 0.2) {
-			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000;
+			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
 		} else if(velocity_difference < 0) {
 			vel_acelerada = target.velocity;
 		}

@@ -143,18 +143,6 @@ static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_
 	}
 }
 
-//string str(double num) {
-//	char buffer[10];
-//	gcvt(num,8,buffer);
-//	return string(buffer);
-//}
-//
-//string str(int num) {
-//	char buffer[10];
-//	gcvt(num,8,buffer);
-//	return string(buffer);
-//}
-
 int main() {
 	led1 = new DigitalOut(LED1);
 	led2 = new DigitalOut(LED2);

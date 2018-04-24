@@ -40,6 +40,7 @@ set(SOURCE_FILES
 	${SRC_DIR}/Controller.cpp
 	${SRC_DIR}/PIN_MAP.h
 	${SRC_DIR}/IMU_regs.h
+	${SRC_DIR}/ToString.cpp
 
 	${MBED_SRC}
 	${LIB_DIR}/XBeeLib/DigiLogger/DigiLogger.cpp
