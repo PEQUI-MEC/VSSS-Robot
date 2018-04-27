@@ -4,6 +4,7 @@
 #include "QEI.h"
 
 #define CONTINUE_SIGNAL 1
+#define MOTOR_REVOLUTION_PER_WHEEL_REV 75.8126f
 
 struct wheel {
 	QEI* encoder;

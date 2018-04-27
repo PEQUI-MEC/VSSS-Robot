@@ -25,6 +25,7 @@ void Controller::control_loop() {
 		set_pwm(left_wheel, pid_left);
 		set_pwm(right_wheel, pid_right);
 
+//		Stop flag is set on Robot after a timeout or arriving at destination
 		if(stop) stop_and_wait();
 		Thread::wait(CONTROL_LOOP_MS);
 	}
@@ -56,19 +57,21 @@ float Controller::get_pid_output(wheel& w) {
 void Controller::update_wheel_velocity() {
 	int left_pulses = left_wheel.encoder->getPulses();
 	int right_pulses = right_wheel.encoder->getPulses();
-	float time_ms = timer.read_us()/1000.0f;
+	float time = timer.read_us()/1E6f; // Time in seconds
 
 	left_wheel.encoder->reset();
 	right_wheel.encoder->reset();
 	timer.reset();
 
-	if(time_ms != 0) {
-		left_wheel.velocity = (1000*left_pulses*0.06f*PI)/(PULSES_REVOLUTION * 75.8126f * time_ms);
-		right_wheel.velocity = (1000*right_pulses*0.06f*PI)/(PULSES_REVOLUTION * 75.8126f * time_ms);
+	if(time != 0) {
+//		0.06f*PI: m/s conversion
+		left_wheel.velocity = (left_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
+		right_wheel.velocity = (right_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
 	}
 
-	left_wheel.encoder_distance += (2*PI*3*left_pulses)/(PULSES_REVOLUTION * 75.8126f);
-	right_wheel.encoder_distance += (2*PI*3*right_pulses)/(PULSES_REVOLUTION * 75.8126f);
+//	Distance travelled since last odometry update. Is used and zeroed on Robot::update_odometry()
+	left_wheel.encoder_distance += (2*PI*3*left_pulses)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV);
+	right_wheel.encoder_distance += (2*PI*3*right_pulses)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV);
 }
 
 void Controller::set_target_velocity(float left, float right, float total) {
@@ -96,7 +99,7 @@ void Controller::stop_and_wait() {
 }
 
 void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {
-	w.encoder = new QEI(tach_pin1, tach_pin2, NC, PULSES_REVOLUTION, QEI::X4_ENCODING);
+	w.encoder = new QEI(tach_pin1, tach_pin2, NC, PULSES_PER_REVOLUTION, QEI::X4_ENCODING);
 	w.pwm_out1 = new PwmOut(motor_pin1);
 	w.pwm_out1->period_ms(2);
 	w.pwm_out2 = new PwmOut(motor_pin2);

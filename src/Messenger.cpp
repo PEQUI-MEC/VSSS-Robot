@@ -1,7 +1,6 @@
 #include <string>
 #include "Messenger.h"
 #include "PIN_MAP.h"
-#include "ToString.h"
 
 using std::string;
 
@@ -72,7 +71,8 @@ string Messenger::decode_strings(string msg) {
 void Messenger::send_battery() {
 	AnalogIn vin_all_cells(ALL_CELLS);
 	float vbat = vin_all_cells.read() * (3.3f * 1470.0f/470.0f);
-	string msg_bat = "B" + str(vbat,3);
+	float vbat_round = std::round(vbat*1000)/1000;
+	string msg_bat = "B" + std::to_string(vbat_round);
 	send_msg(msg_bat);
 }
 
@@ -130,5 +130,5 @@ void Messenger::operator<<(const string &msg) {
 }
 
 void Messenger::operator<<(float value) {
-	send_msg(str(value, 4));
+	send_msg(std::to_string(value));
 }

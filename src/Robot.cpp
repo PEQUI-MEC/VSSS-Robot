@@ -48,8 +48,11 @@ void Robot::vector_control() {
 	}
 
 	float theta = state.theta;
+
+//	Computes target.theta in direction of {target.x, target.y} before each control loop
 	target.theta = std::atan2(target.y - state.y, target.x - state.x);
 
+//	Activates backwards movement if theta_error > PI/2
 	bool move_backwards = std::abs(target.theta - state.theta) > PI/2;
 	if(move_backwards) theta = round_angle(state.theta + PI);
 	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
@@ -57,9 +60,11 @@ void Robot::vector_control() {
 
 	float theta_error = round_angle(target.theta - theta);
 
+//	Decreases velocity for big errors
 	if (std::abs(theta_error) > max_theta_error) {
 		vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
 	} else {
+//		Applies acceleration until robot reaches target velocity
 		if (vel_acelerada < target.velocity) {
 			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
 		} else {
@@ -67,10 +72,11 @@ void Robot::vector_control() {
 		}
 	}
 
-	set_wheel_velocity_tan_controller(theta_error, vel_acelerada, move_backwards);
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
 void Robot::position_control() {
+//	Stops after arriving at destination
 	float position_error = std::sqrt(std::pow(state.x - target.x, 2.0f) + std::pow(state.y - target.y, 2.0f));
 	if(target.velocity == 0 || position_error < 1) {
 		stop_and_wait();
@@ -79,9 +85,11 @@ void Robot::position_control() {
 
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 
+//	Computes target.theta in direction of {target.x, target.y} before each control loop
 	target.theta = std::atan2(target.y - state.y, target.x - state.x);
 	float theta = state.theta;
 
+//	Activates backwards movement if theta_error > PI/2
 	bool move_backwards = round_angle(target.theta - state.theta + PI/2) < 0;
 	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
 	previously_backwards = move_backwards;
@@ -89,6 +97,7 @@ void Robot::position_control() {
 
 	float theta_error = round_angle(target.theta - theta);
 
+//	Decreases velocity for big errors and limits maximum velocity
 	if (std::abs(theta_error) > max_theta_error) {
 		if(vel_acelerada > 0.8) {
 			vel_acelerada = 0.8;
@@ -96,6 +105,7 @@ void Robot::position_control() {
 			vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
 		}
 	} else {
+//		Applies acceleration until robot reaches target velocity
 		float velocity_difference = target.velocity - vel_acelerada;
 		if (velocity_difference > 0.2) {
 			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
@@ -108,29 +118,33 @@ void Robot::position_control() {
 	limiar = limiar > 30 ? 30 : limiar;
 	if(std::abs(theta_error) < limiar) theta_error = 0;
 
-	set_wheel_velocity_tan_controller(theta_error, vel_acelerada, move_backwards);
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
 
 void Robot::orientation_control() {
 	float theta = state.theta;
+
+//	Activates backwards movement if theta_error > PI/2
 	if(round_angle(target.theta - state.theta + PI/2) < 0){
 		theta = round_angle(state.theta + PI);
 	}
 	float theta_error = round_angle(target.theta - theta);
 
+//	Stops after arriving at desired orientation
 	if(std::abs(theta_error) < 2*PI/180) {
 		stop_and_wait();
 		return;
 	}
 
+//	Wheel velocities are always between 1 and -1
 	float right_wheel_velocity = saturate(orientation_Kp * theta_error, 1);
 	float left_wheel_velocity = saturate(-orientation_Kp * theta_error, 1);
 
 	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, target.velocity);
 }
 
-void Robot::set_wheel_velocity_tan_controller(float theta_error, float velocity, bool backwards) {
+void Robot::set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards) {
 	float m = 1;
 	if(backwards) m = -1;
 
@@ -147,6 +161,7 @@ void Robot::update_odometry() {
 	wheel& left_wheel = controller.left_wheel;
 	wheel& right_wheel = controller.right_wheel;
 
+//	encoder_distance: distance travelled since last odometry update. Is updated on Controller::update_wheel_velocity()
 	float distance = (left_wheel.encoder_distance + right_wheel.encoder_distance)/2;
 
 	state.x += distance * std::cos(state.theta);
@@ -160,6 +175,7 @@ void Robot::update_odometry() {
 
 void Robot::start_vector_control(float theta, float velocity, bool reset) {
 	if(reset) reset_state();
+//	target.theta is computed before each vector control loop, in direction of {target.x, target.y}
 	target.x = 50*std::cos(theta * PI/180);
 	target.y = 50*std::sin(theta * PI/180);
 	target.velocity = velocity;
@@ -193,9 +209,11 @@ void Robot::start_velocity_control(float vel_left, float vel_right) {
 void Robot::continue_threads() {
 	msg_timeout_timer.reset();
 	msg_timeout_timer.start();
+//	Resumes Robot::control_loop thread
 	if(control_thread.get_state() == Thread::WaitingThreadFlag) {
 		control_thread.signal_set(CONTINUE_SIGNAL);
 	}
+//	Resumes Controller::control_loop thread
 	controller.continue_thread();
 }
 
@@ -206,6 +224,7 @@ void Robot::reset_state() {
 }
 
 void Robot::stop_and_wait() {
+//	Flag tells Controller to stop robot and pause thread
 	controller.stop = true;
 	vel_acelerada = 0;
 	state.command = NO_CONTROL;

@@ -49,9 +49,9 @@ class Robot {
 
 		/**	@brief Sets the target velocity for each wheel using the output of the nonlinear controller
 		 * 	@param theta_error Controller input. Difference between the target orientation and the current orientation.
-		 * 	@param velocity Desired velocity of the robot
+		 * 	@param velocity Total desired velocity. Used to set velocity for each wheel
 		 * 	@param backwards True for backwards movement, false for forwards movement */
-		void set_wheel_velocity_tan_controller(float theta_error, float velocity, bool backwards);
+		void set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards);
 
 		/**	@brief Updates position and orientation stored on Robot::state, using the odometry data
 		 *	computed by controller.update_wheel_velocity */
