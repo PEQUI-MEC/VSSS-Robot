@@ -725,4 +725,5 @@ set(MBED_SRC
     ${MBED_DIR}/drivers/I2C.h
     ${MBED_DIR}/drivers/Ticker.h
     ${MBED_DIR}/drivers/Timeout.h
-    ${MBED_DIR}/drivers/BusIn.h)
+    ${MBED_DIR}/drivers/BusIn.h
+	${MBED_DIR}/mbed_config.h)
