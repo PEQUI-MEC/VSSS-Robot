@@ -20,12 +20,12 @@ set(COMMON_FLAGS "-Os -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-
 
 set(CMAKE_C_FLAGS "-std=c11 ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
-set(CMAKE_CXX_FLAGS "-std=c++11 -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
+set(CMAKE_CXX_FLAGS "-std=c++14 -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r \
  -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit \
  -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-m3 -mthumb -T ${PROJECT_SOURCE_DIR}/LPC1768.ld -Wl,--start-group \
- -lstdc++ -lsupc++ -lm -lc -lgcc -lg -lrdimon -lnosys -Wl,--end-group -static --specs=nano.specs")
+ -u _printf_float -lstdc++ -lsupc++ -lm -lc -lgcc -lg -lrdimon -lnosys -Wl,--end-group -static --specs=nano.specs")
 
 set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${COMMON_FLAGS}")
 

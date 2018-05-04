@@ -1,4 +1,3 @@
-//ROBO ID
 // CONSTANTES DO ROBO
 #define Largura_Robo 6.80f
 #define Raio_roda 3.0f
@@ -8,25 +7,19 @@
 
 
 //PULSOS POR REVOLUÇÃO DO TACOMETRO
-#define PULSES_REVOLUTION 12
+#define PULSES_PER_REVOLUTION 12
 
 //PINOS DE INTERRUPÇÃO DOS ENCODERS
-#define TACHPIN_B_1 p7
-#define TACHPIN_B_2 p8
-#define TACHPIN_A_1 p29
-#define TACHPIN_A_2 p30
-
-//TEMPO DE AMOSTRAGEM DO CONTROLE
-#define CONTROL_LOOP_MS 5
-//TEMPO DE REALIMENTACAO DO CONTROLE DE POSICAO
-#define POS_LOOP 10
-
+#define ENCODER_LEFT_PIN_1 p7
+#define ENCODER_LEFT_PIN_2 p8
+#define ENCODER_RIGHT_PIN_1 p29
+#define ENCODER_RIGHT_PIN_2 p30
 
 //PINOS DOS MOTORES
-#define MOTOR_A_PIN_1 p26   //MOTOR A -> MOTOR DA ((((DIREITA))))
-#define MOTOR_A_PIN_2 p25
-#define MOTOR_B_PIN_1 p24   //MOTOR B -> MOTOR DA ((((ESQUERDA))))
-#define MOTOR_B_PIN_2 p23
+#define MOTOR_RIGHT_PIN_1 p26   //MOTOR A -> MOTOR DA ((((DIREITA))))
+#define MOTOR_RIGHT_PIN_2 p25
+#define MOTOR_LEFT_PIN_1 p24   //MOTOR B -> MOTOR DA ((((ESQUERDA))))
+#define MOTOR_LEFT_PIN_2 p23
 
 //PINOS I2C PARA O IMU
 #define IMU_SDA_PIN p28
@@ -51,4 +44,4 @@
 #define RXPIN p27
 #endif
 #endif
-#define G 9.81
+//#define G 9.81

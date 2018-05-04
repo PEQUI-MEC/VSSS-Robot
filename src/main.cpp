@@ -3,6 +3,7 @@
 #include "XBeeLib.h"
 #include "Messenger.h"
 #include "IMU.h"
+#include "PIN_MAP.h"
 #include <cmath>
 #include <fstream>
 
@@ -46,8 +47,8 @@ uint16_t addr;
 Serial *log_serial;
 
 //MANIPULADOR DE MENSAGENS
-Robot *robot;
-Messenger *messenger;
+Robot *robot = nullptr;
+Messenger *messenger = nullptr;
 
 //VARIAVEIS DO CONTROLADOR DE POSICAO
 
@@ -97,26 +98,26 @@ void ler_arquivo() {
 	if (prox_string(fp, ':') == "my_id")
 		robot->MY_ID = prox_string(fp, '\n')[0];
 	if (prox_string(fp, ':') == "msg_timeout")
-		robot->MSG_TIMEOUT = atoi(prox_string(fp, '\n').c_str());
+		robot->msg_timeout_limit = atoi(prox_string(fp, '\n').c_str());
 	if (prox_string(fp, ':') == "acc_rate")
-		robot->ACC_RATE = atof(prox_string(fp, '\n').c_str());
+		robot->acc_rate = float(atof(prox_string(fp, '\n').c_str()));
 	if (prox_string(fp, ':') == "kgz")
-		robot->kgz = atof(prox_string(fp, '\n').c_str());
+		robot->kgz = float(atof(prox_string(fp, '\n').c_str()));
 	if (prox_string(fp, ':') == "max_theta_error")
-		robot->MAX_Theta_Error = atof(prox_string(fp, '\n').c_str());
+		robot->set_max_theta_error(float(atof(prox_string(fp, '\n').c_str())));
 	fclose(fp);
 }
 
-void escrever_arquivo() {
-	FILE *fp = fopen("/local/config.txt", "w");
-	fprintf(fp, "addr:%04x\n", addr);
-	fprintf(fp, "my_id:%c\n", robot->MY_ID);
-	fprintf(fp, "msg_timeout:%d\n", robot->MSG_TIMEOUT);
-	fprintf(fp, "acc_rate:%f\n", robot->ACC_RATE);
-	fprintf(fp, "kgz:%lf\n", robot->kgz);
-	fprintf(fp, "max_theta_error:%f\n", robot->MAX_Theta_Error);
-	fclose(fp);
-}
+//void escrever_arquivo() {
+//	FILE *fp = fopen("/local/config.txt", "w");
+//	fprintf(fp, "addr:%04x\n", addr);
+//	fprintf(fp, "my_id:%c\n", robot->MY_ID);
+//	fprintf(fp, "msg_timeout:%d\n", robot->MSG_TIMEOUT);
+//	fprintf(fp, "acc_rate:%f\n", robot->ACC_RATE);
+//	fprintf(fp, "kgz:%lf\n", robot->kgz);
+//	fprintf(fp, "max_theta_error:%f\n", robot->MAX_Theta_Error);
+//	fclose(fp);
+//}
 
 void led_write(uint8_t num) {
 	*led1 = ((num >> 0) & 1);
@@ -142,12 +143,6 @@ static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_
 	}
 }
 
-string str(double num) {
-	char buffer[10];
-	gcvt(num,8,buffer);
-	return string(buffer);
-}
-
 int main() {
 	led1 = new DigitalOut(LED1);
 	led2 = new DigitalOut(LED2);
@@ -156,8 +151,9 @@ int main() {
 
 	vin_all_cells = new AnalogIn(ALL_CELLS);
 	vin_single_cell = new AnalogIn(SINGLE_CELL);
+	bat_watcher();
 
-	robot = new Robot();
+	robot = new Robot(messenger);
 
 	log_serial = new Serial(USBTX, USBRX, 115200);
 
@@ -184,22 +180,23 @@ int main() {
 	t_rx.set_priority(osPriorityHigh);
 
 	messenger = new Messenger(robot->MY_ID, robot, xbee);
-	robot->init(messenger);
+	robot->start_thread();
+	robot->messenger = messenger;
 
 	wait(0.5);
-	messenger->decode_msg("O45;1");
+	robot->start_orientation_control(45, 1);
 	wait(0.5);
-	messenger->decode_msg("O-45;1");
+	robot->start_orientation_control(-45, 1);
 	wait(0.5);
-	messenger->decode_msg("O-45;1");
+	robot->start_orientation_control(-45, 1);
 	wait(0.5);
-	messenger->decode_msg("O45;1");
-	wait(1);
-	while (1) {
+	robot->start_orientation_control(45, 1);
+	wait(0.5);
+
+	while (true) {
 		bat_watcher();
 		if (messenger->debug_mode) {
-//        serial->printf("%.2f %.2f %.2f %.2f\n",
-//        10*robot.controllerA->currVel,10*robot.controllerB->currVel,10*(*(robot.controllerA->target_vel)),10*(*(robot.controllerB->target_vel)));
+//			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
 		Thread::wait(1000);
 	}

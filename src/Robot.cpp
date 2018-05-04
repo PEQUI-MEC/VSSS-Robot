@@ -1,418 +1,252 @@
-#include "Robot.h"
 #include <cmath>
+#include "Robot.h"
+#include "PIN_MAP.h"
 
-using std::abs;
+#define PI 3.1415926f
+#define ROBOT_LOOP_MS 10
 
-#define PI 3.1415265358
-
-// **********************CONSTRUTOR ********************
-
-
-Robot::Robot() :
-		M_A_1(MOTOR_A_PIN_1),
-		M_A_2(MOTOR_A_PIN_2),
-		M_B_1(MOTOR_B_PIN_1),
-		M_B_2(MOTOR_B_PIN_2) {
-}
-
-// ********************************* ********************
-void Robot::init(Messenger* msgr) {
+Robot::Robot(Messenger *msgr) {
 	messenger = msgr;
-	Vector_Control = false;
-	Vector_msg_timeout.start();
-	LOS_ant = 0;
-	LOS_acc = 0;
-	old_vel = 0;
-	MAX_Theta_Error = 20;
-	// Configuracao do periodo do pwm em 2ms (frequencia de 500Hz)
-	acc_posA = 0;
-	acc_posB = 0;
-	desiredVr = 0;
-	desiredVl = 0;
-	ACC_RATE = 1;
-	M_A_1.period_ms(2);
-	M_A_2.period_ms(2);
-	M_B_1.period_ms(2);
-	M_B_2.period_ms(2);
-	controllerA = new Controller();
-	controllerB = new Controller();
-	controllerA->init(&acc_posA, &desiredVr, TACHPIN_A_1, TACHPIN_A_2, PULSES_REVOLUTION, MSG_TIMEOUT, CONTROL_LOOP_MS);
-	controllerB->init(&acc_posB, &desiredVl, TACHPIN_B_1, TACHPIN_B_2, PULSES_REVOLUTION, MSG_TIMEOUT, CONTROL_LOOP_MS);
-	goToActive = false;
-	Orientation_Control = false;
-	xr = 0;
-	yr = 0;
-	erro = 0;
-	erro_ant = 0;
-	theta = 0;
-	targetTheta = 0;
-	acc_posA = 0;
-	acc_posB = 0;
-	vel_acelerada = 0;
-	PID_POS[0] = 2.5;
-	PID_POS[1] = 0;
-	PID_POS[2] = 0.5;
-	desiredVlin = 0;
-	desiredVang = 0;
-	desiredPos[0] = 0;
-	desiredPos[1] = 0;
-	t_ControlPos = new Thread();
-	t_ControlPos->start(callback(Control_Pos, this));
-	t_ControlVel = new Thread();
-	t_ControlVel->start(callback(Control_Vel, this));
-	desiredOrientation = 0;
-	kgz = 1;
+	state.command = NO_CONTROL;
 }
 
-void Robot::goToOrientation(float targetTheta, float vel) {
+void Robot::start_thread() {
+	controller.start_thread();
+	control_thread.start(callback(this, &Robot::control_loop));
+}
 
-	float m, LOS;
-	theta = theta + (acc_posA - acc_posB) / Largura_Robo;
-	targetTheta = targetTheta * PI / 180;
-	targetTheta = atan2(sin(targetTheta), cos(targetTheta));
-	if (((atan2(sin(targetTheta - theta + PI / 2), cos(targetTheta - theta + PI / 2)))) < 0) {
-		backward = true;
-		m = -1;
-	} else {
-		backward = false;
-		m = 1;
+void Robot::control_loop() {
+	while(true) {
+		if(msg_timeout_timer.read_ms() > msg_timeout_limit) stop_and_wait();
+		if(state.command != NO_CONTROL) update_odometry();
+
+		switch (state.command) {
+			case VECTOR_CONTROL:
+				vector_control();
+				break;
+			case POSITION_CONTROL:
+				position_control();
+				break;
+			case ORIENTATION_CONTROL:
+				orientation_control();
+				break;
+			case NO_CONTROL:
+//				Robot não faz nada, controle de velocidade é feito em Controller
+				break;
+			default:
+				break;
+		}
+		Thread::wait(ROBOT_LOOP_MS);
 	}
+}
 
-	if (backward) {
-		double atheta = theta + PI;
-		atheta = atan2(sin(atheta), cos(atheta));
-		LOS = atan2(sin(targetTheta - atheta), cos(targetTheta - atheta));
-	} else {
-		LOS = atan2(sin(targetTheta - theta), cos(targetTheta - theta));
-	}
-	float Kp = 1;
-	Vr = Kp * LOS;
-	Vl = -Kp * LOS;
-
-	if (abs(Vl) > 1) {
-		Vl = 1 * Vl / abs(Vl);
-	}
-	if (abs(Vr) > 1) {
-		Vr = 1 * Vr / abs(Vr);
-	}
-
-	Vl *= vel;
-	Vr *= vel;
-
-	//d=100;
-	if (abs(LOS) < 2 * PI / 180) {
-		desiredVr = 0;
-		desiredVl = 0;
-		Orientation_Control = false;
-		controllerB->start_timer_new_msg();
-		controllerA->start_timer_new_msg();
-		//serial->printf("%d | %.2f ;%.2f; %.2f %.2f\n",backward,xr,yr,theta,targetTheta);//,Vr,Vl,targetTheta);
-		acc_posA = 0;
-		acc_posB = 0;
+void Robot::vector_control() {
+	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
+	if(target.velocity == 0) {
+		stop_and_wait();
 		return;
 	}
 
-	desiredVl = Vl;
-	desiredVr = Vr;
-	controllerB->start_timer_new_msg();
-	controllerA->start_timer_new_msg();
-	//serial->printf("%.2f \n",theta*180/PI);
-	acc_posA = 0;
-	acc_posB = 0;
-}
+	float theta = state.theta;
 
-void Robot::Control_Pos(void const *arg) {
-	Robot *self = (Robot *) arg;
-	//self->serial->printf("Tread ON\n");
-	while (1) {
-		if (self->goToActive) {
-			//self->serial->printf("Going to target %.2f %.2f %.2f\n",self->desiredPos[0],self->desiredPos[1],self->desiredVlin);
-			//goToTarget_PID(messenger.desiredPos[0], messenger.desiredPos[1], messenger.desiredVlin,messenger.ACC_RATE);
-			self->goToTarget_SIN(self->desiredPos[0], self->desiredPos[1], self->desiredVlin);
-		} else if (self->Orientation_Control) {
+//	Computes target.theta in direction of {target.x, target.y} before each control loop
+	target.theta = std::atan2(target.y - state.y, target.x - state.x);
 
-			self->goToOrientation(self->desiredOrientation, self->desiredVang);
-		} else if (self->Vector_Control) {
+//	Activates backwards movement if theta_error > PI/2
+	bool move_backwards = std::abs(target.theta - state.theta) > PI/2;
+	if(move_backwards) theta = round_angle(state.theta + PI);
+	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
+	previously_backwards = move_backwards;
 
-			self->goToVector(self->desiredOrientation, self->desiredVlin);
+	float theta_error = round_angle(target.theta - theta);
+
+//	Decreases velocity for big errors
+	if (std::abs(theta_error) > max_theta_error) {
+		vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
+	} else {
+//		Applies acceleration until robot reaches target velocity
+		if (vel_acelerada < target.velocity) {
+			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
 		} else {
-			// self->serial->printf("Stopping\n");
-			self->xr = 0;
-			self->yr = 0;
-			self->erro = 0;
-			self->erro_ant = 0;
-			self->theta = 0;
-			self->targetTheta = 0;
-			self->acc_posA = 0;
-			self->acc_posB = 0;
-			self->vel_acelerada = 0;
+			vel_acelerada = target.velocity;
 		}
-		//wait(float(POS_LOOP)/1000.0);
-		Thread::wait(POS_LOOP);
 	}
+
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
-// ********************************* CONTROLADOR DE POSICAO **************************************
-void Robot::goToVector(float theta_arg, float vel) {
-
-	if (vel_acelerada < 0.3)
-		vel_acelerada = 0.3;
-
-	if (vel == 0) {
-		vel_acelerada = 0;
-		desiredVr = 0;
-		desiredVl = 0;
-		goToActive = false;
-		controllerB->start_timer_new_msg();
-		controllerA->start_timer_new_msg();
-		//serial->printf("%d | %.2f ;%.2f; %.2f %.2f\n",backward,xr,yr,theta,targetTheta);//,Vr,Vl,targetTheta);
-		acc_posA = 0;
-		acc_posB = 0;
+void Robot::position_control() {
+//	Stops after arriving at destination
+	float position_error = std::sqrt(std::pow(state.x - target.x, 2.0f) + std::pow(state.y - target.y, 2.0f));
+	if(target.velocity == 0 || position_error < 1) {
+		stop_and_wait();
 		return;
-		//d=100;
 	}
 
+	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 
+//	Computes target.theta in direction of {target.x, target.y} before each control loop
+	target.theta = std::atan2(target.y - state.y, target.x - state.x);
+	float theta = state.theta;
 
-	//if(Dv<-0.2)
-	//  vel_acelerada = vel_acelerada - ACC_RATE*POS_LOOP/1000;
-	float m, LOS;
-	pos = (acc_posA + acc_posB) / 2;
-	xr = xr + pos * cos(theta);
-	yr = yr + pos * sin(theta);
-	targetTheta = (atan2(desiredPos[1] - yr, desiredPos[0] - xr));
+//	Activates backwards movement if theta_error > PI/2
+	bool move_backwards = round_angle(target.theta - state.theta + PI/2) < 0;
+	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
+	previously_backwards = move_backwards;
+	if(move_backwards) theta = round_angle(state.theta + PI);
 
-	theta = theta + (acc_posA - acc_posB) / Largura_Robo;
+	float theta_error = round_angle(target.theta - theta);
 
-	if (((atan2(sin(targetTheta - theta + PI / 2), cos(targetTheta - theta + PI / 2)))) < 0) {
-		if (!backward) {
-			vel_acelerada = 0.3;
-		}
-		backward = true;
-		m = -1;
-	} else {
-		if (backward) {
-			vel_acelerada = 0.3;
-		}
-
-		backward = false;
-		m = 1;
-	}
-
-	if (abs(90 - theta_arg) < 20) backward = false;
-
-	if (backward) {
-		double atheta = theta + PI;
-		atheta = atan2(sin(atheta), cos(atheta));
-		LOS = atan2(sin(targetTheta - atheta), cos(targetTheta - atheta));
-	} else {
-		LOS = atan2(sin(targetTheta - theta), cos(targetTheta - theta));
-	}
-
-	if (abs(LOS) > MAX_Theta_Error * PI / 180) {
-		vel_acelerada = vel_acelerada - 2 * ACC_RATE * POS_LOOP / 1000;
-	} else {
-		//serial->printf("ENTREI\n");
-		float Dv = vel - vel_acelerada;
-		if (Dv > 0.2) {
-			vel_acelerada = vel_acelerada + ACC_RATE * POS_LOOP / 1000;
-		} else if (Dv < 0) {
-			vel_acelerada = vel;
-		}
-	}
-	Vr = (m + sin(LOS) + m * kgz * tan(m * LOS / 2));
-	Vl = (m - sin(LOS) + m * kgz * tan(-m * LOS / 2));
-
-	if (abs(Vl) > 1) {
-		Vl = 1 * Vl / abs(Vl);
-	}
-	if (abs(Vr) > 1) {
-		Vr = 1 * Vr / abs(Vr);
-	}
-
-	Vl *= vel_acelerada;
-	Vr *= vel_acelerada;
-	acc_posA = 0;
-	acc_posB = 0;
-	controllerB->start_timer_new_msg();
-	controllerA->start_timer_new_msg();
-
-	//d=100;
-	if (Vector_msg_timeout.read_ms() > MSG_TIMEOUT) {
-		desiredVr = 0;
-		desiredVl = 0;
-		Vector_Control = false;
-	} else {
-		desiredVl = Vl;
-		desiredVr = Vr;
-	}
-
-	//serial->printf("%d | %.2f ;%.2f; %.2f %.2f\n",backward,xr,yr,theta,targetTheta);//,Vr,Vl,targetTheta);
-
-}
-
-void Robot::goToTarget_SIN(double x, double y, double vel) {
-	//serial->printf("Going to target %.2f %.2f %.2f\n",x,y,vel);
-	//serial->printf("goToTarget\n");
-	//kgz = -(1 + sin(MAX_Theta_Error))/(tan(MAX_Theta_Error/2);
-	float d = sqrt(pow(xr - x, 2) + pow(yr - y, 2));
-	if (vel_acelerada < 0.3)
-		vel_acelerada = 0.3;
-
-	if (vel == 0) {
-		vel_acelerada = 0;
-		desiredVr = 0;
-		desiredVl = 0;
-		goToActive = false;
-	}
-
-
-
-	//if(Dv<-0.2)
-	//  vel_acelerada = vel_acelerada - ACC_RATE*POS_LOOP/1000;
-	float m, LOS;
-	pos = (acc_posA + acc_posB) / 2;
-	xr = xr + pos * cos(theta);
-	yr = yr + pos * sin(theta);
-	targetTheta = (atan2(y - yr, x - xr));
-
-	theta = theta + (acc_posA - acc_posB) / Largura_Robo;
-
-	if (((atan2(sin(targetTheta - theta + PI / 2), cos(targetTheta - theta + PI / 2)))) < 0) {
-		if (!backward) {
-			vel_acelerada = 0.3;
-		}
-		backward = true;
-		m = -1;
-	} else {
-		if (backward) {
-			vel_acelerada = 0.3;
-		}
-		backward = false;
-		m = 1;
-	}
-
-	if (backward) {
-		double atheta = theta + PI;
-		atheta = atan2(sin(atheta), cos(atheta));
-		LOS = atan2(sin(targetTheta - atheta), cos(targetTheta - atheta));
-	} else {
-		LOS = atan2(sin(targetTheta - theta), cos(targetTheta - theta));
-	}
-
-	if (abs(LOS) > MAX_Theta_Error * PI / 180) {
-		if (vel_acelerada > 0.8)
+//	Decreases velocity for big errors and limits maximum velocity
+	if (std::abs(theta_error) > max_theta_error) {
+		if(vel_acelerada > 0.8) {
 			vel_acelerada = 0.8;
-		else if (vel_acelerada > 0.3)
-			vel_acelerada = vel_acelerada - 2 * ACC_RATE * POS_LOOP / 1000;
+		} else if (vel_acelerada > 0.3) {
+			vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
+		}
 	} else {
-		//serial->printf("ENTREI\n");
-		float Dv = vel - vel_acelerada;
-		if (Dv > 0.2)
-			vel_acelerada = vel_acelerada + ACC_RATE * POS_LOOP / 1000;
+//		Applies acceleration until robot reaches target velocity
+		float velocity_difference = target.velocity - vel_acelerada;
+		if (velocity_difference > 0.2) {
+			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
+		} else if(velocity_difference < 0) {
+			vel_acelerada = target.velocity;
+		}
 	}
-	vel = vel_acelerada;
-	float limiar = atan2(1, d);
+
+	float limiar = std::atan2(1.0f, position_error);
 	limiar = limiar > 30 ? 30 : limiar;
-	if (abs(LOS) < limiar)
-		LOS = 0;
-	Vr = (m + sin(LOS) + m * kgz * tan(m * LOS / 2));
-	Vl = (m - sin(LOS) + m * kgz * tan(-m * LOS / 2));
+	if(std::abs(theta_error) < limiar) theta_error = 0;
 
-	if (abs(Vl) > 1) {
-		Vl = 1 * Vl / abs(Vl);
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
+}
+
+
+void Robot::orientation_control() {
+	float theta = state.theta;
+
+//	Activates backwards movement if theta_error > PI/2
+	if(round_angle(target.theta - state.theta + PI/2) < 0){
+		theta = round_angle(state.theta + PI);
 	}
-	if (abs(Vr) > 1) {
-		Vr = 1 * Vr / abs(Vr);
-	}
+	float theta_error = round_angle(target.theta - theta);
 
-	Vl *= vel;
-	Vr *= vel;
-
-
-
-	//d=100;
-	if (d < 1) {
-		desiredVr = 0;
-		desiredVl = 0;
-		goToActive = false;
+//	Stops after arriving at desired orientation
+	if(std::abs(theta_error) < 2*PI/180) {
+		stop_and_wait();
 		return;
 	}
-	//if(d<10) {
-	//    Vr = Vr*(d/10);
-	//    Vl = Vl*(d/10);
-	//}
-	desiredVl = Vl;
-	desiredVr = Vr;
-	controllerB->start_timer_new_msg();
-	controllerA->start_timer_new_msg();
-	//serial->printf("%d | %.2f ;%.2f; %.2f %.2f\n",backward,xr,yr,theta,targetTheta);//,Vr,Vl,targetTheta);
-	acc_posA = 0;
-	acc_posB = 0;
+
+//	Wheel velocities are always between 1 and -1
+	float right_wheel_velocity = saturate(orientation_Kp * theta_error, 1);
+	float left_wheel_velocity = saturate(-orientation_Kp * theta_error, 1);
+
+	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, target.velocity);
 }
-// ********************************* CONTROLADOR DE VELOCIDADE **************************************
 
-void Robot::Control_Vel(void const *arg) {
-	Robot *self = (Robot *) arg;
-	while (1) {
-		self->controllerA->control_loop();
-		self->controllerB->control_loop();
+void Robot::set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards) {
+	float m = 1;
+	if(backwards) m = -1;
 
-		float pwm = float(self->controllerA->PWM);
-		if (self->desiredVr == 0) {
-			//serial->printf("resetA");
-			pwm = 0;
-			self->controllerA->reset();
-		}
-		//pwm = (pwm/abs(pwm))*(1-abs(pwm)); // Correcao para modo slow-decay, calculo do pwm'
+	float right_wheel_velocity = m + std::sin(theta_error) + m*kgz*std::tan(m*theta_error/2);
+	right_wheel_velocity = saturate(right_wheel_velocity,1);
 
-		// if(messenger.reinforcement_learning_mode)
-		//   pwm = controllerA -> target_vel;
+	float left_wheel_velocity = m - std::sin(theta_error) + m*kgz*std::tan(-m*theta_error/2);
+	left_wheel_velocity = saturate(left_wheel_velocity,1);
 
-		if (pwm < 0) {
-			pwm = (pwm / abs(pwm)) * (1 - abs(pwm));
-			self->M_A_1.write(
-					1); //   | write(pwm) + write(0) = fast decay -> mudanca brusca de corrente no pwm = frenagem mais potente
-			self->M_A_2.write(
-					-pwm);// | write(pwm) + wirte(1) = slow decay -> mudanca de corrente mais suave = relacao linear entre velocidade e pwm
-		} else if (pwm > 0) {
-			pwm = (pwm / abs(pwm)) * (1 - abs(pwm));
-			self->M_A_1.write(pwm);
-			self->M_A_2.write(1);
-		} else {
-			// frenagem em fast decay
-			self->M_A_1.write(1);
-			self->M_A_2.write(1);
-		}
+	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, velocity);
+}
 
-		pwm = float(self->controllerB->PWM);
+void Robot::update_odometry() {
+	wheel& left_wheel = controller.left_wheel;
+	wheel& right_wheel = controller.right_wheel;
 
-		if (self->desiredVl == 0) {
+//	encoder_distance: distance travelled since last odometry update. Is updated on Controller::update_wheel_velocity()
+	float distance = (left_wheel.encoder_distance + right_wheel.encoder_distance)/2;
 
-			// serial->printf("resetB");
-			pwm = 0;
-			self->controllerB->reset();
-		}
-		// Correcao para modo slow-decay, calculo do pwm'
+	state.x += distance * std::cos(state.theta);
+	state.y += distance * std::sin(state.theta);
+	state.theta += (right_wheel.encoder_distance - left_wheel.encoder_distance)/Largura_Robo;
+	state.theta = round_angle(state.theta);
 
-		//if(messenger.reinforcement_learning_mode)
-		//   pwm = - controllerB -> target_vel;
+	left_wheel.encoder_distance = 0;
+	right_wheel.encoder_distance = 0;
+}
 
-		if (pwm < 0) {
-			pwm = (pwm / abs(pwm)) * (1 - abs(pwm));
-			self->M_B_1.write(
-					1); //   | write(pwm) + write(0) = fast decay -> mudanca brusca de corrente no pwm = frenagem mais potente
-			self->M_B_2.write(
-					-pwm);// | write(pwm) + wirte(1) = slow decay -> mudanca de corrente mais suave = relacao linear entre velocidade e pwm
+void Robot::start_vector_control(float theta, float velocity, bool reset) {
+	if(reset) reset_state();
+//	target.theta is computed before each vector control loop, in direction of {target.x, target.y}
+	target.x = 50*std::cos(theta * PI/180);
+	target.y = 50*std::sin(theta * PI/180);
+	target.velocity = velocity;
+	state.command = VECTOR_CONTROL;
+	continue_threads();
+}
 
-		} else if (pwm > 0) {
-			pwm = (pwm / abs(pwm)) * (1 - abs(pwm));
-			self->M_B_1.write(pwm);
-			self->M_B_2.write(1);
-		} else {
-			// frenagem em fast decay
-			self->M_B_1.write(1);
-			self->M_B_2.write(1);
-		}
+void Robot::start_position_control(float x, float y, float velocity, bool reset) {
+	if(reset) reset_state();
+	target.x = x;
+	target.y = y;
+	target.velocity = velocity;
+	state.command = POSITION_CONTROL;
+	continue_threads();
+}
+
+void Robot::start_orientation_control(float theta, float velocity, bool reset) {
+	if(reset) reset_state();
+	target.theta = round_angle(theta * PI/180);
+	target.velocity = velocity;
+	state.command = ORIENTATION_CONTROL;
+	continue_threads();
+}
+
+void Robot::start_velocity_control(float vel_left, float vel_right) {
+	state.command = NO_CONTROL;
+	controller.set_target_velocity(vel_left, vel_right, 1);
+	continue_threads();
+}
+
+void Robot::continue_threads() {
+	msg_timeout_timer.reset();
+	msg_timeout_timer.start();
+//	Resumes Robot::control_loop thread
+	if(control_thread.get_state() == Thread::WaitingThreadFlag) {
+		control_thread.signal_set(CONTINUE_SIGNAL);
 	}
+//	Resumes Controller::control_loop thread
+	controller.continue_thread();
+}
+
+void Robot::reset_state() {
+	state.x = 0;
+	state.y = 0;
+	state.theta = 0;
+}
+
+void Robot::stop_and_wait() {
+//	Flag tells Controller to stop robot and pause thread
+	controller.stop = true;
+	vel_acelerada = 0;
+	state.command = NO_CONTROL;
+	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
+		Thread::signal_wait(CONTINUE_SIGNAL);
+		Thread::signal_clr(CONTINUE_SIGNAL);
+	}
+}
+
+float Robot::round_angle(float angle) {
+	float theta = std::fmod(angle, 2*PI);
+	if(theta > PI) theta = theta - 2*PI;
+	else if(theta < -PI) theta = theta + 2*PI;
+	return theta;
+}
+
+float Robot::saturate(float value, float limit) {
+	if(value > limit) value = limit;
+	if(value < -limit) value = -limit;
+	return value;
+}
+
+void Robot::set_max_theta_error(float error) {
+	max_theta_error = round_angle(error * PI/180);
 }
