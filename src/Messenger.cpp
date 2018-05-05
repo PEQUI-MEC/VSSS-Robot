@@ -124,11 +124,3 @@ Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee) {
 	this->robot = robot;
 	ID = id;
 }
-
-void Messenger::operator<<(const string &msg) {
-	send_msg(msg);
-}
-
-void Messenger::operator<<(float value) {
-	send_msg(std::to_string(value));
-}

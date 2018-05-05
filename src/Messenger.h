@@ -6,6 +6,7 @@
 #include "Robot.h"
 #include <string>
 #include <array>
+#include <sstream>
 
 class Robot;
 
@@ -22,7 +23,12 @@ struct msg_data {
 	}
 };
 
-class Messenger {
+/**	@brief Sends data and receives commands by xbee. A command can set value to variables or start a controller.
+ *
+ * 	Messages can be sent through a std::ostream object, using the same syntax as std::cout:		<br>
+ *		std::ostream m(messenger);																<br>
+ *		m << "number: " << 123 << std::flush;	*/
+class Messenger : public std::stringbuf {
 
 	private:
 		char ID;
@@ -89,13 +95,14 @@ class Messenger {
 		 *	@param addr 16-bit address of the receiving xbee */
 		void send_msg(std::string msg, uint16_t addr = 0x35D0);
 
-		/**	@brief Operator overload, sends message to default address (0x35D0)
-		 *	@param msg Message to be sent */
-		void operator<<(const std::string &msg);
-
-		/**	@brief Operator overload, sends message to default address (0x35D0)
-		 *	@param value Float value to be converted to string and sent to default address */
-		void operator<<(float value);
+		/**	@brief Overrides std::stringbuf::sync().
+		 *	Sends buffer content to default address after a flush is received (std::flush or std::endl)
+		 *	@return Always returns 0 */
+		int sync() override {
+			send_msg(this->str());
+			this->str("");
+			return 0;
+		}
 };
 
 #endif /* MESSENGER_H_ */

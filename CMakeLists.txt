@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 project(VSSS C CXX ASM)
-set (CMAKE_CXX_STANDARD 11)
+set (CMAKE_CXX_STANDARD 14)
 
 set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/src)
@@ -15,7 +15,7 @@ include("${PROJECT_SOURCE_DIR}/cmake/mbed_file_list.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/mbed_flags.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/xbeelib_files.cmake")
 
-set(COMMON_FLAGS "-Os -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 \
+set(COMMON_FLAGS "-O3 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 \
   -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -MMD \
    -fno-delete-null-pointer-checks -fomit-frame-pointer -mcpu=cortex-m3 -mthumb --specs=nosys.specs ${MBED_DEFINES}")
 
