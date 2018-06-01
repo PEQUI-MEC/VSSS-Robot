@@ -11,6 +11,7 @@ class Messenger;
 #define POSITION_CONTROL 1
 #define ORIENTATION_CONTROL 2
 #define NO_CONTROL 3
+#define UVF_CONTROL 4
 
 struct robot_state {
 	float x;
@@ -18,6 +19,8 @@ struct robot_state {
 	float theta;
 	float velocity;
 	int command;
+	float ref_x;
+	float ref_y;
 };
 
 class Robot {
@@ -28,6 +31,7 @@ class Robot {
 		robot_state state = {};
 		robot_state target = {};
 
+		float uvf_n = 2;
 		float vel_acelerada = 0;
 		float orientation_Kp = 0.8;
 		bool previously_backwards = false;
@@ -37,6 +41,9 @@ class Robot {
 		 *	depending on state.command. Controller can be selected by calling start_vector_control,
 		 *	start_position_control or start_orientation_control */
 		void control_loop();
+
+		/**	@brief Executes controller for the uvf command. Is started by start_uvf_control */
+		void uvf_control();
 
 		/**	@brief Executes controller for the vector command. Is started by start_vector_control */
 		void vector_control();
@@ -92,6 +99,16 @@ class Robot {
 		/**	@brief Constructor
 		 * 	@param msgr Pointer to Messenger, can be used to send logs */
 		explicit Robot(Messenger *msgr);
+
+		/**	@brief Executes vector command. Configures Robot::target used on the main control loop
+		 *	@param x X component of the desired position
+		 *	@param y Y component of the desired position
+		 *	@param x_ref X component of the uvf reference
+		 *	@param y_ref Y component of the uvf reference
+		 *	@param n UVF constant, defines curvature
+		 *	@param velocity Desired velocity
+		 *	@param reset Executes a relative command if true, by setting state variables to 0 */
+		void start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity, bool reset);
 
 		/**	@brief Executes vector command. Configures Robot::target used on the main control loop
 		 * 	@param theta Desired orientation

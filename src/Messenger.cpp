@@ -36,6 +36,12 @@ void Messenger::Update_PID_K(string msg) {
 		robot->controller.set_pid_constants(values[0], values[1], values[2]);
 }
 
+void Messenger::uvf_message(std::string &msg) {
+	msg_data<6> values = get_values<6>(msg, 1);
+	if(values.is_valid)
+		robot->start_uvf_control(values[0], values[1], values[2], values[3], values[4], values[5], true);
+}
+
 void Messenger::GoToPoint(string msg) {
 	msg_data<3> values = get_values<3>(msg, 1);
 	if(values.is_valid)
@@ -84,6 +90,9 @@ void Messenger::decode_msg(string msg) {
 	}
 
 	switch (msg[0]) {
+		case 'U':
+			uvf_message(msg);
+			return;
 		case 'K':
 			if(msg[1] == 'P') Update_PID_Pos(msg);
 			else Update_PID_K(msg);

@@ -31,6 +31,11 @@ class Messenger {
 
 		Robot *robot;
 
+		/**	@brief Decodes uvf command message and starts uvf controller
+		 *	@param msg Example: "U20;30;40;45;2;0.8" sets target position to {20,30}, with uvf reference to {40,45},
+		 *	using 2 as calibration constant n and desired velocity to 0.8m/s */
+		void uvf_message(std::string& msg);
+
 		/**	@brief Decodes vector command message and starts vector controller.
 		 *	@param msg Example: "V45;0.8" sets desired angle to 45 degrees and desired velocity to 0.8 m/s */
 		void GoToVector(std::string msg);
