@@ -23,12 +23,7 @@ struct msg_data {
 	}
 };
 
-/**	@brief Sends data and receives commands by xbee. A command can set value to variables or start a controller.
- *
- * 	Messages can be sent through a std::ostream object, using the same syntax as std::cout:		<br>
- *		std::ostream m(messenger);																<br>
- *		m << "number: " << 123 << std::flush;	*/
-class Messenger : public std::stringbuf {
+class Messenger {
 
 	private:
 		char ID;
@@ -94,15 +89,6 @@ class Messenger : public std::stringbuf {
 		 *	@param msg Message to be sent
 		 *	@param addr 16-bit address of the receiving xbee */
 		void send_msg(std::string msg, uint16_t addr = 0x35D0);
-
-		/**	@brief Overrides std::stringbuf::sync().
-		 *	Sends buffer content to default address after a flush is received (std::flush or std::endl)
-		 *	@return Always returns 0 */
-		int sync() override {
-			send_msg(this->str());
-			this->str("");
-			return 0;
-		}
 };
 
 #endif /* MESSENGER_H_ */
