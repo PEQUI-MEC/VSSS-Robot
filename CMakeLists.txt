@@ -14,6 +14,7 @@ include("${PROJECT_SOURCE_DIR}/cmake/mbed_directories.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/mbed_file_list.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/mbed_flags.cmake")
 include("${PROJECT_SOURCE_DIR}/cmake/xbeelib_files.cmake")
+include("${PROJECT_SOURCE_DIR}/cmake/eigen_files.cmake")
 
 set(COMMON_FLAGS "-O3 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -fmessage-length=0 \
   -fno-exceptions -fno-builtin -ffunction-sections -fdata-sections -funsigned-char -MMD \
@@ -21,7 +22,7 @@ set(COMMON_FLAGS "-O3 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-
 
 set(CMAKE_C_FLAGS "-std=c11 ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
+set(CMAKE_CXX_FLAGS "-std=c++14 -faligned-new -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r \
  -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit \
@@ -41,14 +42,16 @@ set(SOURCE_FILES
 
 	${MBED_SRC}
 	${XBEELIB_SRC}
-	${LIB_DIR}/QEI/QEI.cpp)
+	${LIB_DIR}/QEI/QEI.cpp
+	${EIGEN_FILES})
 
 include_directories(
 	${SRC_DIR}
 	${PROJECT_SOURCE_DIR}
 	${MBED_DIRECTORIES}
 	${XBEELIB_DIR}
-	${LIB_DIR}/QEI)
+	${LIB_DIR}/QEI
+	${EIGEN_DIRS})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCE_FILES})
 add_custom_command(TARGET ${PROJECT_NAME}.elf
