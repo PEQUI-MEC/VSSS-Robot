@@ -65,9 +65,9 @@ void EKF::update(measurement_data data, bool use_mag, bool use_enc) {
 
 //	Updated Pose
 	auto pred_z = measurement_model();
-	Eigen::Matrix<float, POSE_SIZE, 1> innovation = K_GAIN * (z - pred_z);
-	innovation(2,0) = round_angle(innovation(2,0));
-	x = x_p + innovation;
+	Eigen::Matrix<float, MEASUREMENT_SIZE, 1> error = z - pred_z;
+	error(0,0) = round_angle(error(0,0));
+	x = x_p + K_GAIN * error;
 
 //	std::tie(pose.x, pose.y, pose.theta, pose.v, pose.w) = std::make_tuple(x(0,0), x(1,0), x(2,0), x(3,0), x(4,0));
 	pose.x = x(0,0);
@@ -92,7 +92,9 @@ void EKF::update_camera(vision_data data) {
 
 //	Updated Pose
 	auto pred_z = camera_measurement_model();
-	x = x_p + K_GAIN * (z_cam - pred_z);
+	Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, 1> error = z_cam - pred_z;
+	error(2,0) = round_angle(error(2,0));
+	x = x_p + K_GAIN * error;
 
 //	std::tie(pose.x, pose.y, pose.theta, pose.v, pose.w) = std::make_tuple(x(0,0), x(1,0), x(2,0), x(3,0), x(4,0));
 	pose.x = x(0,0);
@@ -155,9 +157,9 @@ EKF::EKF() {
 	COV_P.setZero();
 
 	R.setZero();
-	R(0,0) = float(std::pow(0.01,2));
-	R(1,1) = float(std::pow(0.01,2));
-	R(2,2) = float(std::pow(0.01,2));
+	R(0,0) = float(std::pow(0.001,2));
+	R(1,1) = float(std::pow(0.001,2));
+	R(2,2) = float(std::pow(0.001,2));
 	R(3,3) = float(std::pow(0.02,2));
 	R(4,4) = float(std::pow(0.02,2));
 

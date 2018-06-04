@@ -58,11 +58,10 @@ void Robot::uvf_control() {
 	float uvf_target_theta = round_angle(state_to_targ - uvf_n * fi);
 
 //	Activates backwards movement if theta_error > PI/2
-	float theta = pose.theta;
-	bool move_backwards = backwards_select(uvf_target_theta, theta);
-	if(move_backwards) theta = round_angle(theta + PI);
+	bool move_backwards = backwards_select(uvf_target_theta, pose.theta);
+	if(move_backwards) uvf_target_theta = round_angle(uvf_target_theta + PI);
 
-	float theta_error = round_angle(uvf_target_theta - theta);
+	float theta_error = round_angle(uvf_target_theta - pose.theta);
 
 //	Decreases velocity for big errors
 	if (std::abs(theta_error) > max_theta_error) {
@@ -85,18 +84,16 @@ void Robot::vector_control() {
 		stop_and_wait();
 		return;
 	}
-
 	auto pose = sensors->get_pose();
-	float theta = pose.theta;
 
-//	Computes target.theta in direction of {target.x, target.y} before each control loop
-	target.theta = std::atan2(target.y - pose.y, target.x - pose.x);
+//	Computes target_theta in direction of {target.x, target.y} before each control loop
+	float target_theta = std::atan2(target.y - pose.y, target.x - pose.x);
 
 //	Activates backwards movement if theta_error > PI/2
-	bool move_backwards = backwards_select(target.theta, theta);
-	if(move_backwards) theta = round_angle(theta + PI);
+	bool move_backwards = backwards_select(target_theta, pose.theta);
+	if(move_backwards) target_theta = round_angle(target_theta + PI);
 
-	float theta_error = round_angle(target.theta - theta);
+	float theta_error = round_angle(target_theta - pose.theta);
 
 //	Decreases velocity for big errors
 	if (std::abs(theta_error) > max_theta_error) {
@@ -124,15 +121,14 @@ void Robot::position_control() {
 
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 
-//	Computes target.theta in direction of {target.x, target.y} before each control loop
-	target.theta = std::atan2(target.y - pose.y, target.x - pose.x);
-	float theta = pose.theta;
+//	Computes target_theta in direction of {target.x, target.y} before each control loop
+	float target_theta = std::atan2(target.y - pose.y, target.x - pose.x);
 
 //	Activates backwards movement if theta_error > PI/2
-	bool move_backwards = backwards_select(target.theta, theta);
-	if(move_backwards) theta = round_angle(pose.theta + PI);
+	bool move_backwards = backwards_select(target_theta, pose.theta);
+	if(move_backwards) target_theta = round_angle(target_theta + PI);
 
-	float theta_error = round_angle(target.theta - theta);
+	float theta_error = round_angle(target_theta - pose.theta);
 
 //	Decreases velocity for big errors and limits maximum velocity
 	if (std::abs(theta_error) > max_theta_error) {
@@ -164,12 +160,6 @@ void Robot::orientation_control() {
 		target_theta = round_angle(target_theta + PI);
 
 	float theta_error = round_angle(target_theta - pose.theta);
-
-//	Stops after arriving at desired orientation
-//	if(std::abs(theta_error) < 2*PI/180) {
-//		stop_and_wait();
-//		return;
-//	}
 
 //	Wheel velocities are always between 1 and -1
 	float right_wheel_velocity = saturate(orientation_Kp * theta_error, 1);
@@ -272,7 +262,7 @@ void Robot::set_max_theta_error(float error) {
 }
 
 bool Robot::backwards_select(float target, float orientation) {
-	if(backwards_timer.read_ms() > 500) {
+	if(backwards_timer.read_ms() > 25) {
 		bool backwards = std::abs(round_angle(target - orientation)) > PI/2;
 		if(previously_backwards != backwards) {
 			backwards_timer.reset();

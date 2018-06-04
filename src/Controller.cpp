@@ -90,10 +90,10 @@ void Controller::stop_and_wait() {
 	reset(left_wheel);
 	reset(right_wheel);
 	stop = false;
-//	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
-//		Thread::signal_wait(CONTINUE_SIGNAL);
-//		Thread::signal_clr(CONTINUE_SIGNAL);
-//	}
+	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
+		Thread::signal_wait(CONTINUE_SIGNAL);
+		Thread::signal_clr(CONTINUE_SIGNAL);
+	}
 }
 
 void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {
