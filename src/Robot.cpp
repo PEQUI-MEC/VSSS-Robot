@@ -5,25 +5,21 @@
 #define PI 3.1415926f
 #define ROBOT_LOOP_MS 10
 
-Robot::Robot(Messenger *msgr) {
-	messenger = msgr;
-	state.command = NO_CONTROL;
+Robot::Robot() {
+	target.command = NO_CONTROL;
 }
 
 void Robot::start_thread() {
 	controller.start_thread();
 	control_thread.start(callback(this, &Robot::control_loop));
+	backwards_timer.start();
 }
 
 void Robot::control_loop() {
 	while(true) {
 		if(msg_timeout_timer.read_ms() > msg_timeout_limit) stop_and_wait();
-		if(state.command != NO_CONTROL) update_odometry();
 
-		switch (state.command) {
-			case UVF_CONTROL:
-				uvf_control();
-				break;
+		switch (target.command) {
 			case VECTOR_CONTROL:
 				vector_control();
 				break;
@@ -32,6 +28,9 @@ void Robot::control_loop() {
 				break;
 			case ORIENTATION_CONTROL:
 				orientation_control();
+				break;
+			case UVF_CONTROL:
+				uvf_control();
 				break;
 			case NO_CONTROL:
 //				Robot não faz nada, controle de velocidade é feito em Controller
@@ -44,6 +43,8 @@ void Robot::control_loop() {
 }
 
 void Robot::uvf_control() {
+	auto pose = sensors->get_pose();
+
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 	if(target.velocity == 0) {
 		stop_and_wait();
@@ -51,17 +52,15 @@ void Robot::uvf_control() {
 	}
 
 //	Computes uni-vector field target theta
-	float state_to_targ = std::atan2(target.y - state.y, target.x - state.x);
-	float state_to_ref = std::atan2(target.ref_y - state.y, target.ref_x - state.x);
+	float state_to_targ = std::atan2(target.y - pose.y, target.x - pose.x);
+	float state_to_ref = std::atan2(target.ref_y - pose.y, target.ref_x - pose.x);
 	float fi = round_angle(state_to_ref - state_to_targ);
 	float uvf_target_theta = round_angle(state_to_targ - uvf_n * fi);
 
 //	Activates backwards movement if theta_error > PI/2
-	float theta = state.theta;
-	bool move_backwards = std::abs(uvf_target_theta - theta) > PI/2;
-	if(move_backwards) theta = round_angle(state.theta + PI);
-	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
-	previously_backwards = move_backwards;
+	float theta = pose.theta;
+	bool move_backwards = backwards_select(uvf_target_theta, theta);
+	if(move_backwards) theta = round_angle(theta + PI);
 
 	float theta_error = round_angle(uvf_target_theta - theta);
 
@@ -87,16 +86,15 @@ void Robot::vector_control() {
 		return;
 	}
 
-	float theta = state.theta;
+	auto pose = sensors->get_pose();
+	float theta = pose.theta;
 
 //	Computes target.theta in direction of {target.x, target.y} before each control loop
-	target.theta = std::atan2(target.y - state.y, target.x - state.x);
+	target.theta = std::atan2(target.y - pose.y, target.x - pose.x);
 
 //	Activates backwards movement if theta_error > PI/2
-	bool move_backwards = std::abs(target.theta - state.theta) > PI/2;
-	if(move_backwards) theta = round_angle(state.theta + PI);
-	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
-	previously_backwards = move_backwards;
+	bool move_backwards = backwards_select(target.theta, theta);
+	if(move_backwards) theta = round_angle(theta + PI);
 
 	float theta_error = round_angle(target.theta - theta);
 
@@ -116,9 +114,10 @@ void Robot::vector_control() {
 }
 
 void Robot::position_control() {
+	auto pose = sensors->get_pose();
 //	Stops after arriving at destination
-	float position_error = std::sqrt(std::pow(state.x - target.x, 2.0f) + std::pow(state.y - target.y, 2.0f));
-	if(target.velocity == 0 || position_error < 1) {
+	float position_error = std::sqrt(std::pow(pose.x - target.x, 2.0f) + std::pow(pose.y - target.y, 2.0f));
+	if(target.velocity == 0 || position_error < 0.01) {
 		stop_and_wait();
 		return;
 	}
@@ -126,14 +125,12 @@ void Robot::position_control() {
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 
 //	Computes target.theta in direction of {target.x, target.y} before each control loop
-	target.theta = std::atan2(target.y - state.y, target.x - state.x);
-	float theta = state.theta;
+	target.theta = std::atan2(target.y - pose.y, target.x - pose.x);
+	float theta = pose.theta;
 
 //	Activates backwards movement if theta_error > PI/2
-	bool move_backwards = round_angle(target.theta - state.theta + PI/2) < 0;
-	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
-	previously_backwards = move_backwards;
-	if(move_backwards) theta = round_angle(state.theta + PI);
+	bool move_backwards = backwards_select(target.theta, theta);
+	if(move_backwards) theta = round_angle(pose.theta + PI);
 
 	float theta_error = round_angle(target.theta - theta);
 
@@ -154,28 +151,25 @@ void Robot::position_control() {
 		}
 	}
 
-	float limiar = std::atan2(1.0f, position_error);
-	limiar = limiar > 30 ? 30 : limiar;
-	if(std::abs(theta_error) < limiar) theta_error = 0;
-
 	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
 
 void Robot::orientation_control() {
-	float theta = state.theta;
+	auto pose = sensors->get_pose();
+	float target_theta = target.theta;
 
 //	Activates backwards movement if theta_error > PI/2
-	if(round_angle(target.theta - state.theta + PI/2) < 0){
-		theta = round_angle(state.theta + PI);
-	}
-	float theta_error = round_angle(target.theta - theta);
+	if(backwards_select(target_theta, pose.theta))
+		target_theta = round_angle(target_theta + PI);
+
+	float theta_error = round_angle(target_theta - pose.theta);
 
 //	Stops after arriving at desired orientation
-	if(std::abs(theta_error) < 2*PI/180) {
-		stop_and_wait();
-		return;
-	}
+//	if(std::abs(theta_error) < 2*PI/180) {
+//		stop_and_wait();
+//		return;
+//	}
 
 //	Wheel velocities are always between 1 and -1
 	float right_wheel_velocity = saturate(orientation_Kp * theta_error, 1);
@@ -197,63 +191,43 @@ void Robot::set_wheel_velocity_nonlinear_controller(float theta_error, float vel
 	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, velocity);
 }
 
-void Robot::update_odometry() {
-	wheel& left_wheel = controller.left_wheel;
-	wheel& right_wheel = controller.right_wheel;
-
-//	encoder_distance: distance travelled since last odometry update. Is updated on Controller::update_wheel_velocity()
-	float distance = (left_wheel.encoder_distance + right_wheel.encoder_distance)/2;
-
-	state.x += distance * std::cos(state.theta);
-	state.y += distance * std::sin(state.theta);
-	state.theta += (right_wheel.encoder_distance - left_wheel.encoder_distance)/Largura_Robo;
-	state.theta = round_angle(state.theta);
-
-	left_wheel.encoder_distance = 0;
-	right_wheel.encoder_distance = 0;
-}
-
-void Robot::start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity, bool reset) {
-	if(reset) reset_state();
+void Robot::start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity) {
 	target.x = x;
 	target.y = y;
 	target.ref_x = x_ref;
 	target.ref_y = y_ref;
 	uvf_n = n;
 	target.velocity = velocity;
-	state.command = UVF_CONTROL;
+	target.command = UVF_CONTROL;
 	continue_threads();
 }
 
-void Robot::start_vector_control(float theta, float velocity, bool reset) {
-	if(reset) reset_state();
+void Robot::start_vector_control(float theta, float velocity) {
 //	target.theta is computed before each vector control loop, in direction of {target.x, target.y}
-	target.x = 50*std::cos(theta * PI/180);
-	target.y = 50*std::sin(theta * PI/180);
+	target.x = 10*std::cos(theta * PI/180);
+	target.y = 10*std::sin(theta * PI/180);
 	target.velocity = velocity;
-	state.command = VECTOR_CONTROL;
+	target.command = VECTOR_CONTROL;
 	continue_threads();
 }
 
-void Robot::start_position_control(float x, float y, float velocity, bool reset) {
-	if(reset) reset_state();
+void Robot::start_position_control(float x, float y, float velocity) {
 	target.x = x;
 	target.y = y;
 	target.velocity = velocity;
-	state.command = POSITION_CONTROL;
+	target.command = POSITION_CONTROL;
 	continue_threads();
 }
 
-void Robot::start_orientation_control(float theta, float velocity, bool reset) {
-	if(reset) reset_state();
+void Robot::start_orientation_control(float theta, float velocity) {
 	target.theta = round_angle(theta * PI/180);
 	target.velocity = velocity;
-	state.command = ORIENTATION_CONTROL;
+	target.command = ORIENTATION_CONTROL;
 	continue_threads();
 }
 
 void Robot::start_velocity_control(float vel_left, float vel_right) {
-	state.command = NO_CONTROL;
+	target.command = NO_CONTROL;
 	controller.set_target_velocity(vel_left, vel_right, 1);
 	continue_threads();
 }
@@ -269,17 +243,11 @@ void Robot::continue_threads() {
 	controller.continue_thread();
 }
 
-void Robot::reset_state() {
-	state.x = 0;
-	state.y = 0;
-	state.theta = 0;
-}
-
 void Robot::stop_and_wait() {
 //	Flag tells Controller to stop robot and pause thread
 	controller.stop = true;
 	vel_acelerada = 0;
-	state.command = NO_CONTROL;
+	target.command = NO_CONTROL;
 	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
 		Thread::signal_wait(CONTINUE_SIGNAL);
 		Thread::signal_clr(CONTINUE_SIGNAL);
@@ -301,4 +269,18 @@ float Robot::saturate(float value, float limit) {
 
 void Robot::set_max_theta_error(float error) {
 	max_theta_error = round_angle(error * PI/180);
+}
+
+bool Robot::backwards_select(float target, float orientation) {
+	if(backwards_timer.read_ms() > 500) {
+		bool backwards = std::abs(round_angle(target - orientation)) > PI/2;
+		if(previously_backwards != backwards) {
+			backwards_timer.reset();
+			vel_acelerada = 0.3;
+		}
+		previously_backwards = backwards;
+		return backwards;
+	} else {
+		return previously_backwards;
+	}
 }

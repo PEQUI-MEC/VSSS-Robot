@@ -34,6 +34,7 @@ void Controller::control_loop() {
 void Controller::set_pwm(wheel &w, float pwm) {
 	if(pwm > 1) pwm = 1;
 	if(pwm < -1) pwm = -1;
+	if(std::abs(pwm) < 0.05) pwm = 0;
 
 	if (pwm < 0) {
 		w.pwm_out1->write(1);
@@ -69,10 +70,6 @@ void Controller::update_wheel_velocity() {
 		right_wheel.velocity = (right_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
 		encoder_vel = {true, left_wheel.velocity, right_wheel.velocity};
 	}
-
-//	Distance travelled since last odometry update. Is used and zeroed on Robot::update_odometry()
-	left_wheel.encoder_distance += (2*PI*3*left_pulses)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV);
-	right_wheel.encoder_distance += (2*PI*3*right_pulses)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV);
 }
 
 void Controller::set_target_velocity(float left, float right, float total) {
@@ -93,10 +90,10 @@ void Controller::stop_and_wait() {
 	reset(left_wheel);
 	reset(right_wheel);
 	stop = false;
-	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
-		Thread::signal_wait(CONTINUE_SIGNAL);
-		Thread::signal_clr(CONTINUE_SIGNAL);
-	}
+//	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
+//		Thread::signal_wait(CONTINUE_SIGNAL);
+//		Thread::signal_clr(CONTINUE_SIGNAL);
+//	}
 }
 
 void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {

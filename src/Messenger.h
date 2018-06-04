@@ -4,6 +4,7 @@
 #include "mbed.h"
 #include "XBeeLib.h"
 #include "Robot.h"
+#include "SensorFusion.h"
 #include <string>
 #include <array>
 #include <sstream>
@@ -30,6 +31,14 @@ class Messenger {
 		XBeeLib::XBee802 *xbee;
 
 		Robot *robot;
+		SensorFusion *sensors;
+
+		/**	@brief Sets new vision data (x, y and theta) for a new EKF update
+		 *	@param msg Example: "E20;50;10" sets measured position to {20,50}cm and orientation to 10 degrees */
+		void set_ekf_data(std::string &msg);
+
+		/**	@brief Sends current estimated pose to default xbee address */
+		void send_information();
 
 		/**	@brief Decodes uvf command message and starts uvf controller
 		 *	@param msg Example: "U20;30;40;45;2;0.8" sets target position to {20,30}, with uvf reference to {40,45},
@@ -72,7 +81,7 @@ class Messenger {
 		 *	@tparam size Expected number of substrings, also size of returned array
 		 *	@param msg Input string, to be divided in substrings
 		 *	@param first_char_pos Function ignores all chars before first_char_position
-		 *	@return Struct containing output float array and flag is_valid,
+		 *	@return Struct containing the resulting float array and flag is_valid,
 		 *	set to false if number of substrings is smaller than expected */
 		template<int size>
 		msg_data<size> get_values(const std::string& msg, unsigned int first_char_pos);
@@ -82,9 +91,10 @@ class Messenger {
 
 		/**	@brief Constructor
 		 *	@param id A unique ID assigned to each robot
-		 *	@param robot Poiter to Robot, used to set constants and start controllers
-		 *	@param this_xbee XBee802 object, used for sending and receiving messages */
-		Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee);
+		 *	@param robot Pointer to Robot, used to set constants and start controllers
+		 *	@param this_xbee XBee802 object, used for sending and receiving messages
+		 *	@param sensors_ptr Pointer to SensorFusion, used to set new data for an EKF vision update*/
+		Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee, SensorFusion *sensors_ptr);
 
 		/**	@brief Decodes received message and executes command
 		 *	@param msg Message containing command to be executed */

@@ -14,7 +14,6 @@ struct wheel {
 	float target_velocity;
 	float error_acc;
 	float last_error;
-	float encoder_distance;
 };
 
 struct encoder_data {

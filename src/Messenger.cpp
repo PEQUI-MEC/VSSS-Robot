@@ -1,7 +1,9 @@
 #include <string>
 #include "Messenger.h"
 #include "PIN_MAP.h"
+#include "SensorFusion.h"
 
+#define PI 3.1415926f
 using std::string;
 
 void Messenger::send_msg(string msg, uint16_t addr) {
@@ -39,13 +41,14 @@ void Messenger::Update_PID_K(string msg) {
 void Messenger::uvf_message(std::string &msg) {
 	msg_data<6> values = get_values<6>(msg, 1);
 	if(values.is_valid)
-		robot->start_uvf_control(values[0], values[1], values[2], values[3], values[4], values[5], true);
+		robot->start_uvf_control(values[0]/100, values[1]/100,
+								 values[2]/100, values[3]/100, values[4], values[5]);
 }
 
 void Messenger::GoToPoint(string msg) {
 	msg_data<3> values = get_values<3>(msg, 1);
 	if(values.is_valid)
-		robot->start_position_control(values[0], values[1], values[2]);
+		robot->start_position_control(values[0]/100, values[1]/100, values[2]);
 }
 
 void Messenger::GoToVector(string msg) {
@@ -64,6 +67,20 @@ void Messenger::goToOrientation(string msg) {
 	msg_data<2> values = get_values<2>(msg, 1);
 	if(values.is_valid)
 		robot->start_orientation_control(values[0], values[1]);
+}
+
+void Messenger::set_ekf_data(string &msg) {
+	msg_data<3> values = get_values<3>(msg, 1);
+	if(values.is_valid) {
+		sensors->set_vision_data(values[0], values[1], values[2]);
+	}
+}
+
+void Messenger::send_information() {
+	auto robot_pose = sensors->get_pose();
+	string pose_msg = std::to_string(robot_pose.x*100) + ", " + std::to_string(robot_pose.y*100)
+					  + ", " + std::to_string(robot_pose.theta * 180/PI);
+	send_msg(pose_msg);
 }
 
 string Messenger::decode_strings(string msg) {
@@ -90,6 +107,12 @@ void Messenger::decode_msg(string msg) {
 	}
 
 	switch (msg[0]) {
+		case 'E':
+			set_ekf_data(msg);
+			return;
+		case 'I':
+			send_information();
+			return;
 		case 'U':
 			uvf_message(msg);
 			return;
@@ -126,10 +149,12 @@ void Messenger::decode_msg(string msg) {
 		robot->start_velocity_control(values[1], values[0]);
 }
 
-Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee) {
+Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee,
+					 SensorFusion *sensors_ptr) {
 	setlocale(LC_ALL, "C");
 	xbee = this_xbee;
 	debug_mode = false;
 	this->robot = robot;
+	sensors = sensors_ptr;
 	ID = id;
 }

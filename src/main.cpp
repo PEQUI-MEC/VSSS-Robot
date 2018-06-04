@@ -4,6 +4,7 @@
 #include "Messenger.h"
 #include "IMU.h"
 #include "PIN_MAP.h"
+#include "SensorFusion.h"
 #include <cmath>
 #include <fstream>
 
@@ -12,7 +13,7 @@
 using namespace DigiLog;
 #endif
 
-#define PI 3.141592653589793238
+#define PI 3.141592f
 
 using std::string;
 using mbed::DigitalOut;
@@ -23,24 +24,13 @@ using XBeeLib::XBee802;
 using XBeeLib::RemoteXBee802;
 using XBeeLib::RadioStatus;
 
-//*****************ENCODER HANDLER AND PID CONTROL FUNCTIONS******************//
-
 //LEDS DO MBED
 DigitalOut *led1, *led2, *led3, *led4;
 
 //ANALOG INPUT MBED
-
 AnalogIn *vin_all_cells;
 AnalogIn *vin_single_cell;
 
-//VARIAVEIS PARA GUARDAR LEITURA DO IMU
-//int16_t *Mag;
-//int16_t *Acc;
-//int16_t *Gyro;
-
-//DECLARANDO PWM DOS MOTORES
-//IMU
-//IMU* imu;
 XBee802 *xbee;
 uint16_t addr;
 //SERIAL USB
@@ -50,12 +40,6 @@ Serial *log_serial;
 Robot *robot = nullptr;
 Messenger *messenger = nullptr;
 
-//VARIAVEIS DO CONTROLADOR DE POSICAO
-
-double toDegrees(double rad) {
-	return rad * 180 / PI;
-}
-
 //SERIAL THREAD*****************************************************************
 void rx_thread() {
 	while (true) {
@@ -63,21 +47,6 @@ void rx_thread() {
 		Thread::wait(20);
 	}
 }
-
-//Timer t;
-//
-//double gyro_offset[3];
-//double angulo_z = 0;
-//
-//void gyro_thread() {
-//	while (1) {
-//		imu->read_gyro(Gyro);
-//		angulo_z += (((double) Gyro[2] * 0.00747703) - gyro_offset[2]) * (t.read_ms() / 1000.0);
-//		t.reset();
-//		t.start();
-//		Thread::wait(1);
-//	}
-//}
 
 string prox_string(FILE *fp, char delim) {
 	string buffer;
@@ -171,6 +140,7 @@ float gyro_calib() {
 	return acc/sample_size_gyro;
 }
 
+SensorFusion* sensors;
 int main() {
 	led1 = new DigitalOut(LED1);
 	led2 = new DigitalOut(LED2);
@@ -181,7 +151,7 @@ int main() {
 	vin_single_cell = new AnalogIn(SINGLE_CELL);
 	bat_watcher();
 
-	robot = new Robot(messenger);
+	robot = new Robot();
 
 	log_serial = new Serial(USBTX, USBRX, 115200);
 
@@ -207,19 +177,27 @@ int main() {
 	}
 	t_rx.set_priority(osPriorityHigh);
 
-	messenger = new Messenger(robot->MY_ID, robot, xbee);
-	robot->start_thread();
-	robot->messenger = messenger;
+	robot->controller.set_target_velocity(0,0,0);
+	float offset = gyro_calib();
 
+	sensors = new SensorFusion(&robot->controller);
+	sensors->gyro_offset = offset;
+	robot->sensors = sensors;
+	sensors->ekf_thread_start();
+
+	messenger = new Messenger(robot->MY_ID, robot, xbee, sensors);
+
+	robot->start_thread();
+
+	robot->start_orientation_control(0, 0.8);
+	wait(0.1);
+	robot->start_orientation_control(-45, 0.8);
 	wait(0.5);
-	robot->start_orientation_control(45, 1);
+	robot->start_orientation_control(0, 0.8);
 	wait(0.5);
-	robot->start_orientation_control(-45, 1);
+	robot->start_orientation_control(45, 0.8);
 	wait(0.5);
-	robot->start_orientation_control(-45, 1);
-	wait(0.5);
-	robot->start_orientation_control(45, 1);
-	wait(0.5);
+	robot->start_orientation_control(0, 0.8);
 
 	while (true) {
 		bat_watcher();
