@@ -17,6 +17,12 @@ struct wheel {
 	float encoder_distance;
 };
 
+struct encoder_data {
+	bool new_data;
+	float vel_left;
+	float vel_right;
+};
+
 struct PID {
 	float kp;
 	float ki;
@@ -70,6 +76,7 @@ class Controller {
 		PID pid = {1.26,0.0481,0};
 		wheel left_wheel = {};
 		wheel right_wheel = {};
+		encoder_data encoder_vel{};
 
 		/**	@brief Constructor. Initializes left_wheel and right_wheel, creating PwmOut and QEI objects for them */
 		Controller();

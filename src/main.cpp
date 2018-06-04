@@ -143,6 +143,34 @@ static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_
 	}
 }
 
+void mag_calibration() {
+	IMU imu{};
+	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+	Thread::wait(1000);
+
+	#define sample_size 5000
+	for (int i = 0; i < sample_size; ++i) {
+		robot->start_velocity_control(-0.05f, 0.05f);
+		auto data = imu.read_mag_components();
+		string msg = std::to_string(data.x) + ',' + std::to_string(data.y);
+		messenger->send_msg(msg);
+		Thread::wait(10);
+	}
+}
+
+float gyro_calib() {
+	IMU imu{};
+	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+	float acc = 0;
+
+	#define sample_size_gyro 500
+	for (int i = 0; i < sample_size_gyro; ++i) {
+		acc += imu.read_gyro();
+		wait_ms(5);
+	}
+	return acc/sample_size_gyro;
+}
+
 int main() {
 	led1 = new DigitalOut(LED1);
 	led2 = new DigitalOut(LED2);

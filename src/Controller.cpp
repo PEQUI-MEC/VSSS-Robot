@@ -67,6 +67,7 @@ void Controller::update_wheel_velocity() {
 //		0.06f*PI: m/s conversion
 		left_wheel.velocity = (left_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
 		right_wheel.velocity = (right_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
+		encoder_vel = {true, left_wheel.velocity, right_wheel.velocity};
 	}
 
 //	Distance travelled since last odometry update. Is used and zeroed on Robot::update_odometry()

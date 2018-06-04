@@ -39,6 +39,8 @@ set(SOURCE_FILES
 	${SRC_DIR}/Controller.cpp
 	${SRC_DIR}/PIN_MAP.h
 	${SRC_DIR}/IMU_regs.h
+	${SRC_DIR}/EKF.cpp
+	${SRC_DIR}/SensorFusion.cpp
 
 	${MBED_SRC}
 	${XBEELIB_SRC}
