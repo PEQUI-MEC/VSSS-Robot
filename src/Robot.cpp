@@ -21,6 +21,9 @@ void Robot::control_loop() {
 		if(state.command != NO_CONTROL) update_odometry();
 
 		switch (state.command) {
+			case UVF_CONTROL:
+				uvf_control();
+				break;
 			case VECTOR_CONTROL:
 				vector_control();
 				break;
@@ -38,6 +41,43 @@ void Robot::control_loop() {
 		}
 		Thread::wait(ROBOT_LOOP_MS);
 	}
+}
+
+void Robot::uvf_control() {
+	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
+	if(target.velocity == 0) {
+		stop_and_wait();
+		return;
+	}
+
+//	Computes uni-vector field target theta
+	float state_to_targ = std::atan2(target.y - state.y, target.x - state.x);
+	float state_to_ref = std::atan2(target.ref_y - state.y, target.ref_x - state.x);
+	float fi = round_angle(state_to_ref - state_to_targ);
+	float uvf_target_theta = round_angle(state_to_targ - uvf_n * fi);
+
+//	Activates backwards movement if theta_error > PI/2
+	float theta = state.theta;
+	bool move_backwards = std::abs(uvf_target_theta - theta) > PI/2;
+	if(move_backwards) theta = round_angle(state.theta + PI);
+	if(move_backwards != previously_backwards) vel_acelerada = 0.3;
+	previously_backwards = move_backwards;
+
+	float theta_error = round_angle(uvf_target_theta - theta);
+
+//	Decreases velocity for big errors
+	if (std::abs(theta_error) > max_theta_error) {
+		vel_acelerada = vel_acelerada - 2 * acc_rate * ROBOT_LOOP_MS/1000.0f;
+	} else {
+//		Applies acceleration until robot reaches target velocity
+		if (vel_acelerada < target.velocity) {
+			vel_acelerada = vel_acelerada + acc_rate * ROBOT_LOOP_MS/1000.0f;
+		} else {
+			vel_acelerada = target.velocity;
+		}
+	}
+
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
 void Robot::vector_control() {
@@ -171,6 +211,18 @@ void Robot::update_odometry() {
 
 	left_wheel.encoder_distance = 0;
 	right_wheel.encoder_distance = 0;
+}
+
+void Robot::start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity, bool reset) {
+	if(reset) reset_state();
+	target.x = x;
+	target.y = y;
+	target.ref_x = x_ref;
+	target.ref_y = y_ref;
+	uvf_n = n;
+	target.velocity = velocity;
+	state.command = UVF_CONTROL;
+	continue_threads();
 }
 
 void Robot::start_vector_control(float theta, float velocity, bool reset) {
