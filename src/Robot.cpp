@@ -17,7 +17,8 @@ void Robot::start_thread() {
 
 void Robot::control_loop() {
 	while(true) {
-		if(msg_timeout_timer.read_ms() > msg_timeout_limit) stop_and_wait();
+		if(msg_timeout_timer.read_ms() > msg_timeout_limit
+		   && target.command != ORIENTATION_CONTROL) stop_and_wait();
 
 		switch (target.command) {
 			case VECTOR_CONTROL:

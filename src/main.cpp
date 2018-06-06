@@ -8,33 +8,12 @@
 #include <cmath>
 #include <fstream>
 
-#if defined(ENABLE_LOGGING)
-#include "DigiLoggerMbedSerial.h"
-using namespace DigiLog;
-#endif
-
 #define PI 3.141592f
 
 using std::string;
-using mbed::DigitalOut;
-using mbed::AnalogIn;
-using mbed::Serial;
-using mbed::LocalFileSystem;
-using XBeeLib::XBee802;
-using XBeeLib::RemoteXBee802;
-using XBeeLib::RadioStatus;
 
-//LEDS DO MBED
-DigitalOut *led1, *led2, *led3, *led4;
-
-//ANALOG INPUT MBED
-AnalogIn *vin_all_cells;
-AnalogIn *vin_single_cell;
-
-XBee802 *xbee;
+XBeeLib::XBee802 *xbee;
 uint16_t addr;
-//SERIAL USB
-Serial *log_serial;
 
 //MANIPULADOR DE MENSAGENS
 Robot *robot = nullptr;
@@ -48,33 +27,36 @@ void rx_thread() {
 	}
 }
 
-string prox_string(FILE *fp, char delim) {
-	string buffer;
-	char ch = fgetc(fp);
-	while (ch != delim && ch != '\0') {
-		buffer += ch;
-		ch = fgetc(fp);
+void set_config(const string &type, const string &data,
+				Robot &robot, uint16_t &xbee_addr) {
+	if(type == "addr") {
+		xbee_addr = (uint16_t) std::stoul(data, nullptr, 16);
+	} else if(type == "my_id") {
+		robot.MY_ID = data[0];
+	} else if(type == "msg_timeout") {
+		robot.msg_timeout_limit = std::stoi(data);
+	} else if(type == "acc_rate") {
+		robot.acc_rate = std::stof(data);
+	} else if(type == "kgz") {
+		robot.kgz = std::stof(data);
+	} else if(type == "max_theta_error") {
+		robot.max_theta_error = std::stof(data);
 	}
-	return buffer;
 }
 
-LocalFileSystem *local;
-
-void ler_arquivo() {
-	FILE *fp = fopen("/local/config.txt", "r");
-	if (prox_string(fp, ':') == "addr")
-		addr = (uint16_t) strtol(prox_string(fp, '\n').c_str(), NULL, 16);
-	if (prox_string(fp, ':') == "my_id")
-		robot->MY_ID = prox_string(fp, '\n')[0];
-	if (prox_string(fp, ':') == "msg_timeout")
-		robot->msg_timeout_limit = atoi(prox_string(fp, '\n').c_str());
-	if (prox_string(fp, ':') == "acc_rate")
-		robot->acc_rate = float(atof(prox_string(fp, '\n').c_str()));
-	if (prox_string(fp, ':') == "kgz")
-		robot->kgz = float(atof(prox_string(fp, '\n').c_str()));
-	if (prox_string(fp, ':') == "max_theta_error")
-		robot->set_max_theta_error(float(atof(prox_string(fp, '\n').c_str())));
-	fclose(fp);
+void configure_by_file(const string &path, int file_size,
+					   Robot &robot, uint16_t &xbee_addr) {
+	LocalFileSystem local("local");
+	FILE *config_file = fopen(path.c_str(), "r");
+	for (int i = 0; i < file_size; ++i) {
+		char * cline;
+		size_t size;
+		if(__getline(&cline, &size, config_file) == -1) return;
+		string line = string(cline, size);
+		size_t separator = line.find(':');
+		set_config(line.substr(0, separator), line.substr(separator + 1), robot, xbee_addr);
+	}
+	fclose(config_file);
 }
 
 //void escrever_arquivo() {
@@ -88,24 +70,25 @@ void ler_arquivo() {
 //	fclose(fp);
 //}
 
-void led_write(uint8_t num) {
-	*led1 = ((num >> 0) & 1);
-	*led2 = ((num >> 1) & 1);
-	*led3 = ((num >> 2) & 1);
-	*led4 = ((num >> 3) & 1);
+void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
+	LEDs[0] = ((num >> 0) & 1);
+	LEDs[1] = ((num >> 1) & 1);
+	LEDs[2] = ((num >> 2) & 1);
+	LEDs[3] = ((num >> 3) & 1);
 }
 
-void bat_watcher() {
-	double vbat = vin_all_cells->read() * (3.3 * 1470 / 470);
+void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
+	double vbat = battery_vin.read() * (3.3 * 1470 / 470);
 	double threshold = (vbat - 6.6) / 1.4;
 
-	if (threshold >= 0.75) led_write(0b1111);
-	else if (threshold >= 0.5) led_write(0b0111);
-	else if (threshold >= 0.25) led_write(0b0011);
-	else led_write(0b0001);
+	if (threshold >= 0.75) led_write(LEDs, 0b1111);
+	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
+	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
+	else led_write(LEDs, 0b0001);
 }
 
-static void receive_cb(const RemoteXBee802 &remote, bool broadcast, const uint8_t *const data, uint16_t len) {
+static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
+					   const uint8_t *const data, uint16_t len) {
 	if (len != 0) {
 		string msg = string((const char *) data, len);
 		messenger->decode_msg(msg);
@@ -142,39 +125,24 @@ float gyro_calib() {
 
 SensorFusion* sensors;
 int main() {
-	led1 = new DigitalOut(LED1);
-	led2 = new DigitalOut(LED2);
-	led3 = new DigitalOut(LED3);
-	led4 = new DigitalOut(LED4);
-
-	vin_all_cells = new AnalogIn(ALL_CELLS);
-	vin_single_cell = new AnalogIn(SINGLE_CELL);
-	bat_watcher();
+	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
+									  DigitalOut(LED3), DigitalOut(LED4)};
+	AnalogIn battery_vin(ALL_CELLS);
+	bat_watcher(LEDs, battery_vin);
 
 	robot = new Robot();
+	configure_by_file("/local/config.txt", 6, *robot, addr);
 
-	log_serial = new Serial(USBTX, USBRX, 115200);
-
-	local = new LocalFileSystem("local");
-	ler_arquivo();
-
-	xbee = new XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
-
-	#if defined(ENABLE_LOGGING)
-	new DigiLoggerMbedSerial(&log_serial, LogLevelInfo);
-	#endif
+	xbee = new XBeeLib::XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
 
 	xbee->register_receive_cb(&receive_cb);
 
-	RadioStatus const radioStatus = xbee->init();
+	XBeeLib::RadioStatus const radioStatus = xbee->init();
 	MBED_ASSERT(radioStatus == XBeeLib::Success);
 	xbee->set_network_address(addr);
 
 	Thread t_rx;
-	osStatus errTX = t_rx.start(rx_thread); // Handle de erro na thread da serial
-	if (errTX) {
-		// Tratamento do erro se necessário algum dia
-	}
+	t_rx.start(rx_thread); // Handle de erro na thread da serial
 	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
@@ -200,7 +168,7 @@ int main() {
 	robot->start_orientation_control(0, 0.8);
 
 	while (true) {
-		bat_watcher();
+		bat_watcher(LEDs, battery_vin);
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
