@@ -69,6 +69,8 @@ class Messenger {
 		 *	@param msg Example: "A2" sets desired acceleration to 2 m/s^2 */
 		void Update_ACC(std::string msg);
 
+		void get_gyro_calib_data();
+
 		/**	@brief Sends battery voltage. Example: "B7.53" */
 		void send_battery();
 

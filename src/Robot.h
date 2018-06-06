@@ -36,6 +36,7 @@ class Robot {
 		float vel_acelerada = 0;
 		float orientation_Kp = 0.8;
 		bool previously_backwards = false;
+		volatile bool gyro_calib = false;
 
 
 		/**	@brief Main control loop. Calls vector_control, position_control or orientation_control
@@ -136,6 +137,8 @@ class Robot {
 
 		/**	@brief Starts main control loop thread */
 		void start_thread();
+		void calib_gyro_movement();
+		void start_gyro_calib();
 };
 
 #endif //VSSS_ROBOT2_H

@@ -74,7 +74,7 @@ imu_data IMU::read_imu_data(bool use_mag) {
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
-	return (gyro_data * MAX_GYRO/INT16_MAX)*(237611.9f/205838.1f) + 0.02063384f;
+	return (gyro_data * (MAX_GYRO/INT16_MAX) * (346722.0f/298599.0f));
 }
 
 float IMU::read_mag() {

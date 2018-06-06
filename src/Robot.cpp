@@ -35,6 +35,7 @@ void Robot::control_loop() {
 				break;
 			case NO_CONTROL:
 //				Robot não faz nada, controle de velocidade é feito em Controller
+				if(gyro_calib) calib_gyro_movement();
 				break;
 			default:
 				break;
@@ -220,6 +221,26 @@ void Robot::start_orientation_control(float theta, float velocity) {
 void Robot::start_velocity_control(float vel_left, float vel_right) {
 	target.command = NO_CONTROL;
 	controller.set_target_velocity(vel_left, vel_right, 1);
+	continue_threads();
+}
+
+void Robot::calib_gyro_movement() {
+	#define sample_size_gyro_s 20000
+	#define max_velocity 1.17f
+	for (int i = 0; i < sample_size_gyro_s; ++i) {
+		float v = max_velocity * i/sample_size_gyro_s;
+		controller.set_target_velocity(-v, v, 1);
+//		controller.set_target_velocity(-0.8f, 0.8f, 1);
+		wait_ms(10);
+	}
+	gyro_calib = false;
+	sensors->wait = false;
+}
+
+void Robot::start_gyro_calib() {
+	sensors->wait = true;
+	gyro_calib = true;
+	target.command = NO_CONTROL;
 	continue_threads();
 }
 

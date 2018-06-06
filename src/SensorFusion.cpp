@@ -26,7 +26,7 @@ void SensorFusion::ekf_thread() {
 
 	while(true) {
 		int time_us = timer_ekf.read_us();
-		if(new_vision_data) {
+		if(new_vision_data && !wait) {
 			new_vision_data = false;
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
@@ -34,7 +34,7 @@ void SensorFusion::ekf_thread() {
 			ekf.predict(time);
 			ekf.update_camera(vision);
 
-		} else if(time_us > EKF_PERIOD_US) {
+		} else if(time_us > EKF_PERIOD_US && !wait) {
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
 

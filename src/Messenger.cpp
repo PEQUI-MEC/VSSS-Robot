@@ -83,6 +83,10 @@ void Messenger::send_information() {
 	send_msg(pose_msg);
 }
 
+void Messenger::get_gyro_calib_data() {
+	robot->start_gyro_calib();
+}
+
 string Messenger::decode_strings(string msg) {
 	size_t id_pos, end_pos;
 	if ((id_pos = msg.find(ID)) == string::npos ||
@@ -112,6 +116,9 @@ void Messenger::decode_msg(string msg) {
 			return;
 		case 'I':
 			send_information();
+			return;
+		case 'G':
+			get_gyro_calib_data();
 			return;
 		case 'U':
 			uvf_message(msg);

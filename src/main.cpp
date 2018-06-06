@@ -168,10 +168,21 @@ int main() {
 	robot->start_orientation_control(0, 0.8);
 
 	while (true) {
-		bat_watcher(LEDs, battery_vin);
+		if(robot->gyro_calib) {
+			auto vels = robot->controller.encoder_vel;
+//			float enc_w = (vels.vel_right - vels.vel_left)/ROBOT_SIZE;
+			float gyro_w = sensors->imu.read_gyro();
+//			std::string msg = std::to_string(enc_w) + ',' + std::to_string(gyro_w);
+			std::string msg = std::to_string(gyro_w - offset) + ',' + std::to_string(vels.vel_left)
+							  + ',' + std::to_string(vels.vel_right);
+			messenger->send_msg(msg);
+			Thread::wait(10);
+		} else {
+			bat_watcher(LEDs, battery_vin);
+		}
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(1000);
+//		Thread::wait(1000);
 	}
 }

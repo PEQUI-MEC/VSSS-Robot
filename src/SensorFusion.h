@@ -18,7 +18,7 @@ struct opt_mag {
 };
 
 class SensorFusion {
-	private:
+	public:
 		IMU imu;
 		Controller* controller;
 
@@ -28,6 +28,7 @@ class SensorFusion {
 		vision_data vision{};
 		bool new_vision_data = false;
 		float mag_offset = 0;
+		volatile bool wait = false;
 
 		void ekf_thread();
 		opt_mag read_magnetometer(Timer& timer_mag);
