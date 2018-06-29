@@ -6,9 +6,9 @@
 #define PI 3.1415926f
 using std::string;
 
-void Messenger::send_msg(string msg, uint16_t addr) {
+void Messenger::send_msg(const string &msg, uint16_t addr) {
 	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
-	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), false);
+	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
 }
 
 template<int size>
@@ -38,20 +38,20 @@ void Messenger::Update_PID_K(string msg) {
 		robot->controller.set_pid_constants(values[0], values[1], values[2]);
 }
 
-void Messenger::uvf_message(std::string &msg) {
+void Messenger::uvf_message(const string &msg) {
 	msg_data<6> values = get_values<6>(msg, 1);
 	if(values.is_valid)
 		robot->start_uvf_control(values[0]/100, values[1]/100,
 								 values[2]/100, values[3]/100, values[4], values[5]);
 }
 
-void Messenger::GoToPoint(string msg) {
+void Messenger::GoToPoint(const string &msg) {
 	msg_data<3> values = get_values<3>(msg, 1);
 	if(values.is_valid)
 		robot->start_position_control(values[0]/100, values[1]/100, values[2]);
 }
 
-void Messenger::GoToVector(string msg) {
+void Messenger::GoToVector(const string &msg) {
 	msg_data<2> values = get_values<2>(msg, 1);
 	if(values.is_valid)
 		robot->start_vector_control(values[0], values[1]);
@@ -63,13 +63,13 @@ void Messenger::Update_ACC(string msg) {
 		robot->acc_rate = values[0];
 }
 
-void Messenger::goToOrientation(string msg) {
+void Messenger::goToOrientation(const string &msg) {
 	msg_data<2> values = get_values<2>(msg, 1);
 	if(values.is_valid)
 		robot->start_orientation_control(values[0], values[1]);
 }
 
-void Messenger::set_ekf_data(string &msg) {
+void Messenger::set_ekf_data(const string &msg) {
 	msg_data<3> values = get_values<3>(msg, 1);
 	if(values.is_valid) {
 		sensors->set_vision_data(values[0], values[1], values[2]);
@@ -83,11 +83,21 @@ void Messenger::send_information() {
 	send_msg(pose_msg);
 }
 
-void Messenger::get_gyro_calib_data() {
-	robot->start_gyro_calib();
+void Messenger::send_sensor_data(const string &msg) {
+	msg_data<1> values = get_values<1>(msg, 1);
+	robot->start_calibration(values[0]);
+	float offset = sensors->gyro_offset;
+	Thread::wait(500);
+	while(robot->target.command != SENSOR_CALIBRATION) {
+		auto vels = robot->controller.encoder_vel;
+		float gyro_w = sensors->imu.read_gyro();
+		std::string send = std::to_string(gyro_w - offset) + std::to_string(vels.vel_left)
+						  + ',' + std::to_string(vels.vel_right);
+		Thread::wait(5);
+	}
 }
 
-string Messenger::decode_strings(string msg) {
+string Messenger::decode_strings(const string &msg) {
 	size_t id_pos, end_pos;
 	if ((id_pos = msg.find(ID)) == string::npos ||
 		(end_pos = msg.find('#', id_pos)) == string::npos)
@@ -118,7 +128,7 @@ void Messenger::decode_msg(string msg) {
 			send_information();
 			return;
 		case 'G':
-			get_gyro_calib_data();
+			send_sensor_data(msg);
 			return;
 		case 'U':
 			uvf_message(msg);
@@ -141,8 +151,6 @@ void Messenger::decode_msg(string msg) {
 			return;
 		case 'D':
 			debug_mode = !debug_mode;
-//			(*r).controllerA->debug_mode = debug_mode;
-//			(*r).controllerB->debug_mode = debug_mode;
 			return;
 		case 'B':
 			send_battery();

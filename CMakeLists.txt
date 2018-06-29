@@ -41,6 +41,7 @@ set(SOURCE_FILES
 	${SRC_DIR}/IMU_regs.h
 	${SRC_DIR}/EKF.cpp
 	${SRC_DIR}/SensorFusion.cpp
+	${SRC_DIR}/helper_functions.h
 
 	${MBED_SRC}
 	${XBEELIB_SRC}

@@ -48,7 +48,6 @@ class EKF {
 		Eigen::Matrix<float, POSE_SIZE, 1> x_p;
 		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> COV_P;
 		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> COV;
-		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> R;
 		Eigen::Matrix<float, MEASUREMENT_SIZE, MEASUREMENT_SIZE> Q;
 		Eigen::Matrix<float, MEASUREMENT_SIZE, 1> z;
 		Eigen::Matrix<float, MEASUREMENT_SIZE, POSE_SIZE> H;
@@ -61,12 +60,13 @@ class EKF {
 
 		Eigen::Matrix<float,MEASUREMENT_SIZE_CAM,1> camera_measurement_model();
 
-		void predict(float time);
+		void predict(float time, float left_accel, float right_accel, float ang_accel);
 		void update(measurement_data data, bool use_mag, bool use_enc);
 		void update_camera(vision_data data);
 		Eigen::Matrix<float,MEASUREMENT_SIZE,1> measurement_model();
 		float round_angle(float angle);
 		EKF();
+		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> process_noise(float time);
 };
 
 #endif //VSSS_EKF_H

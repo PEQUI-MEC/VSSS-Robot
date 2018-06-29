@@ -14,6 +14,16 @@
 #define MAG_X_MAX_a 0.1886219f
 #define MAG_Y_MAX_a 0.1955043f
 
+#define MAG_X_OFF_e 0.4261779f
+#define MAG_Y_OFF_e 0.1183533f
+#define MAG_X_MAX_e 0.1886219f
+#define MAG_Y_MAX_e 0.1955043f
+
+#define MAG_X_OFF_b 1.0294917f
+#define MAG_Y_OFF_b (-0.24693936f)
+#define MAG_X_MAX_b 0.1941387f
+#define MAG_Y_MAX_b 0.2118146f
+
 // Configura os sensores
 void IMU::init(PinName sda, PinName scl) {
 	addr_gyro_acc = 0b1101011 << 1;
@@ -34,7 +44,7 @@ void IMU::init(PinName sda, PinName scl) {
 	write_reg(addr_gyro_acc, CTRL10_C, 0x20);
 
 	// Gyro no modo de alta performance, 1.66KHz, 2000dps max
-	write_reg(addr_gyro_acc, CTRL2_G, 0x8C);
+	write_reg(addr_gyro_acc, CTRL2_G, 0x7C);
 
 //	Habilita BDU - Atualiza LSB e MSB juntos
 	write_reg(addr_gyro_acc, CTRL3_C, 0x44);
@@ -74,7 +84,9 @@ imu_data IMU::read_imu_data(bool use_mag) {
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
-	return (gyro_data * (MAX_GYRO/INT16_MAX) * (346722.0f/298599.0f));
+//	return (gyro_data * (MAX_GYRO/INT16_MAX) * (346722.0f/298599.0f));
+	return gyro_data * (MAX_GYRO/INT16_MAX) * (0.006934109f / 0.006106417f);
+//	return gyro_data * (MAX_GYRO/INT16_MAX);
 }
 
 float IMU::read_mag() {
@@ -82,16 +94,18 @@ float IMU::read_mag() {
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
 //	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
 //	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_a) / MAG_X_MAX_a;
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_a) / MAG_Y_MAX_a;
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
 	return std::atan2(-mag_y, mag_x);
 }
 
 mag_components IMU::read_mag_components() {
 	int16_t mag_data[2];
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
+//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
+//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
 	return {mag_x, mag_y};
 }
 

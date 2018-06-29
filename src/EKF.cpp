@@ -8,21 +8,24 @@
 
 #define PI 3.141592f
 
-void EKF::predict(float time) {
-//	Predicts pose
-	float direction = (pose.w * time)/2;
+void EKF::predict(float time, float left_accel, float right_accel, float ang_accel) {
+	float linear_accel = (right_accel + left_accel)/2;
+//	float angular_accel = (right_accel - left_accel)/ROBOT_SIZE;
 
-	float x_direction = time * std::cos(pose.theta + direction);
+//	Predicts pose
+	float delta_theta = (pose.w * time)/2;
+
+	float x_direction = time * std::cos(pose.theta + delta_theta);
 	float x_increment = pose.v * x_direction;
 
-	float y_direction = time * std::sin(pose.theta + direction);
+	float y_direction = time * std::sin(pose.theta + delta_theta);
 	float y_increment = pose.v * y_direction;
 
 	x_p(0,0) = pose.x + x_increment;
 	x_p(1,0) = pose.y + y_increment;
 	x_p(2,0) = round_angle(pose.theta + pose.w * time);
-	x_p(3,0) = pose.v;
-	x_p(4,0) = pose.w;
+	x_p(3,0) = pose.v + linear_accel;
+	x_p(4,0) = pose.w + ang_accel;
 
 //	Computes jacobian
 	F(0,2) = -y_increment;
@@ -33,6 +36,7 @@ void EKF::predict(float time) {
 	F(1,4) = x_increment * time/2;
 
 //	Predicted covariance
+	auto R = process_noise(time);
 	COV_P = F * COV * F.transpose() + R;
 }
 
@@ -125,6 +129,17 @@ Eigen::Matrix<float,MEASUREMENT_SIZE_CAM,1> EKF::camera_measurement_model() {
 	return pred_measurement;
 }
 
+Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
+	Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> R;
+	R.setZero();
+	R(0,0) = time * 0.0001f;
+	R(1,1) = time * 0.0001f;
+	R(2,2) = time * 0.00001f;
+	R(3,3) = time * 0.0001f;
+	R(4,4) = time * 0.0001f;
+	return R;
+};
+
 float EKF::round_angle(float angle) {
 	float theta = std::fmod(angle, 2*PI);
 	if(theta > PI) theta = theta - 2*PI;
@@ -156,21 +171,14 @@ EKF::EKF() {
 	COV.setIdentity();
 	COV_P.setZero();
 
-	R.setZero();
-	R(0,0) = float(std::pow(0.001,2));
-	R(1,1) = float(std::pow(0.001,2));
-	R(2,2) = float(std::pow(0.001,2));
-	R(3,3) = float(std::pow(0.02,2));
-	R(4,4) = float(std::pow(0.02,2));
-
 	Q.setZero();
-	Q(0,0) = float(std::pow(0.01,2));
-	Q(1,1) = float(4.173547e-05f);
-	Q(2,2) = float(std::pow(0.1,2));
-	Q(3,3) = float(std::pow(0.1,2));
+	Q(0,0) = 0.00022846f;
+	Q(1,1) = 0.02857541f;
+	Q(2,2) = 0.00022096f;
+	Q(3,3) = 0.00022096f;
 
 	Q_CAM.setZero();
-	Q_CAM(0,0) = float(std::pow(0.04,2));
-	Q_CAM(1,1) = float(std::pow(0.04,2));
-	Q_CAM(2,2) = float(0.087);
+	Q_CAM(0,0) = 3.44048681e-06f;
+	Q_CAM(1,1) = 2.82211659e-06f;
+	Q_CAM(2,2) = 9.75675349e-04f;
 }

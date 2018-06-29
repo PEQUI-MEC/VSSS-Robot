@@ -20,9 +20,8 @@ void SensorFusion::ekf_thread_start() {
 
 void SensorFusion::ekf_thread() {
 	Timer timer_ekf;
-	Timer timer_mag;
 	timer_ekf.start();
-//	timer_mag.start();
+	timer_mag.start();
 
 	while(true) {
 		int time_us = timer_ekf.read_us();
@@ -31,14 +30,18 @@ void SensorFusion::ekf_thread() {
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
 
-			ekf.predict(time);
+			auto wheel_vel = controller->encoder_vel;
+			float gyro_rate = imu.read_gyro() - gyro_offset;
+			
+			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, gyro_rate - prev_mesure.gyro_w);
+			prev_mesure.gyro_w = gyro_rate;
 			ekf.update_camera(vision);
 
 		} else if(time_us > EKF_PERIOD_US && !wait) {
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
 
-			opt_mag mag_data = read_magnetometer(timer_mag);
+			opt_mag mag_data = read_magnetometer();
 			float gyro_rate = imu.read_gyro();
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
@@ -47,7 +50,8 @@ void SensorFusion::ekf_thread() {
 									 wheel_vel.vel_left,
 									 wheel_vel.vel_right};
 
-			ekf.predict(time);
+			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
+			prev_mesure = data;
 			ekf.update(data, mag_data.valid, wheel_vel.new_data);
 		}
 	}
@@ -62,15 +66,14 @@ void SensorFusion::set_vision_data(float x, float y, float theta) {
 	}
 }
 
-opt_mag SensorFusion::read_magnetometer(Timer &timer_mag) {
+opt_mag SensorFusion::read_magnetometer() {
 	return {false, 0};
-//	if(no_vision) return {false, 0};
 
 	bool use_mag = timer_mag.read_ms() > 10;
 	if(use_mag) {
 		timer_mag.reset();
 		return {true, imu.read_mag() - mag_offset};
-	} else return {false, 0};
+	} else return {false, prev_mesure.mag_theta};
 }
 
 pose_data SensorFusion::get_pose() {

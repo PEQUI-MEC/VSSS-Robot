@@ -1,10 +1,10 @@
-//IMPORTS
 #include "mbed.h"
 #include "XBeeLib.h"
 #include "Messenger.h"
 #include "IMU.h"
 #include "PIN_MAP.h"
 #include "SensorFusion.h"
+#include "helper_functions.h"
 #include <cmath>
 #include <fstream>
 
@@ -14,17 +14,30 @@ using std::string;
 
 XBeeLib::XBee802 *xbee;
 uint16_t addr;
-
-//MANIPULADOR DE MENSAGENS
 Robot *robot = nullptr;
 Messenger *messenger = nullptr;
+Thread* t_rx;
 
-//SERIAL THREAD*****************************************************************
 void rx_thread() {
 	while (true) {
+		if(t_rx->get_state() != Thread::WaitingThreadFlag) {
+			Thread::signal_wait(CONTINUE_SIGNAL);
+			Thread::signal_clr(CONTINUE_SIGNAL);
+		}
 		xbee->process_rx_frames();
-		Thread::wait(20);
 	}
+}
+
+static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
+					   const uint8_t *const data, uint16_t len) {
+	if (len != 0) {
+		string msg = string((const char *) data, len);
+		messenger->decode_msg(msg);
+	}
+}
+
+static void process_frames() {
+	t_rx->signal_set(CONTINUE_SIGNAL);
 }
 
 void set_config(const string &type, const string &data,
@@ -59,16 +72,18 @@ void configure_by_file(const string &path, int file_size,
 	fclose(config_file);
 }
 
-//void escrever_arquivo() {
-//	FILE *fp = fopen("/local/config.txt", "w");
-//	fprintf(fp, "addr:%04x\n", addr);
-//	fprintf(fp, "my_id:%c\n", robot->MY_ID);
-//	fprintf(fp, "msg_timeout:%d\n", robot->MSG_TIMEOUT);
-//	fprintf(fp, "acc_rate:%f\n", robot->ACC_RATE);
-//	fprintf(fp, "kgz:%lf\n", robot->kgz);
-//	fprintf(fp, "max_theta_error:%f\n", robot->MAX_Theta_Error);
-//	fclose(fp);
-//}
+void save_configs(const string &path, Robot &robot,
+						   uint16_t &xbee_addr) {
+	LocalFileSystem local("local");
+	FILE *config_file = fopen("/local/config.txt", "w");
+	fprintf(config_file, "addr:%04x\n", xbee_addr);
+	fprintf(config_file, "my_id:%c\n", robot.MY_ID);
+	fprintf(config_file, "msg_timeout:%d\n", robot.msg_timeout_limit);
+	fprintf(config_file, "acc_rate:%f\n", robot.acc_rate);
+	fprintf(config_file, "kgz:%lf\n", robot.kgz);
+	fprintf(config_file, "max_theta_error:%f\n", robot.max_theta_error);
+	fclose(config_file);
+}
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
 	LEDs[0] = ((num >> 0) & 1);
@@ -85,14 +100,6 @@ void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
 	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
 	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
 	else led_write(LEDs, 0b0001);
-}
-
-static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
-					   const uint8_t *const data, uint16_t len) {
-	if (len != 0) {
-		string msg = string((const char *) data, len);
-		messenger->decode_msg(msg);
-	}
 }
 
 void mag_calibration() {
@@ -141,9 +148,11 @@ int main() {
 	MBED_ASSERT(radioStatus == XBeeLib::Success);
 	xbee->set_network_address(addr);
 
-	Thread t_rx;
-	t_rx.start(rx_thread); // Handle de erro na thread da serial
-	t_rx.set_priority(osPriorityHigh);
+	xbee->set_complete_callback(&process_frames);
+
+	t_rx = new Thread;
+	t_rx->start(&rx_thread); // Handle de erro na thread da serial
+//	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
 	float offset = gyro_calib();
@@ -166,23 +175,13 @@ int main() {
 	robot->start_orientation_control(45, 0.8);
 	wait(0.5);
 	robot->start_orientation_control(0, 0.8);
+	wait(0.5);
 
 	while (true) {
-		if(robot->gyro_calib) {
-			auto vels = robot->controller.encoder_vel;
-//			float enc_w = (vels.vel_right - vels.vel_left)/ROBOT_SIZE;
-			float gyro_w = sensors->imu.read_gyro();
-//			std::string msg = std::to_string(enc_w) + ',' + std::to_string(gyro_w);
-			std::string msg = std::to_string(gyro_w - offset) + ',' + std::to_string(vels.vel_left)
-							  + ',' + std::to_string(vels.vel_right);
-			messenger->send_msg(msg);
-			Thread::wait(10);
-		} else {
-			bat_watcher(LEDs, battery_vin);
-		}
+		bat_watcher(LEDs, battery_vin);
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-//		Thread::wait(1000);
+		Thread::wait(1000);
 	}
 }

@@ -13,6 +13,7 @@ class Messenger;
 #define ORIENTATION_CONTROL 2
 #define NO_CONTROL 3
 #define UVF_CONTROL 4
+#define SENSOR_CALIBRATION 5
 
 struct target_state {
 	float x;
@@ -36,7 +37,7 @@ class Robot {
 		float vel_acelerada = 0;
 		float orientation_Kp = 0.8;
 		bool previously_backwards = false;
-		volatile bool gyro_calib = false;
+		float calibration_velocity = 0;
 
 
 		/**	@brief Main control loop. Calls vector_control, position_control or orientation_control
@@ -137,8 +138,8 @@ class Robot {
 
 		/**	@brief Starts main control loop thread */
 		void start_thread();
-		void calib_gyro_movement();
-		void start_gyro_calib();
+		void sensor_calibration();
+		void start_calibration(float v);
 };
 
 #endif //VSSS_ROBOT2_H

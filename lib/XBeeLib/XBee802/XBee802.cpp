@@ -249,6 +249,10 @@ void XBee802::unregister_node_discovery_cb()
     }
 }
 
+void XBee802::set_complete_callback(void (*cb)()) {
+    _framebuf_app.cb_complete = cb;
+}
+
 void XBee802::register_receive_cb(receive_802_cb_t function)
 {
     if (_rx_64b_handler == NULL) {

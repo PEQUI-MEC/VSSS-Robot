@@ -76,6 +76,8 @@ bool FrameBuffer::complete_frame(ApiFrame *frame)
         }
     }
 
+    if(ret && cb_complete != nullptr) cb_complete();
+
     return ret;
 }
 

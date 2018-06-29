@@ -33,6 +33,7 @@ typedef struct element {
 class FrameBuffer
 {
     public:
+        void (*cb_complete)() = nullptr;
         /** Constructor */
         FrameBuffer(uint8_t size, uint16_t max_payload_len);
 

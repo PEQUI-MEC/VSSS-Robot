@@ -86,6 +86,8 @@ class XBee802 : public XBee
          */
         RadioStatus init();
 
+
+        void set_complete_callback(void (*cb)());
         /** set_panid - sets the 16 bit PAN ID.
          *
          *  @param panid the PAN ID value that will be set on the radio
@@ -396,9 +398,7 @@ class XBee802 : public XBee
         virtual RadioStatus get_node_discovery_timeout(uint16_t * const timeout_ms);
         virtual RadioStatus get_node_discovery_timeout(uint16_t * const timeout_ms, bool * const wait_for_complete_timeout);
 
-    private:
-
-};
+    };
 
 }   /* namespace XBeeLib */
 
