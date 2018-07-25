@@ -5,6 +5,7 @@
 #include "PIN_MAP.h"
 #include "SensorFusion.h"
 #include "helper_functions.h"
+#include "ConfigFile.h"
 #include <cmath>
 #include <fstream>
 
@@ -13,7 +14,7 @@
 using std::string;
 
 XBeeLib::XBee802 *xbee;
-uint16_t addr;
+uint16_t xbee_addr;
 Robot *robot = nullptr;
 Messenger *messenger = nullptr;
 Thread* t_rx;
@@ -38,51 +39,6 @@ static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
 
 static void process_frames() {
 	t_rx->signal_set(CONTINUE_SIGNAL);
-}
-
-void set_config(const string &type, const string &data,
-				Robot &robot, uint16_t &xbee_addr) {
-	if(type == "addr") {
-		xbee_addr = (uint16_t) std::stoul(data, nullptr, 16);
-	} else if(type == "my_id") {
-		robot.MY_ID = data[0];
-	} else if(type == "msg_timeout") {
-		robot.msg_timeout_limit = std::stoi(data);
-	} else if(type == "acc_rate") {
-		robot.acc_rate = std::stof(data);
-	} else if(type == "kgz") {
-		robot.kgz = std::stof(data);
-	} else if(type == "max_theta_error") {
-		robot.max_theta_error = std::stof(data);
-	}
-}
-
-void configure_by_file(const string &path, int file_size,
-					   Robot &robot, uint16_t &xbee_addr) {
-	LocalFileSystem local("local");
-	FILE *config_file = fopen(path.c_str(), "r");
-	for (int i = 0; i < file_size; ++i) {
-		char * cline;
-		size_t size;
-		if(__getline(&cline, &size, config_file) == -1) return;
-		string line = string(cline, size);
-		size_t separator = line.find(':');
-		set_config(line.substr(0, separator), line.substr(separator + 1), robot, xbee_addr);
-	}
-	fclose(config_file);
-}
-
-void save_configs(const string &path, Robot &robot,
-						   uint16_t &xbee_addr) {
-	LocalFileSystem local("local");
-	FILE *config_file = fopen("/local/config.txt", "w");
-	fprintf(config_file, "addr:%04x\n", xbee_addr);
-	fprintf(config_file, "my_id:%c\n", robot.MY_ID);
-	fprintf(config_file, "msg_timeout:%d\n", robot.msg_timeout_limit);
-	fprintf(config_file, "acc_rate:%f\n", robot.acc_rate);
-	fprintf(config_file, "kgz:%lf\n", robot.kgz);
-	fprintf(config_file, "max_theta_error:%f\n", robot.max_theta_error);
-	fclose(config_file);
 }
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
@@ -138,7 +94,11 @@ int main() {
 	bat_watcher(LEDs, battery_vin);
 
 	robot = new Robot();
-	configure_by_file("/local/config.txt", 6, *robot, addr);
+
+	{
+		ConfigFile configs("/local/config.txt");
+		configs.configure(*robot, xbee_addr);
+	}
 
 	xbee = new XBeeLib::XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
 
@@ -146,7 +106,7 @@ int main() {
 
 	XBeeLib::RadioStatus const radioStatus = xbee->init();
 	MBED_ASSERT(radioStatus == XBeeLib::Success);
-	xbee->set_network_address(addr);
+	xbee->set_network_address(xbee_addr);
 
 	xbee->set_complete_callback(&process_frames);
 
