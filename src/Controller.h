@@ -30,8 +30,13 @@ struct PID {
 	float kd;
 };
 
+struct WheelVelocity {
+	float left;
+	float right;
+};
+
 class Controller {
-	private:
+	public:
 		Timer timer;
 
 		/**	@brief Wheel velocity control loop. Also updates odometry data */
@@ -72,7 +77,7 @@ class Controller {
 
 	public:
 		Thread control_thread;
-		bool stop = true;
+		bool stop = false;
 
 		PID pid = {1.26,0.0481,0};
 		wheel left_wheel = {};
@@ -87,6 +92,7 @@ class Controller {
 		 *	@param right Desired right wheel velocity
 		 *	@param total Desired total velocity for the robot */
 		void set_target_velocity(float left, float right, float total);
+		void set_target_velocity(WheelVelocity target_velocity);
 
 		/**	@brief Sets PID constants for the wheel velocity controller, computed on get_pid_output
 		 *	@param kp Constant multiplied by the error

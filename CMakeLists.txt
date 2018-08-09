@@ -43,11 +43,14 @@ set(SOURCE_FILES
 	${SRC_DIR}/SensorFusion.cpp
 	${SRC_DIR}/ConfigFile.cpp
 	${SRC_DIR}/helper_functions.h
+	${SRC_DIR}/Control.cpp
+	${SRC_DIR}/VFOControl.cpp
+	${SRC_DIR}/helper_functions.cpp
 
 	${MBED_SRC}
 	${XBEELIB_SRC}
 	${LIB_DIR}/QEI/QEI.cpp
-	${EIGEN_FILES})
+	${EIGEN_FILES} src/AdpsSensor.cpp src/AdpsSensor.h src/AdpsRegs.h src/VFO.cpp src/VFO.h)
 
 include_directories(
 	${SRC_DIR}

@@ -34,6 +34,7 @@ class SensorFusion {
 
 		void ekf_thread();
 		opt_mag read_magnetometer();
+		void gyro_calib();
 
 	public:
 		bool no_vision = true;
@@ -41,7 +42,7 @@ class SensorFusion {
 
 		explicit SensorFusion(Controller *controler_ptr);
 		void ekf_thread_start();
-		pose_data get_pose();
+		const pose_data & get_pose() const;
 		void set_vision_data(float x, float y, float theta);
 };
 

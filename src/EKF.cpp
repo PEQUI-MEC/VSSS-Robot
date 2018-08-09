@@ -135,8 +135,11 @@ Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
 	R(0,0) = time * 0.0001f;
 	R(1,1) = time * 0.0001f;
 	R(2,2) = time * 0.00001f;
-	R(3,3) = time * 0.0001f;
-	R(4,4) = time * 0.0001f;
+//	R(2,2) = time * 0.01f;
+	R(3,3) = time * 0.01f;
+//	R(3,3) = time * 0.01f;
+//	R(4,4) = time * 0.0001f;
+	R(4,4) = time * 10;
 	return R;
 };
 
@@ -174,8 +177,8 @@ EKF::EKF() {
 	Q.setZero();
 	Q(0,0) = 0.00022846f;
 	Q(1,1) = 0.02857541f;
-	Q(2,2) = 0.00022096f;
-	Q(3,3) = 0.00022096f;
+	Q(2,2) = 0.0022096f;
+	Q(3,3) = 0.0022096f;
 
 	Q_CAM.setZero();
 	Q_CAM(0,0) = 3.44048681e-06f;

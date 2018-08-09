@@ -11,10 +11,11 @@
 
 SensorFusion::SensorFusion(Controller *controler_ptr) {
 	controller = controler_ptr;
-	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
 }
 
 void SensorFusion::ekf_thread_start() {
+	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+	gyro_calib();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }
 
@@ -51,14 +52,40 @@ void SensorFusion::ekf_thread() {
 									 wheel_vel.vel_right};
 
 			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
+//			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, 0);
 			prev_mesure = data;
 			ekf.update(data, mag_data.valid, wheel_vel.new_data);
 		}
 	}
 }
 
+void SensorFusion::gyro_calib() {
+	float acc = 0;
+	constexpr uint32_t sample_size_gyro = 500;
+	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
+		acc += imu.read_gyro();
+		wait_ms(5);
+	}
+	gyro_offset = acc/sample_size_gyro;
+}
+
+//void mag_calibration() {
+//	IMU imu{};
+//	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+//	Thread::wait(1000);
+//
+//	#define sample_size 5000
+//	for (int i = 0; i < sample_size; ++i) {
+////		robot->start_velocity_control(-0.05f, 0.05f);
+//		auto data = imu.read_mag_components();
+//		std::string msg = std::to_string(data.x) + ',' + std::to_string(data.y);
+//		messenger.send_msg(msg);
+//		Thread::wait(10);
+//	}
+//}
+
 void SensorFusion::set_vision_data(float x, float y, float theta) {
-	vision = {x/100, y/100, theta*PI/180};
+	vision = {x, y, theta};
 	new_vision_data = true;
 	if(no_vision) {
 		mag_offset = vision.theta;
@@ -76,6 +103,6 @@ opt_mag SensorFusion::read_magnetometer() {
 	} else return {false, prev_mesure.mag_theta};
 }
 
-pose_data SensorFusion::get_pose() {
+const pose_data & SensorFusion::get_pose() const {
 	return ekf.pose;
 }

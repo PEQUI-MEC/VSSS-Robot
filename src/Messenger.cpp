@@ -1,108 +1,16 @@
 #include <string>
 #include "Messenger.h"
 #include "PIN_MAP.h"
-#include "SensorFusion.h"
+#include "Control.h"
+#include "ConfigFile.h"
+#include "helper_functions.h"
 
 #define PI 3.1415926f
 using std::string;
 
 void Messenger::send_msg(const string &msg, uint16_t addr) {
 	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
-	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
-}
-
-template<int size>
-msg_data<size> Messenger::get_values(const string &msg, unsigned int first_char_pos) {
-	std::array<float,size> values{};
-	unsigned int pos_atual = first_char_pos;
-	for (int i = 0; i < size; ++i) {
-		size_t delim_pos = msg.find(';', pos_atual);
-		if (delim_pos == string::npos && i != size - 1) return {values,false};
-		values[i] = std::stof(msg.substr(pos_atual, delim_pos - pos_atual));
-		pos_atual = delim_pos + 1;
-	}
-	return {values,true};
-}
-
-void Messenger::Update_PID_Pos(string msg) {
-	msg_data<2> values = get_values<2>(msg, 2);
-	if(values.is_valid) {
-		robot->kgz = values[0];
-		robot->set_max_theta_error(values[1]);
-	}
-}
-
-void Messenger::Update_PID_K(string msg) {
-	msg_data<3> values = get_values<3>(msg, 1);
-	if(values.is_valid)
-		robot->controller.set_pid_constants(values[0], values[1], values[2]);
-}
-
-void Messenger::uvf_message(const string &msg) {
-	msg_data<6> values = get_values<6>(msg, 1);
-	if(values.is_valid)
-		robot->start_uvf_control(values[0]/100, values[1]/100,
-								 values[2]/100, values[3]/100, values[4], values[5]);
-}
-
-void Messenger::GoToPoint(const string &msg) {
-	msg_data<3> values = get_values<3>(msg, 1);
-	if(values.is_valid)
-		robot->start_position_control(values[0]/100, values[1]/100, values[2]);
-}
-
-void Messenger::GoToVector(const string &msg) {
-	msg_data<2> values = get_values<2>(msg, 1);
-	if(values.is_valid)
-		robot->start_vector_control(values[0], values[1]);
-}
-
-void Messenger::Update_ACC(string msg) {
-	msg_data<1> values = get_values<1>(msg, 1);
-	if(values.is_valid)
-		robot->acc_rate = values[0];
-}
-
-void Messenger::goToOrientation(const string &msg) {
-	msg_data<2> values = get_values<2>(msg, 1);
-	if(values.is_valid)
-		robot->start_orientation_control(values[0], values[1]);
-}
-
-void Messenger::set_ekf_data(const string &msg) {
-	msg_data<3> values = get_values<3>(msg, 1);
-	if(values.is_valid) {
-		sensors->set_vision_data(values[0], values[1], values[2]);
-	}
-}
-
-void Messenger::send_information() {
-	auto robot_pose = sensors->get_pose();
-	string pose_msg = std::to_string(robot_pose.x*100) + ", " + std::to_string(robot_pose.y*100)
-					  + ", " + std::to_string(robot_pose.theta * 180/PI);
-	send_msg(pose_msg);
-}
-
-void Messenger::send_sensor_data(const string &msg) {
-	msg_data<1> values = get_values<1>(msg, 1);
-	robot->start_calibration(values[0]);
-	float offset = sensors->gyro_offset;
-	Thread::wait(500);
-	while(robot->target.command != SENSOR_CALIBRATION) {
-		auto vels = robot->controller.encoder_vel;
-		float gyro_w = sensors->imu.read_gyro();
-		std::string send = std::to_string(gyro_w - offset) + std::to_string(vels.vel_left)
-						  + ',' + std::to_string(vels.vel_right);
-		Thread::wait(5);
-	}
-}
-
-string Messenger::decode_strings(const string &msg) {
-	size_t id_pos, end_pos;
-	if ((id_pos = msg.find(ID)) == string::npos ||
-		(end_pos = msg.find('#', id_pos)) == string::npos)
-		return "";
-	else return msg.substr(id_pos + 2, end_pos - id_pos - 2);
+	xbee.send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
 }
 
 void Messenger::send_battery() {
@@ -113,63 +21,76 @@ void Messenger::send_battery() {
 	send_msg(msg_bat);
 }
 
-void Messenger::decode_msg(string msg) {
-	if (msg[1] == '@') {
-		string s = decode_strings(msg);
-		if (!s.empty()) msg = s;
-		else return;
-	}
+void Messenger::ekf_msg(const Message &msg) {
+	if(msg.length != 13) return;
+	control->sensors.set_vision_data(msg.get<float>(1),
+									 msg.get<float>(5),
+									 msg.get<float>(9));
+	send_msg(str(msg.get<float>(1)) + ", " +
+					 str(msg.get<float>(5)) + ", " + str(msg.get<float>(9)));
+}
 
-	switch (msg[0]) {
-		case 'E':
-			set_ekf_data(msg);
-			return;
-		case 'I':
-			send_information();
-			return;
-		case 'G':
-			send_sensor_data(msg);
-			return;
-		case 'U':
-			uvf_message(msg);
-			return;
-		case 'K':
-			if(msg[1] == 'P') Update_PID_Pos(msg);
-			else Update_PID_K(msg);
-			return;
-		case 'A':
-			Update_ACC(msg);
-			return;
-		case 'O':
-			goToOrientation(msg);
-			return;
-		case 'P':
-			GoToPoint(msg);
-			return;
-		case 'V':
-			GoToVector(msg);
-			return;
-		case 'D':
-			debug_mode = !debug_mode;
-			return;
-		case 'B':
-			send_battery();
-			return;
+void Messenger::pose_control_msg(const Message &msg) {
+	if(msg.length != 17) return;
+	control->set_target_pose(msg.get<float>(1),
+							 msg.get<float>(5),
+							 msg.get<float>(9));
+}
+
+void Messenger::decode_msg(const Message &msg) {
+	switch (msg.get<uint8_t>(0)) {
+		case 0 :
+			ekf_msg(msg);
+			break;
+		case 1 :
+			pose_control_msg(msg);
+			break;
 		default:
 			break;
 	}
-
-	msg_data<2> values = get_values<2>(msg, 0);
-	if(values.is_valid)
-		robot->start_velocity_control(values[1], values[0]);
 }
 
-Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee,
-					 SensorFusion *sensors_ptr) {
+void Messenger::start_thread() {
+	xbee_thread.start(callback(this, &Messenger::xbee_thread_callback));
+//	xbee_thread.set_priority(osPriorityHigh);
+}
+
+void Messenger::xbee_thread_callback() {
+	while (true) {
+		Thread::signal_wait(CONTINUE_SIGNAL);
+		Thread::signal_clr(CONTINUE_SIGNAL);
+		xbee.process_rx_frames();
+	}
+}
+
+Messenger * messenger_ptr;
+Messenger::Messenger(char id, Control *control)
+		: xbee(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200) {
+
 	setlocale(LC_ALL, "C");
-	xbee = this_xbee;
-	debug_mode = false;
-	this->robot = robot;
-	sensors = sensors_ptr;
+
+	messenger_ptr = this;
+	this->control = control;
+
 	ID = id;
+
+	{
+		ConfigFile configs("/local/config.txt");
+		xbee_addr = configs.get_xbee_addr();
+	}
+
+	xbee.set_on_complete_callback([]() {
+		messenger_ptr->xbee_thread.signal_set(CONTINUE_SIGNAL);
+	});
+
+	xbee.register_receive_cb([](const XBeeLib::RemoteXBee802 &remote,
+								bool broadcast, const uint8_t * data, uint16_t len) {
+		if (len != 0) {
+			messenger_ptr->decode_msg({data, len});
+		}
+	});
+
+	XBeeLib::RadioStatus const radioStatus = xbee.init();
+	MBED_ASSERT(radioStatus == XBeeLib::Success);
+	xbee.set_network_address(xbee_addr);
 }

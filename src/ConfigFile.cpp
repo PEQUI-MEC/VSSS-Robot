@@ -13,6 +13,10 @@ ConfigFile::~ConfigFile() {
 	fclose(file);
 }
 
+uint16_t ConfigFile::get_xbee_addr() {
+	return (uint16_t) std::stoul(get_data("addr"), nullptr, 16);
+}
+
 void ConfigFile::configure(Robot &robot, uint16_t &xbee_addr) {
 	xbee_addr = (uint16_t) std::stoul(get_data("addr"), nullptr, 16);
 	robot.MY_ID = get_data("my_id")[0];

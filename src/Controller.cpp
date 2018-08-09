@@ -35,6 +35,7 @@ void Controller::set_pwm(wheel &w, float pwm) {
 	if(pwm > 1) pwm = 1;
 	if(pwm < -1) pwm = -1;
 	if(std::abs(pwm) < 0.05) pwm = 0;
+	pwm = 0;
 
 	if (pwm < 0) {
 		w.pwm_out1->write(1);
@@ -79,6 +80,11 @@ void Controller::set_target_velocity(float left, float right, float total) {
 	left_wheel.target_velocity = left * total;
 	right_wheel.target_velocity = right * total;
 };
+
+void Controller::set_target_velocity(WheelVelocity target_velocity) {
+	left_wheel.target_velocity = target_velocity.left;
+	right_wheel.target_velocity = target_velocity.right;
+}
 
 void Controller::continue_thread() {
 	if(control_thread.get_state() == Thread::WaitingThreadFlag) {

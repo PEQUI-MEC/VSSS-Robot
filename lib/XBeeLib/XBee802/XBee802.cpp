@@ -249,7 +249,7 @@ void XBee802::unregister_node_discovery_cb()
     }
 }
 
-void XBee802::set_complete_callback(void (*cb)()) {
+void XBee802::set_on_complete_callback(void (*cb)()) {
     _framebuf_app.cb_complete = cb;
 }
 

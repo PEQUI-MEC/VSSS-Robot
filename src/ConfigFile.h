@@ -20,6 +20,7 @@ class ConfigFile {
 		std::string get_data(const std::string &name, bool optional = false);
 		void set_data(const std::string &name, const std::string &data);
 		void save_configs(const std::string &path, Robot &robot, uint16_t &xbee_addr);
+		uint16_t get_xbee_addr();
 };
 
 #endif //VSSS_CONFIGSFILE_H
