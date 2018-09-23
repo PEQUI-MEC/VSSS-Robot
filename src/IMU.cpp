@@ -1,34 +1,22 @@
 #include "IMU.h"
+#include "ConfigFile.h"
 
 #define PI 3.1415926f
 
 #define MAX_GYRO (2000 * (PI)/180) // 2000 dps para rad/s
 #define MAX_MAG 4.0f
-#define MAG_X_OFF 0.571852f
-#define MAG_Y_OFF 0.132321f
-#define MAG_X_MAX 0.174501f
-#define MAG_Y_MAX 0.182615f
 
-#define MAG_X_OFF_a 0.4261779f
-#define MAG_Y_OFF_a 0.1183533f
-#define MAG_X_MAX_a 0.1886219f
-#define MAG_Y_MAX_a 0.1955043f
-
-#define MAG_X_OFF_e 0.4261779f
-#define MAG_Y_OFF_e 0.1183533f
-#define MAG_X_MAX_e 0.1886219f
-#define MAG_Y_MAX_e 0.1955043f
-
-#define MAG_X_OFF_b 1.0294917f
-#define MAG_Y_OFF_b (-0.24693936f)
-#define MAG_X_MAX_b 0.1941387f
-#define MAG_Y_MAX_b 0.2118146f
+IMU::IMU() {
+	ConfigFile configs("/local/config.txt");
+	gyro_scale = configs.get_float("gyro_scale");
+	mag_max_x = configs.get_float("mag_max_x");
+	mag_off_x = configs.get_float("mag_off_x");
+	mag_max_y = configs.get_float("mag_max_y");
+	mag_off_y = configs.get_float("mag_off_y");
+}
 
 // Configura os sensores
 void IMU::init(PinName sda, PinName scl) {
-	addr_gyro_acc = 0b1101011 << 1;
-	addr_comp = 0b0011110 << 1;
-
 	i2c = new I2C(sda, scl);
 	i2c->frequency(400*1000);
 	// Habilita acelerometro nos 3 eixos
@@ -84,28 +72,22 @@ imu_data IMU::read_imu_data(bool use_mag) {
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
-//	return (gyro_data * (MAX_GYRO/INT16_MAX) * (346722.0f/298599.0f));
-	return gyro_data * (MAX_GYRO/INT16_MAX) * (0.006934109f / 0.006106417f);
-//	return gyro_data * (MAX_GYRO/INT16_MAX);
+	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 }
 
 float IMU::read_mag() {
 	int16_t mag_data[2];
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
-//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
-//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + mag_off_x) / mag_max_x;
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + mag_off_y) / mag_max_y;
 	return std::atan2(-mag_y, mag_x);
 }
 
 mag_components IMU::read_mag_components() {
 	int16_t mag_data[2];
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
-//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
-//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + mag_off_x) / mag_max_x;
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + mag_off_y) / mag_max_y;
 	return {mag_x, mag_y};
 }
 

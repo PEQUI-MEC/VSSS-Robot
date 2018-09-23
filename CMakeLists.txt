@@ -33,21 +33,21 @@ set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${COMMON_FLAGS}")
 
 set(SOURCE_FILES
 	${SRC_DIR}/main.cpp
-	${SRC_DIR}/Robot.cpp
 	${SRC_DIR}/Messenger.cpp
 	${SRC_DIR}/IMU.cpp
 	${SRC_DIR}/Controller.cpp
 	${SRC_DIR}/PIN_MAP.h
 	${SRC_DIR}/IMU_regs.h
-	${SRC_DIR}/EKF.cpp
 	${SRC_DIR}/SensorFusion.cpp
 	${SRC_DIR}/ConfigFile.cpp
 	${SRC_DIR}/helper_functions.h
+	${SRC_DIR}/Control.cpp
+	${SRC_DIR}/helper_functions.cpp
 
 	${MBED_SRC}
 	${XBEELIB_SRC}
 	${LIB_DIR}/QEI/QEI.cpp
-	${EIGEN_FILES})
+	${EIGEN_FILES} src/EKF2.h src/EkfModel.cpp src/EkfModel.h src/Types.h)
 
 include_directories(
 	${SRC_DIR}
