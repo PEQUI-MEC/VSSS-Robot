@@ -3,10 +3,10 @@
 AdpsSensor::AdpsSensor(PinName sda, PinName scl) : i2c(sda, scl) {
 	i2c.frequency(400000);
 	write_reg(AdpsReg::CONTROL, 3 << 2 | 3);
-	write_reg(AdpsReg::ATIME, 200);
-//	write_reg(AdpsReg::CONFIG2, 3 << 4);
+//	write_reg(AdpsReg::ATIME, 200);
+	write_reg(AdpsReg::CONFIG2, 3 << 4);
 //	write_reg(AdpsReg::CONFIG2, 0);
-//	write_reg(AdpsReg::GCONF2, 3 << 5);
+	write_reg(AdpsReg::GCONF2, 3 << 5);
 	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 1 | 1 << 6);
 //	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 1);
 	wait_ms(10);

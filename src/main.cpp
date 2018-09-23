@@ -8,7 +8,7 @@
 //#include "VFO.h"
 #include <cmath>
 #include <fstream>
-//#include <AdpsSensor.h>
+#include <AdpsSensor.h>
 
 #define PI 3.141592f
 
@@ -49,18 +49,18 @@ int main() {
 	static Messenger messenger('B', &control);
 //	static Serial usb(USBTX, USBRX);
 //	static AdpsSensor adps(p9, p10);
-//	static AdpsSensor adps(IMU_SDA_PIN, IMU_SCL_PIN);
+	static AdpsSensor adps(IMU_SDA_PIN, IMU_SCL_PIN);
 
 	control.start_threads();
 	messenger.start_thread();
 
-//	control.set_target_pose(0, 0, to_rads(-45));
-//	wait(0.5);
-//	control.set_target_pose(0, 0, 0);
-//	wait(0.5);
-//	control.set_target_pose(0, 0, to_rads(45));
-//	wait(0.5);
-//	control.set_target_pose(0, 0, 0);
+	control.set_target_pose(0, 0, to_rads(-45));
+	wait(0.5);
+	control.set_target_pose(0, 0, 0);
+	wait(0.5);
+	control.set_target_pose(0, 0, to_rads(45));
+	wait(0.5);
+	control.set_target_pose(0, 0, 0);
 	wait(0.2);
 //	control.velocity = 0.8;
 //	control.set_target_pose(0.5, 0, PI);
@@ -88,14 +88,14 @@ int main() {
 //		bool is_ball = float(color.r)/color.b > thresh && float(color.r)/color.g > thresh;
 //		if(is_ball) usb.printf("is ball\n");
 //		else usb.printf("isn't ball\n");
-//		auto location = adps.read_location();
-//		auto theta = float(std::atan2(location.right, location.left)) - to_rads(45);
-//		auto prox = float(std::sqrt(std::pow(location.right, 2.0f) + std::pow(location.left, 2.0f)));
-//		if(prox > 10) {
-//			control.set_target_pose(0, 0, wrap(control.sensors.get_pose().theta - theta));
-//		} else {
-//			control.set_target_pose(0, 0, control.sensors.get_pose().theta);
-//		}
+		auto location = adps.read_location();
+		auto theta = float(std::atan2(location.right, location.left)) - to_rads(45);
+		auto prox = float(std::sqrt(std::pow(location.right, 2.0f) + std::pow(location.left, 2.0f)));
+		if(prox > 10) {
+			control.set_target_pose(0, 0, wrap(control.sensors.get_pose().theta - theta));
+		} else {
+			control.set_target_pose(0, 0, control.sensors.get_pose().theta);
+		}
 //		usb.printf(location.to_string().c_str());
 //		auto msg = str(std::atan2(location.right, location.left)) + '\n';
 //		usb.printf(msg.c_str());

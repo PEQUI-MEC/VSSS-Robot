@@ -154,7 +154,7 @@ EKF::EKF() {
 //	Measurement model for gyroscope, magnetometer and encoders
 	H.setZero();
 	H(0,2) = 1;
-	H(1,4) = 1;
+	H(1,4) = 0;
 	H(2,3) = 1;
 	H(3,3) = 1;
 	H(2,4) = -ROBOT_SIZE/2;
