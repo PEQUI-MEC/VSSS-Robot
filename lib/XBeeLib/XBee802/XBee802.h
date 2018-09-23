@@ -87,7 +87,7 @@ class XBee802 : public XBee
         RadioStatus init();
 
 
-        void set_complete_callback(void (*cb)());
+        void set_on_complete_callback(void (*cb)());
         /** set_panid - sets the 16 bit PAN ID.
          *
          *  @param panid the PAN ID value that will be set on the radio

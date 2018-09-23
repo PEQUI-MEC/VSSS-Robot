@@ -510,7 +510,7 @@ void _mutex_free(mutex *m) {
 #endif /* ARMC */
 #elif defined (__GNUC__) /******************** GCC ********************/
 
-extern int main(int argc, char* argv[]);
+extern int main();
 extern void __libc_init_array (void);
 extern int __real_main(void);
 

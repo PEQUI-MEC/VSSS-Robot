@@ -7,8 +7,9 @@
 
 #include <lib/QEI/QEI.h>
 #include "IMU.h"
-#include "EKF.h"
 #include "Controller.h"
+#include "EkfModel.h"
+#include "EKF2.h"
 
 #define EKF_PERIOD_US 1000
 
@@ -19,30 +20,36 @@ struct opt_mag {
 
 class SensorFusion {
 	public:
-		IMU imu;
-		Controller* controller;
+	IMU imu;
+	Controller *controller;
 
-		EKF ekf;
-		Thread thread_ekf;
-		Timer timer_mag;
+	EKF2 ekf;
 
-		vision_data vision{};
-		bool new_vision_data = false;
-		float mag_offset = 0;
-		volatile bool wait = false;
-		measurement_data prev_mesure{};
+	Thread thread_ekf;
+	Timer timer_mag;
 
-		void ekf_thread();
-		opt_mag read_magnetometer();
+	VisionData vision;
+	bool new_vision_data = false;
+
+	float mag_offset = 0;
+	volatile bool stop = false;
+
+	float previous_w = 0;
+	int e_time = 0;
+
+	void ekf_thread();
+	opt_mag read_magnetometer();
+	void gyro_calib();
 
 	public:
-		bool no_vision = true;
-		float gyro_offset = 0;
+	bool no_vision = true;
+	float gyro_offset = 0;
 
-		explicit SensorFusion(Controller *controler_ptr);
-		void ekf_thread_start();
-		pose_data get_pose();
-		void set_vision_data(float x, float y, float theta);
+	explicit SensorFusion(Controller *controler_ptr);
+	void ekf_thread_start();
+	Pose get_pose() const;
+	void set_vision_data(float x, float y, float theta);
+	void stop_and_wait();
 };
 
 #endif //VSSS_SENSORFUSION_H
