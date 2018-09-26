@@ -17,6 +17,7 @@ struct mag_components {
 };
 
 class IMU {
+	public:
 		I2C *i2c;
 		int addr_gyro_acc;
 		int addr_comp;

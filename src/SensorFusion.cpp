@@ -14,8 +14,8 @@ SensorFusion::SensorFusion(Controller *controler_ptr) {
 }
 
 void SensorFusion::ekf_thread_start() {
-//	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-//	gyro_calib();
+	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+	gyro_calib();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }
 
@@ -43,16 +43,16 @@ void SensorFusion::ekf_thread() {
 			float time = time_us/1E6f; // Time in seconds
 
 			opt_mag mag_data = read_magnetometer();
-//			float gyro_rate = imu.read_gyro();
+			float gyro_rate = imu.read_gyro() - gyro_offset;
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
 			measurement_data data = {mag_data.mag_theta,
-									 0,
+									 gyro_rate,
 									 wheel_vel.vel_left,
 									 wheel_vel.vel_right};
 
-//			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
-			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, 0);
+			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
+//			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, 0);
 			prev_mesure = data;
 			ekf.update(data, mag_data.valid, wheel_vel.new_data);
 		}

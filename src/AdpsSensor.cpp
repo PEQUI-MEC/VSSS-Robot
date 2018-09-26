@@ -7,7 +7,9 @@ AdpsSensor::AdpsSensor(PinName sda, PinName scl) : i2c(sda, scl) {
 	write_reg(AdpsReg::CONFIG2, 3 << 4);
 //	write_reg(AdpsReg::CONFIG2, 0);
 	write_reg(AdpsReg::GCONF2, 3 << 5);
-	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 1 | 1 << 6);
+//	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 1 | 1 << 6);
+	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 6);
+//	write_reg(AdpsReg::ENABLE, 1 | 1 << 6);
 //	write_reg(AdpsReg::ENABLE, 1 | 1 << 2 | 1 << 1);
 	wait_ms(10);
 }

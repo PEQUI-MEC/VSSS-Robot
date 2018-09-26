@@ -44,6 +44,7 @@ class Messenger {
 		void send_battery();
 
 	public:
+		std::string msg1 = "";
 		/**	@brief Constructor
 		 *	@param id A unique ID assigned to each robot
 		 *	@param robot Pointer to Robot, used to set constants and start controllers

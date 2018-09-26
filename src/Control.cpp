@@ -23,6 +23,7 @@ void Control::pose_control_thread() {
 	while (true) {
 		auto target_vel = vector_control(target.theta, 0);
 		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+//		auto target_wheel_vel = get_target_wheel_velocity({0, 10});
 		controller.set_target_velocity(target_wheel_vel);
 		Thread::wait(10);
 	}
@@ -58,7 +59,7 @@ TargetVelocity Control::control(TargetPose target) {
 }
 
 TargetVelocity Control::vector_control(float target_theta, float velocity) const {
-	return {velocity, 10 * wrap(target_theta - sensors.get_pose().theta)};
+	return {velocity, 15 * wrap(target_theta - sensors.get_pose().theta)};
 }
 
 TargetVelocity Control::control_law(PolarPose pose, float vmax) const {

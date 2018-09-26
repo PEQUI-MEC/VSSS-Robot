@@ -86,7 +86,9 @@ Messenger::Messenger(char id, Control *control)
 	xbee.register_receive_cb([](const XBeeLib::RemoteXBee802 &remote,
 								bool broadcast, const uint8_t * data, uint16_t len) {
 		if (len != 0) {
-			messenger_ptr->decode_msg({data, len});
+//			messenger_ptr->msg1 = std::string((const char *) data, len);
+//			messenger_ptr->msg1 += '\n';
+//			messenger_ptr->decode_msg({data, len});
 		}
 	});
 

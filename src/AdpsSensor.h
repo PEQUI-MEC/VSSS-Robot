@@ -32,7 +32,7 @@ struct Location {
 };
 
 class AdpsSensor {
-	private:
+	public:
 		I2C i2c;
 		static constexpr uint16_t addr = 0x39 << 1;
 
