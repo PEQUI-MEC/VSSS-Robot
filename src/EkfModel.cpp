@@ -18,8 +18,8 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	pred.x = pose.x + x_increment;
 	pred.y = pose.y + y_increment;
 	pred.theta = wrap(pose.theta + pose.w * time);
-	pred.v = pose.v + c.lin_accel;
-	pred.w = pose.w + c.ang_accel;
+	pred.v = pose.v + c.lin_accel * time;
+	pred.w = pose.w + c.ang_accel * time;
 
 	F(0, 2) = -y_increment;
 	F(1, 2) = x_increment;
@@ -106,9 +106,9 @@ EkfModel::EkfModel() {
 
 	Q.setZero();
 	Q(0,0) = 0.00022846f;
-	Q(1,1) = 0.002857541f;
-	Q(2,2) = 0.0022096f;
-	Q(3,3) = 0.0022096f;
+	Q(1,1) = 0.02857541f;
+	Q(2,2) = 0.00022096f;
+	Q(3,3) = 0.00022096f;
 
 	Hv.setZero();
 	for (int i = 0; i < 3; ++i) {

@@ -35,6 +35,7 @@ class Control {
 
 	ControlState state = ControlState::None;
 	bool stop_afterwards = true;
+	bool stop = false;
 	Target target{0, 0, 0, 0};
 
 	Timer timeout;

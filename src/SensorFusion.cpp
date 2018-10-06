@@ -32,11 +32,39 @@ void SensorFusion::ekf_thread() {
 			float time = time_us / 1E6f;
 
 			float gyro_rate = imu.read_gyro() - gyro_offset;
+//			float acc = imu.read_acc_components().y - acc_offset;
+
+			auto acc = imu.read_acc();
+//			auto controls = acc_model(acc.y - acc_offset_y,
+//									  -(acc.x - acc_offset_x), gyro_rate);
+
+			x_acc = acc.x - acc_offset_x;
+			y_acc = acc.y - acc_offset_y;
+
+//			last_controls.lin_accel = controls.lin_accel;
+//			last_controls.ang_accel = controls.ang_accel;
+//			Controls controls(acc.x - acc_offset_x, 0);
+
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
 
-			Controls controls((wheel_vel.vel_left_accel + wheel_vel.vel_right_accel) / 2,
-							  gyro_rate - previous_w);
+//			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.02f * std::sin(0.785398f);
+//			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.02f * std::cos(0.785398f);
+
+			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.01335404f;
+			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.01615549f;
+
+			x_acc_fixed = x_acc + centripetal_x;
+			y_acc_fixed = y_acc - centripetal_y;
+
+//			if (gyro_rate != 0) {
+//				float w_sq = std::pow(gyro_rate, 2.0f);
+//				A = y_acc / w_sq;
+//				B = x_acc / w_sq;
+//			}
+
+			Controls controls(x_acc_fixed,
+							  (gyro_rate - previous_w) / time);
 
 			ekf.predict(controls.to_vec(), time);
 
@@ -63,13 +91,20 @@ void SensorFusion::ekf_thread() {
 }
 
 void SensorFusion::gyro_calib() {
-	float acc = 0;
+	float gyro_acc = 0;
+	float acc_ax = 0;
+	float acc_ay = 0;
 	constexpr uint32_t sample_size_gyro = 500;
 	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
-		acc += imu.read_gyro();
+		gyro_acc += imu.read_gyro();
+		auto acc = imu.read_acc();
+		acc_ax += acc.x;
+		acc_ay += acc.y;
 		wait_ms(5);
 	}
-	gyro_offset = acc / sample_size_gyro;
+	gyro_offset = gyro_acc / sample_size_gyro;
+	acc_offset_x = acc_ax / sample_size_gyro;
+	acc_offset_y = acc_ay / sample_size_gyro;
 }
 
 //void mag_calibration() {
@@ -117,4 +152,16 @@ void SensorFusion::stop_and_wait() {
 
 Pose SensorFusion::get_pose() const {
 	return Pose(ekf.x);
+}
+
+constexpr float theta = PI/2 - 0.3652f;
+//constexpr float rx = 0.028f;
+//constexpr float ry = 0.01f;
+constexpr float r = 0.02973f;
+const float sin_theta = std::sin(theta);
+const float cos_theta = std::cos(theta);
+Controls SensorFusion::acc_model(float acc_x, float acc_y, float w) {
+	float alpha = (-acc_y + std::pow(w, 2.0f) * r * cos_theta) / (r * sin_theta);
+	float acc = acc_x - alpha * r * cos_theta - std::pow(w, 2.0f) * r * sin_theta;
+	return {acc, alpha};
 }
