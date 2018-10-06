@@ -40,10 +40,22 @@ class SensorFusion {
 	void ekf_thread();
 	opt_mag read_magnetometer();
 	void gyro_calib();
+	Controls acc_model(float acc_x, float acc_y, float w);
+
+	volatile Controls last_controls{0,0};
+	volatile float x_acc = 0;
+	volatile float x_acc_fixed = 0;
+	volatile float y_acc = 0;
+	volatile float y_acc_fixed = 0;
 
 	public:
 	bool no_vision = true;
 	float gyro_offset = 0;
+	volatile float acc_offset_x = 0;
+	volatile float acc_offset_y = 0;
+
+	volatile float A = 0;
+	volatile float B = 0;
 
 	explicit SensorFusion(Controller *controler_ptr);
 	void ekf_thread_start();

@@ -63,7 +63,7 @@ void Control::set_ang_vel_control(float angular_velocity) {
 
 void Control::pose_control_thread() {
 	while (true) {
-		if (state == ControlState::None) stop_and_sleep();
+//		if (state == ControlState::None || stop) stop_and_sleep();
 		auto target = maybe_backwards(this->target);
 		auto target_vel = [&]() {
 //			if (timeout.read_ms() > 500) return TargetVelocity{0, 0};

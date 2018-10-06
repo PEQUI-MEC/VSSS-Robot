@@ -4,6 +4,7 @@
 #define PI 3.1415926f
 
 #define MAX_GYRO (2000 * (PI)/180) // 2000 dps para rad/s
+#define MAX_ACC (4 * 9.80665f) // 4g para m/s^2
 #define MAX_MAG 4.0f
 
 IMU::IMU() {
@@ -20,10 +21,10 @@ void IMU::init(PinName sda, PinName scl) {
 	i2c = new I2C(sda, scl);
 	i2c->frequency(400*1000);
 	// Habilita acelerometro nos 3 eixos
-//	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);
+	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);
 
-	// Acc no modo de alta performance
-//	write_reg(addr_gyro_acc, CTRL1_XL, 0x60);
+	// Acc no modo de alta performance, 1.66kHz, 4g max
+	write_reg(addr_gyro_acc, CTRL1_XL, 0x88);
 
 	// Habilita giroscopio nos 3 eixos
 //	write_reg(addr_gyro_acc, CTRL10_C, 0x38);
@@ -69,10 +70,28 @@ imu_data IMU::read_imu_data(bool use_mag) {
 	return data;
 }
 
+AccComponents IMU::read_acc_components() {
+	int16_t acc_data[3];
+	read_acc_all(acc_data);
+
+	return {-acc_data[0] * (MAX_ACC / INT16_MAX),
+			-acc_data[1] * (MAX_ACC / INT16_MAX),
+			-acc_data[2] * (MAX_ACC / INT16_MAX)};
+}
+
+AccData IMU::read_acc() {
+	int16_t acc_data[2];
+	read_reg(addr_gyro_acc, OUTX_L_XL, (char *) acc_data, 4);
+
+//	Same coordinates as robot (x is front, y is sideways)
+	return {-acc_data[1] * (MAX_ACC / INT16_MAX),
+			-acc_data[0] * (MAX_ACC / INT16_MAX)};
+}
+
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
-	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
+	return -gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 }
 
 float IMU::read_mag() {
@@ -119,4 +138,5 @@ void IMU::write_reg(int addr, uint8_t reg, uint8_t data) {
 	cmd[1] = data;
 	i2c->write(addr, (char *) cmd, 2);
 }
+
 
