@@ -16,7 +16,7 @@
 #define POSE_SIZE 5
 #define MEASUREMENT_SIZE 4
 #define MEASUREMENT_SIZE_CAM 3
-#define ROBOT_SIZE 0.0675f
+#define ROBOT_SIZE 0.063f
 
 struct pose_data {
 	float x;

@@ -126,6 +126,8 @@ int main() {
 
 	robot->start_thread();
 
+//	Serial usb(USBTX, USBRX);
+
 	robot->start_orientation_control(0, 0.8);
 	wait(0.1);
 	robot->start_orientation_control(-45, 0.8);
@@ -142,6 +144,8 @@ int main() {
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(1000);
+		Thread::wait(200);
+//		std::string msg = std::to_string(sensors->prev_mesure.gyro_w) + '\n';
+//		usb.printf(msg.c_str());
 	}
 }

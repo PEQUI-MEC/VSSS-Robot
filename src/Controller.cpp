@@ -6,8 +6,8 @@
 #define CONTROL_LOOP_MS 10
 
 Controller::Controller() {
-	init_wheel(left_wheel, ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
-	init_wheel(right_wheel, ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
+	init_wheel(right_wheel, ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
+	init_wheel(left_wheel, ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
 }
 
 void Controller::start_thread() {
@@ -35,6 +35,7 @@ void Controller::set_pwm(wheel &w, float pwm) {
 	if(pwm > 1) pwm = 1;
 	if(pwm < -1) pwm = -1;
 	if(std::abs(pwm) < 0.05) pwm = 0;
+//	pwm = 0;
 
 	if (pwm < 0) {
 		w.pwm_out1->write(1);
@@ -68,8 +69,8 @@ void Controller::update_wheel_velocity() {
 //		0.06f*PI: m/s conversion
 		float last_left_vel = left_wheel.velocity;
 		float last_right_vel = right_wheel.velocity;
-		left_wheel.velocity = (left_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
-		right_wheel.velocity = (right_pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
+		left_wheel.velocity = (left_pulses*0.05f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
+		right_wheel.velocity = (right_pulses*0.05f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
 		encoder_vel = {true, left_wheel.velocity, right_wheel.velocity,
 				 left_wheel.velocity - last_left_vel, right_wheel.velocity - last_right_vel};
 	}
