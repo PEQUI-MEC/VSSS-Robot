@@ -27,12 +27,12 @@ class SensorFusion {
 
 	Thread thread_ekf;
 	Timer timer_mag;
+	Timer timeout;
 
 	VisionData vision;
 	bool new_vision_data = false;
 
 	float mag_offset = 0;
-	volatile bool stop = false;
 
 	float previous_w = 0;
 	int e_time = 0;
@@ -40,7 +40,6 @@ class SensorFusion {
 	void ekf_thread();
 	opt_mag read_magnetometer();
 	void gyro_calib();
-	Controls acc_model(float acc_x, float acc_y, float w);
 
 	volatile Controls last_controls{0,0};
 	volatile float x_acc = 0;
@@ -62,6 +61,7 @@ class SensorFusion {
 	Pose get_pose() const;
 	void set_vision_data(float x, float y, float theta);
 	void stop_and_wait();
+	void resume_thread();
 };
 
 #endif //VSSS_SENSORFUSION_H

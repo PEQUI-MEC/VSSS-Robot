@@ -26,6 +26,10 @@ void SensorFusion::ekf_thread() {
 	timer_mag.start();
 
 	while (true) {
+		if (timeout.read_ms() > 500) {
+			stop_and_wait();
+			timer_ekf.reset();
+		}
 		int time_us = timer_ekf.read_us();
 		if (time_us > EKF_PERIOD_US || new_vision_data) {
 			timer_ekf.reset();
@@ -85,7 +89,6 @@ void SensorFusion::ekf_thread() {
 			}
 
 			previous_w = gyro_rate;
-			if(stop) stop_and_wait();
 		}
 	}
 }
@@ -142,26 +145,20 @@ opt_mag SensorFusion::read_magnetometer() {
 }
 
 void SensorFusion::stop_and_wait() {
-	stop = false;
 	ekf.COV.setIdentity();
 	if(thread_ekf.get_state() != Thread::WaitingThreadFlag) {
 		Thread::signal_wait(CONTINUE_SIGNAL);
 		Thread::signal_clr(CONTINUE_SIGNAL);
 	}
+	timeout.reset();
+}
+
+void SensorFusion::resume_thread() {
+	if(thread_ekf.get_state() == Thread::WaitingThreadFlag) {
+		thread_ekf.signal_set(CONTINUE_SIGNAL);
+	}
 }
 
 Pose SensorFusion::get_pose() const {
 	return Pose(ekf.x);
-}
-
-constexpr float theta = PI/2 - 0.3652f;
-//constexpr float rx = 0.028f;
-//constexpr float ry = 0.01f;
-constexpr float r = 0.02973f;
-const float sin_theta = std::sin(theta);
-const float cos_theta = std::cos(theta);
-Controls SensorFusion::acc_model(float acc_x, float acc_y, float w) {
-	float alpha = (-acc_y + std::pow(w, 2.0f) * r * cos_theta) / (r * sin_theta);
-	float acc = acc_x - alpha * r * cos_theta - std::pow(w, 2.0f) * r * sin_theta;
-	return {acc, alpha};
 }
