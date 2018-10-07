@@ -35,7 +35,7 @@ int main() {
 	control.start_threads();
 	messenger.start_thread();
 
-	Serial usb(USBTX, USBRX);
+//	Serial usb(USBTX, USBRX);
 
 	control.set_target_orientation(to_rads(-45));
 	wait(0.5);
@@ -45,6 +45,8 @@ int main() {
 	wait(0.5);
 	control.set_target_orientation(0);
 	wait(0.2);
+
+	control.sensors.timeout.start();
 
 //	control.stop = true;
 
@@ -63,9 +65,9 @@ int main() {
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-//		Thread::wait(200);
-		control.set_ang_vel_control(20);
-		Thread::wait(8);
+		Thread::wait(200);
+//		control.set_ang_vel_control(20);
+//		Thread::wait(8);
 
 //		auto msg = str(control.sensors.e_time) + "\n";
 //		auto acc_y = control.sensors.imu.read_acc().y - off;
@@ -84,13 +86,16 @@ int main() {
 //		auto msg = str(control.sensors.get_pose().w) + '\n';
 //		auto msg = str(control.sensors.get_pose().v) + ',' +
 //		auto msg = str(control.sensors.last_x_acc) + ',' +
-		std::string msg = str(control.sensors.get_pose().v) + ',' +
-				str(control.sensors.x_acc) + ',' +
-				str(control.sensors.x_acc_fixed);
+//		messenger.send_log(control.sensors.get_pose().v,
+//						   control.sensors.x_acc,
+//						   control.sensors.get_pose().w);
+//		std::string msg = str(control.sensors.get_pose().v) + ',' +
+//				str(control.sensors.x_acc) + ',' +
+//				str(control.sensors.x_acc_fixed);
 //		std::string msg = str(control.sensors.A) + ',' +
 //				str(control.sensors.B);
 //				str(control.sensors.previous_w) + '\n';
-		messenger.send_msg(msg);
+//		messenger.send_msg(msg);
 //		auto msg = str(y) + ',' + str(v) + '\n';
 //		auto msg = acc.to_string() + "\n";
 //		usb.printf(msg.c_str());

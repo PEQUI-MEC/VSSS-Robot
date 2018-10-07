@@ -46,4 +46,19 @@ struct Point {
 
 Vector operator*(float value, Vector vec);
 
+// Appends csv data
+template <typename T>
+void append(std::string &buff, T last) {
+	buff.append(std::to_string(last));
+//	buff += '\n';
+}
+
+template <typename First, typename ...Others>
+void append(std::string &buff,
+			First first, Others ...others) {
+	append(buff, first);
+	buff += ',';
+	append(buff, others...);
+}
+
 #endif //VSSS_HELPER_FUNCTIONS_H

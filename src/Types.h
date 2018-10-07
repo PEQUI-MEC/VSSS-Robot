@@ -2,6 +2,7 @@
 #define VSSS_TYPES_H
 
 #include <Core>
+#include "helper_functions.h"
 
 struct Pose {
 	float x;
@@ -28,6 +29,12 @@ struct Pose {
 		vec(3, 0) = v;
 		vec(4, 0) = w;
 		return vec;
+	}
+
+	Pose or_backwards(bool backwards) {
+		static constexpr float PI = 3.1415926f;
+		if (!backwards) return *this;
+		else return {x, y, wrap(theta + PI), -v, w};
 	}
 };
 
