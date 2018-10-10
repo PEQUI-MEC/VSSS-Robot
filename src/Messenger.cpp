@@ -41,27 +41,34 @@ void Messenger::uvf_message(const string &msg) {
 		float y = values[3] / 100;
 		auto pose = control->sensors.get_pose();
 		float theta = std::atan2(y - pose.y, x - pose.x);
-		control->set_target_pose(values[0] / 100, values[1] / 100,
-								 theta, false, values[5]);
+		control->set_target(ControlState::Pose,
+							{values[0] / 100, values[1] / 100, theta, values[5]},
+							false);
 	}
 }
 
 void Messenger::GoToPoint(const string &msg) {
 	msg_data<3> values = get_values<3>(msg, 1);
 	if (values.is_valid)
-		control->set_target_position(values[0] / 100, values[1] / 100, values[2]);
+		control->set_target(ControlState::Position,
+							{values[0] / 100, values[1] / 100, 0, values[2]},
+							true);
 }
 
 void Messenger::GoToVector(const string &msg) {
 	msg_data<2> values = get_values<2>(msg, 1);
 	if (values.is_valid)
-		control->set_vector_control(to_rads(values[0]), values[1]);
+		control->set_target(ControlState::Vector,
+							{0, 0, to_rads(values[0]), values[1]},
+							false);
 }
 
 void Messenger::goToOrientation(const string &msg) {
 	msg_data<2> values = get_values<2>(msg, 1);
 	if (values.is_valid)
-		control->set_target_orientation(to_rads(values[0]));
+		control->set_target(ControlState::Orientation,
+							{0, 0, to_rads(values[0]), 0},
+							true);
 }
 
 void Messenger::set_ekf_data(const string &msg) {
@@ -102,7 +109,9 @@ void Messenger::decode_msg(const string &msg) {
 	if (values.is_valid) {
 		float right_vel = values[0];
 		float left_vel = values[1];
-		control->set_ang_vel_control((right_vel - left_vel) / ROBOT_SIZE);
+		control->set_target(ControlState::Orientation,
+							{0, 0, 0, (right_vel - left_vel) / ROBOT_SIZE},
+							true);
 	}
 }
 

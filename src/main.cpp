@@ -37,14 +37,16 @@ int main() {
 
 //	Serial usb(USBTX, USBRX);
 
-	control.set_target_orientation(to_rads(-45));
-	wait(0.5);
-	control.set_target_orientation(0);
-	wait(0.5);
-	control.set_target_orientation(to_rads(45));
-	wait(0.5);
-	control.set_target_orientation(0);
-	wait(0.2);
+	auto to_orientation = [&](float degrees) {
+		control.set_target(ControlState::Orientation,
+						   {0, 0, to_rads(degrees), 0}, true);
+		wait(0.5);
+	};
+
+	to_orientation(-45);
+	to_orientation(0);
+	to_orientation(45);
+	to_orientation(0);
 
 	control.sensors.timeout.start();
 

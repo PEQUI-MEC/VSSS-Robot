@@ -3,7 +3,7 @@
 
 #include <Types.h>
 
-const float ROBOT_SIZE = 0.0675f;
+const float ROBOT_SIZE = 0.063f;
 
 class EkfModel {
 	private:
