@@ -55,20 +55,22 @@ TargetVelocity Control::set_stop_and_sleep() {
 void Control::pose_control_thread() {
 	while (true) {
 		if (state == ControlState::None ||
-				sensors.timeout.read_ms() > 500) stop_and_sleep();
+				sensors.timeout.read_ms() > 1000) stop_and_sleep();
 
 		backwards = backwards_select(target.theta);
 		auto target = this->target.or_backwards_vel(backwards);
 		auto pose = sensors.get_pose().or_backwards(backwards);
+//		auto pose = sensors.get_pose();
 
 		auto target_vel = [&]() {
 			switch (state) {
 				case ControlState::Pose:
-					return pose_control(sensors.get_pose(), this->target);
+					return vfo.control_law(this->target, sensors.get_pose());
+//					return pose_control(sensors.get_pose(), this->target);
 				case ControlState::Position:
 					return position_control(pose, target);
 				case ControlState::Vector:
-					return vector_control(pose, target.theta, target.velocity);
+					return vector_control(pose.theta, target.theta, target.velocity);
 				case ControlState::Orientation:
 					return orientation_control(pose, target.theta);
 				case ControlState::AngularVel:
@@ -77,6 +79,8 @@ void Control::pose_control_thread() {
 					return TargetVelocity{0, 0};
 			}
 		}();
+		target_vel.v = limit_error(target_vel.v, pose.v, 0.4f);
+//		target_vel.w = limit_error(target_vel.w, pose.w, 10);
 		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
 		controller.set_target_velocity(target_wheel_vel);
 		Thread::wait(10);
@@ -91,23 +95,25 @@ WheelVelocity Control::get_target_wheel_velocity(TargetVelocity target) const {
 TargetVelocity Control::pose_control(Pose pose, Target target) {
 	const PolarPose polar_pose = get_polar_pose(pose, target);
 	if(polar_pose.error < 0.02) {
-		return vector_control(pose, target.theta, target.velocity);
+		return vector_control(pose.theta, target.theta, target.velocity);
 	} else {
 		return control_law(polar_pose, target.velocity);
 	}
 }
 
 TargetVelocity Control::position_control(Pose pose, Target target) {
-	float target_theta = std::atan2(target.y - pose.y,
-									target.x - pose.x);
-	float error = std::sqrt(std::pow(target.x - pose.x, 2.0f)
-							+ std::pow(target.y - pose.y, 2.0f));
+	auto position = pose.position;
+	float target_theta = std::atan2(target.position.y - position.y,
+									target.position.x - position.x);
+	float error = std::sqrt(std::pow(target.position.x - position.x, 2.0f)
+							+ std::pow(target.position.y - position.y, 2.0f));
 	if (error < 0.02) return set_stop_and_sleep();
-	else return vector_control(pose, target_theta, target.velocity * std::sqrt(error));
+	else return vector_control(pose.theta, target_theta, target.velocity * std::sqrt(error));
 }
 
-TargetVelocity Control::vector_control(Pose pose, float target_theta, float velocity) const {
-	return {velocity, 10 * wrap(target_theta - pose.theta)};
+TargetVelocity Control::vector_control(float theta, float target_theta, float velocity) const {
+	auto error = wrap(target_theta - theta);
+	return {velocity * std::cos(error), 10 * error};
 }
 
 TargetVelocity Control::orientation_control(Pose pose, float theta) {
@@ -115,8 +121,10 @@ TargetVelocity Control::orientation_control(Pose pose, float theta) {
 }
 
 PolarPose Control::get_polar_pose(Pose pose, Target target) const {
-	float error = std::sqrt(std::pow(target.x - pose.x, 2.0f) + std::pow(target.y - pose.y, 2.0f));
-	float robot_to_targ = std::atan2(target.y - pose.y, target.x - pose.x);
+	auto position = pose.position;
+	float error = std::sqrt(std::pow(target.position.x - position.x, 2.0f)
+							+ std::pow(target.position.y - position.y, 2.0f));
+	float robot_to_targ = std::atan2(target.position.y - position.y, target.position.x - position.x);
 	float theta = wrap(robot_to_targ - target.theta);
 	float alpha = wrap(robot_to_targ - pose.theta);
 	return {error, -theta, -alpha};

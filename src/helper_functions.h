@@ -8,6 +8,23 @@
 #include <string>
 #include <cmath>
 
+inline float min(float a, float b) {
+	return (a < b) ? a : b;
+}
+
+inline float limit_error(float target, float current, float max_err) {
+	float diff = target - current;
+	if (std::abs(diff) > max_err) {
+		if (target > current) {
+			return current + max_err;
+		} else {
+			return current - max_err;
+		}
+	} else {
+		return target;
+	}
+}
+
 template <typename T>
 inline std::string str(const T& x) {
 	return std::to_string(x);

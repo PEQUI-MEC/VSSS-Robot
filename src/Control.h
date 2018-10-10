@@ -3,6 +3,7 @@
 
 #include "SensorFusion.h"
 #include "Controller.h"
+#include "VFO.h"
 
 struct PolarPose {
 	float error;
@@ -10,28 +11,13 @@ struct PolarPose {
 	float alpha;
 };
 
-struct TargetVelocity {
-	float v;
-	float w;
-};
-
 enum class ControlState {
 	Pose, Position, Vector, Orientation, AngularVel, None
 };
 
-struct Target {
-	float x = 0;
-	float y = 0;
-	float theta = 0;
-	float velocity = 0;
-
-	Target or_backwards_vel(bool backwards) {
-		return {x, y, theta, -velocity};
-	}
-};
-
 class Control {
 	public:
+	VFO vfo;
 	Controller controller;
 	SensorFusion sensors;
 
@@ -39,7 +25,7 @@ class Control {
 
 	volatile ControlState state = ControlState::None;
 	bool stop_afterwards = true;
-	Target target{0, 0, 0, 0};
+	Target target{{0, 0}, 0, 0};
 
 	Timer backwards_timer;
 	bool backwards = false;
@@ -66,7 +52,7 @@ class Control {
 	TargetVelocity position_control(Pose pose, Target target);
 
 	TargetVelocity control_law(PolarPose pose, float vmax) const;
-	TargetVelocity vector_control(Pose pose, float target_theta, float velocity) const;
+	TargetVelocity vector_control(float theta, float target_theta, float velocity) const;
 	WheelVelocity get_target_wheel_velocity(TargetVelocity target) const;
 	PolarPose get_polar_pose(Pose pose, Target target) const;
 	TargetVelocity orientation_control(Pose pose, float theta);

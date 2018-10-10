@@ -15,8 +15,8 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	float y_direction = time * std::sin(pose.theta + delta_theta);
 	float y_increment = pose.v * y_direction;
 
-	pred.x = pose.x + x_increment;
-	pred.y = pose.y + y_increment;
+	pred.position.x = pose.position.x + x_increment;
+	pred.position.y = pose.position.y + y_increment;
 	pred.theta = wrap(pose.theta + pose.w * time);
 	pred.v = pose.v + c.lin_accel * time;
 	pred.w = pose.w + c.ang_accel * time;

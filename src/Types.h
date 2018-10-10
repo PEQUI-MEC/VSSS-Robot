@@ -5,26 +5,28 @@
 #include "helper_functions.h"
 
 struct Pose {
-	float x;
-	float y;
+	Point position;
 	float theta;
 	float v;
 	float w;
 
 	explicit Pose(const Eigen::Matrix<float, 5, 1> &pose_vec) :
-			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
+			position{pose_vec(0, 0), pose_vec(1, 0)},
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
 			w(pose_vec(4, 0)) {}
 
 	Pose(float x, float y, float theta, float v, float w) :
-			x(x), y(y), theta(theta), v(v), w(w) {}
+			position{x, y}, theta(theta), v(v), w(w) {}
 
-	Pose() : x(0), y(0), theta(0), v(0), w(0) {}
+	Pose(Point position, float theta, float v, float w) :
+			position{position.x, position.y}, theta(theta), v(v), w(w) {}
+
+	Pose() : position{0, 0}, theta(0), v(0), w(0) {}
 
 	Eigen::Matrix<float, 5, 1> to_vec() {
 		Eigen::Matrix<float, 5, 1> vec;
-		vec(0, 0) = x;
-		vec(1, 0) = y;
+		vec(0, 0) = position.x;
+		vec(1, 0) = position.y;
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
@@ -33,8 +35,8 @@ struct Pose {
 
 	Pose or_backwards(bool backwards) {
 		static constexpr float PI = 3.1415926f;
-		if (!backwards) return *this;
-		else return {x, y, wrap(theta + PI), -v, w};
+		if (backwards) return {position, wrap(theta + PI), -v, w};
+		else return *this;
 	}
 };
 
@@ -96,6 +98,22 @@ struct VisionData {
 		vec(1, 0) = y;
 		vec(2, 0) = theta;
 		return vec;
+	}
+};
+
+struct TargetVelocity {
+	float v;
+	float w;
+};
+
+struct Target {
+	Point position{0, 0};
+	float theta = 0;
+	float velocity = 0;
+
+	Target or_backwards_vel(bool backwards) {
+		if (backwards) return {position, theta, -velocity};
+		else return *this;
 	}
 };
 

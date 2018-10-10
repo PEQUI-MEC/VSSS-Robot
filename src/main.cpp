@@ -39,7 +39,7 @@ int main() {
 
 	auto to_orientation = [&](float degrees) {
 		control.set_target(ControlState::Orientation,
-						   {0, 0, to_rads(degrees), 0}, true);
+						   {{0, 0}, to_rads(degrees), 0}, true);
 		wait(0.5);
 	};
 
@@ -48,7 +48,9 @@ int main() {
 	to_orientation(45);
 	to_orientation(0);
 
-	control.sensors.timeout.start();
+//	control.sensors.timeout.start();
+
+	control.set_target(ControlState::Position, {{-1, -1}, to_rads(-180), 0.8}, false);
 
 //	control.stop = true;
 
