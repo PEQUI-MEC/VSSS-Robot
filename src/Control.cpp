@@ -39,35 +39,11 @@ void Control::set_ekf_vision_data(float x, float y, float theta) {
 	sensors.set_vision_data(x, y, theta);
 }
 
-void Control::set_target_pose(float x, float y, float theta,
-							  bool stop_afterwards, float velocity) {
-	target = {x, y, theta, velocity};
+void Control::set_target(ControlState control_type, Target target,
+						 bool stop_afterwards) {
 	this->stop_afterwards = stop_afterwards;
-	state = ControlState::Pose;
-	resume_threads();
-}
-
-void Control::set_vector_control(float target_theta, float velocity) {
-	target = {0, 0, target_theta, velocity};
-	state = ControlState::Vector;
-	resume_threads();
-}
-
-void Control::set_target_orientation(float theta) {
-	target = {0, 0, theta, 0};
-	state = ControlState::Orientation;
-	resume_threads();
-}
-
-void Control::set_target_position(float x, float y, float velocity) {
-	target = {x, y, 0, velocity};
-	state = ControlState::Position;
-	resume_threads();
-}
-
-void Control::set_ang_vel_control(float angular_velocity) {
-	target = {0, 0, 0, angular_velocity};
-	state = ControlState::AngularVel;
+	this->target = target;
+	state = control_type;
 	resume_threads();
 }
 

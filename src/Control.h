@@ -57,11 +57,7 @@ class Control {
 
 	void stop_and_sleep();
 	void set_ekf_vision_data(float x, float y, float theta);
-	void set_target_pose(float x, float y, float theta, bool stop_afterwards, float velocity = 0.8);
-	void set_vector_control(float target_theta, float velocity = 0.8);
-	void set_target_orientation(float theta);
-	void set_target_position(float x, float y, float velocity = 0.8);
-	void set_ang_vel_control(float angular_velocity);
+	void set_target(ControlState control_type, Target target, bool stop_afterwards);
 	bool backwards_select(float target_theta);
 
 	void pose_control_thread();
