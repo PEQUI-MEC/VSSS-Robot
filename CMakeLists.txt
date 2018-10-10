@@ -43,6 +43,7 @@ set(SOURCE_FILES
 	${SRC_DIR}/helper_functions.h
 	${SRC_DIR}/Control.cpp
 	${SRC_DIR}/helper_functions.cpp
+	${SRC_DIR}/VFO.cpp
 
 	${MBED_SRC}
 	${XBEELIB_SRC}
