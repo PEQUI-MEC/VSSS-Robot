@@ -44,6 +44,8 @@ set(SOURCE_FILES
 	${SRC_DIR}/Control.cpp
 	${SRC_DIR}/helper_functions.cpp
 	${SRC_DIR}/VFO.cpp
+	${SRC_DIR}/ApdsSensor.cpp
+	${SRC_DIR}/ApdsRegs.h
 
 	${MBED_SRC}
 	${XBEELIB_SRC}

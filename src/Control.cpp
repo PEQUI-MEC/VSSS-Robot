@@ -1,5 +1,7 @@
 #include "Control.h"
 #include "helper_functions.h"
+#include "PIN_MAP.h"
+
 #define PI 3.1415926f
 
 Control::Control() : sensors(&controller) {
@@ -11,7 +13,9 @@ Control::Control() : sensors(&controller) {
 
 void Control::start_threads() {
 	controller.start_thread();
-	sensors.ekf_thread_start();
+	back_apds = new ApdsSensor(p9, p10);
+	front_apds = new ApdsSensor(IMU_SDA_PIN, IMU_SCL_PIN);
+	sensors.ekf_thread_start(&front_apds->i2c);
 	control_thread.start(callback(this, &Control::pose_control_thread));
 }
 
@@ -25,7 +29,7 @@ void Control::reset_timeout() {
 }
 
 void Control::stop_and_sleep() {
-	if(!sleep_enabled) return;
+	if (!sleep_enabled) return;
 
 	state = ControlState::None;
 	controller.stop = true;
@@ -55,18 +59,25 @@ TargetVelocity Control::set_stop_and_sleep() {
 void Control::pose_control_thread() {
 	while (true) {
 		if (state == ControlState::None ||
-				sensors.timeout.read_ms() > 1000) stop_and_sleep();
+			sensors.timeout.read_ms() > 1000)
+			stop_and_sleep();
 
-		backwards = backwards_select(target.theta);
-		auto target = this->target.or_backwards_vel(backwards);
-		auto pose = sensors.get_pose().or_backwards(backwards);
-//		auto pose = sensors.get_pose();
+//		backwards = backwards_select(target.theta);
+//		auto target = this->target.or_backwards_vel(backwards);
+//		auto pose = sensors.get_pose().or_backwards(backwards);
+		auto pose = sensors.get_pose();
 
 		auto target_vel = [&]() {
 			switch (state) {
-				case ControlState::Pose:
+				case ControlState::Pose: {
+					auto position = pose.position;
+					float error = std::sqrt(std::pow(target.position.x - position.x, 2.0f)
+											+ std::pow(target.position.y - position.y, 2.0f));
+					if (error < 0.02) return set_stop_and_sleep();
 					return vfo.control_law(this->target, sensors.get_pose());
 //					return pose_control(sensors.get_pose(), this->target);
+				} case ControlState::SeekBall:
+					return run_to_ball(sensors.get_pose(), this->target);
 				case ControlState::Position:
 					return position_control(pose, target);
 				case ControlState::Vector:
@@ -94,7 +105,7 @@ WheelVelocity Control::get_target_wheel_velocity(TargetVelocity target) const {
 
 TargetVelocity Control::pose_control(Pose pose, Target target) {
 	const PolarPose polar_pose = get_polar_pose(pose, target);
-	if(polar_pose.error < 0.02) {
+	if (polar_pose.error < 0.02) {
 		return vector_control(pose.theta, target.theta, target.velocity);
 	} else {
 		return control_law(polar_pose, target.velocity);
@@ -132,21 +143,58 @@ PolarPose Control::get_polar_pose(Pose pose, Target target) const {
 
 TargetVelocity Control::control_law(PolarPose pose, float vmax) const {
 	float k = (-1 / pose.error) *
-			(k2 * (pose.alpha - std::atan(-k1 * pose.theta))
-			 + (1 + k1 / (1 + std::pow(k1 * pose.theta, 2.0f))) * std::sin(pose.alpha));
-	float v = vmax/(1 + B * std::pow(k, 2.0f));
+			  (k2 * (pose.alpha - std::atan(-k1 * pose.theta))
+			   + (1 + k1 / (1 + std::pow(k1 * pose.theta, 2.0f))) * std::sin(pose.alpha));
+	float v = vmax / (1 + B * std::pow(k, 2.0f));
 	float w = v * k;
 	return {v, w};
 }
 
 bool Control::backwards_select(float target_theta) {
 	auto theta = sensors.get_pose().theta;
-	if(backwards_timer.read_ms() > 50) {
-		bool go_backwards = std::abs(wrap(target_theta - theta)) > PI/2;
-		if(backwards != go_backwards) backwards_timer.reset();
+	if (backwards_timer.read_ms() > 50) {
+		bool go_backwards = std::abs(wrap(target_theta - theta)) > PI / 2;
+		if (backwards != go_backwards) backwards_timer.reset();
 		backwards = go_backwards;
 		return go_backwards;
 	} else {
 		return backwards;
+	}
+}
+
+//TODO: found rules and max proximity
+bool found_front, found_back;
+TargetVelocity Control::seek_ball(Pose pose, Target target) {
+	if (found_front) {
+//		auto obj = front_apds.get_obj();
+//		if (obj.proximity > 20) {
+//			return vector_control(pose.theta, wrap(pose.theta - obj.theta), target.velocity);
+//		} else {
+//			return vfo.control_law(target, pose);
+//		}
+	} else if (found_back) {
+		auto obj = back_apds->get_obj();
+		if (obj.proximity > 20) {
+			return vector_control(pose.theta, wrap(pose.theta - obj.theta), -target.velocity);
+		} else {
+			return vfo.control_law(target, pose);
+		}
+	} else {
+		return vfo.control_law(target, pose);
+	}
+}
+
+TargetVelocity Control::run_to_ball(Pose pose, Target target) {
+	auto obj = front_apds->get_obj();
+	if (obj.proximity > 10) {
+//	if (false) {
+		return vector_control(pose.theta, wrap(pose.theta - obj.theta), target.velocity);
+	} else {
+		auto back_obj = back_apds->get_obj();
+		if (back_obj.proximity > 10) {
+			return vector_control(pose.theta, wrap(pose.theta - back_obj.theta), -target.velocity);
+		} else {
+			return {0, 0};
+		}
 	}
 }

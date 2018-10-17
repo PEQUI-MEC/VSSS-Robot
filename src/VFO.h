@@ -14,9 +14,9 @@ struct H {
 class VFO {
 	public:
 //	VFO parameters
-	float n = 1;
-	float k1 = 1.5;
-	float kp = 3;
+	float n = 1.4;
+	float k1 = 10;
+	float kp = 2.2;
 	int direction = 1;
 
 //	VFO functions

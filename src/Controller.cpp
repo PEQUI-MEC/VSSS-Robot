@@ -112,6 +112,7 @@ void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinN
 	w.pwm_out2 = new PwmOut(motor_pin2);
 	w.pwm_out2->period_ms(2);
 	w.error_acc = 0;
+	set_pwm(w, 0);
 }
 
 void Controller::set_pid_constants(float kp, float ki, float kd) {

@@ -50,7 +50,9 @@ int main() {
 
 //	control.sensors.timeout.start();
 
-	control.set_target(ControlState::Position, {{-1, -1}, to_rads(-180), 0.8}, false);
+	control.set_target(ControlState::Pose, {{0.5f, 0.5f}, to_rads(180), 0.8}, false);
+//	control.set_target(ControlState::Position, {{1, 1}, to_rads(0), 0.8}, false);
+//	control.set_target(ControlState::SeekBall, {{0, 0}, 0, 0.8}, false);
 
 //	control.stop = true;
 
@@ -70,6 +72,7 @@ int main() {
 			bat_watcher(LEDs, battery_vin);
 		}
 		Thread::wait(200);
+//		control.set_target(ControlState::AngularVel, {{0, 0}, 0,0}, false);
 //		control.set_ang_vel_control(20);
 //		Thread::wait(8);
 
@@ -84,6 +87,10 @@ int main() {
 //		auto msg = "$" + str((int) std::round(y * 100)) + ' ' + str((int) std::round(v * 100)) + ";\n";
 //		auto msg = str(v) + '\n';
 //		auto msg = str(control.sensors.get_pose().theta) + '\n';
+//		auto pose = control.sensors.get_pose();
+//		messenger.send_log(pose.position.x);
+//		std::string msg = str(pose.position.x) + '\n';
+//		usb.printf(msg.c_str());
 //		auto msg = str(control.sensors.last_y_acc) + '\n';
 //		auto msg = str(control.sensors.last_controls.ang_accel) + '\n';
 //		auto msg = str(control.sensors.last_y_acc) + '\n';

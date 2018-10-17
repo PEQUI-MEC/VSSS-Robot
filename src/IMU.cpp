@@ -7,7 +7,7 @@
 #define MAX_ACC (4 * 9.80665f) // 4g para m/s^2
 #define MAX_MAG 4.0f
 
-IMU::IMU() {
+IMU::IMU(PinName sda, PinName scl) {
 	ConfigFile configs("/local/config.txt");
 	gyro_scale = configs.get_float("gyro_scale");
 	mag_max_x = configs.get_float("mag_max_x");
@@ -17,8 +17,8 @@ IMU::IMU() {
 }
 
 // Configura os sensores
-void IMU::init(PinName sda, PinName scl) {
-	i2c = new I2C(sda, scl);
+void IMU::init(I2C *imu_i2c) {
+	i2c = imu_i2c;
 	i2c->frequency(400*1000);
 	// Habilita acelerometro nos 3 eixos
 	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);

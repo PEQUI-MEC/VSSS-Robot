@@ -10,12 +10,12 @@
 #define PULSES_PER_REVOLUTION 12
 #define PI 3.141592f
 
-SensorFusion::SensorFusion(Controller *controler_ptr) {
+SensorFusion::SensorFusion(Controller *controler_ptr) : imu(IMU_SDA_PIN, IMU_SCL_PIN) {
 	controller = controler_ptr;
 }
 
-void SensorFusion::ekf_thread_start() {
-	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+void SensorFusion::ekf_thread_start(I2C *imu_i2c) {
+	imu.init(imu_i2c);
 	gyro_calib();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }
