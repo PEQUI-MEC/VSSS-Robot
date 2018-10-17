@@ -57,7 +57,7 @@ class SensorFusion {
 	volatile float B = 0;
 
 	explicit SensorFusion(Controller *controler_ptr);
-	void ekf_thread_start();
+	void ekf_thread_start(I2C *imu_i2c);
 	Pose get_pose() const;
 	void set_vision_data(float x, float y, float theta);
 	void stop_and_wait();

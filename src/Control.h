@@ -4,6 +4,7 @@
 #include "SensorFusion.h"
 #include "Controller.h"
 #include "VFO.h"
+#include "ApdsSensor.h"
 
 struct PolarPose {
 	float error;
@@ -12,19 +13,23 @@ struct PolarPose {
 };
 
 enum class ControlState {
-	Pose, Position, Vector, Orientation, AngularVel, None
+	Pose, Position, Vector, Orientation, AngularVel, SeekBall, None
 };
 
 class Control {
 	public:
-	VFO vfo;
 	Controller controller;
 	SensorFusion sensors;
+	VFO vfo;
+
+	ApdsSensor *back_apds;
+	ApdsSensor *front_apds;
 
 	Thread control_thread;
 
 	volatile ControlState state = ControlState::None;
 	bool stop_afterwards = true;
+
 	Target target{{0, 0}, 0, 0};
 
 	Timer backwards_timer;
@@ -50,6 +55,8 @@ class Control {
 
 	TargetVelocity pose_control(Pose pose, Target target);
 	TargetVelocity position_control(Pose pose, Target target);
+	TargetVelocity seek_ball(Pose pose, Target target);
+	TargetVelocity run_to_ball(Pose pose, Target target);
 
 	TargetVelocity control_law(PolarPose pose, float vmax) const;
 	TargetVelocity vector_control(float theta, float target_theta, float velocity) const;
