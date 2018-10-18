@@ -20,6 +20,7 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	pred.theta = wrap(pose.theta + pose.w * time);
 	pred.v = pose.v + c.lin_accel * time;
 	pred.w = pose.w + c.ang_accel * time;
+	pred.mag_offset = pred.mag_offset;
 
 	F(0, 2) = -y_increment;
 	F(1, 2) = x_increment;
@@ -38,6 +39,7 @@ void EkfModel::process_noise(float time) {
 	R(2, 2) = time * 0.00001f;
 	R(3, 3) = time * 0.01f;
 	R(4, 4) = time * 0.0001f;
+	R(5, 5) = time * 0.01f;
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z) {
@@ -48,13 +50,14 @@ EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const E
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_model(const EKF::PoseVec &x) {
-	EKF::SensorVec z;
-	z(0,0) = x(2,0);
-	z(1,0) = x(4,0);
-	float v_increment = x(4,0) * ROBOT_SIZE/2;
-	z(2,0) = x(3,0) - v_increment;
-	z(3,0) = x(3,0) + v_increment;
-	return z;
+	SensorData pred_sensor_data;
+	Pose pose(x);
+
+	pred_sensor_data.mag_theta = pose.theta + pose.mag_offset;
+	pred_sensor_data.gyro_w = pose.w;
+	pred_sensor_data.vel_left = pose.v - pose.w * ROBOT_SIZE/2;
+	pred_sensor_data.vel_right = pose.v + pose.w * ROBOT_SIZE/2;
+	return pred_sensor_data.to_vec();
 }
 
 EKF::VisionVec EkfModel::vision_measurement_error(const EKF::PoseVec &x, const EKF::VisionVec &z) {
@@ -74,8 +77,13 @@ EKF::VisionVec EkfModel::vision_measurement_model(const EKF::PoseVec &x) {
 
 
 void EkfModel::use_magnetometer(bool use) {
-	if(use) H(0,2) = 1;
-	else H(0,2) = 0;
+	if(use) {
+		H(0,2) = 1;
+		H(0,5) = 1;
+	} else {
+		H(0,2) = 0;
+		H(0,5) = 0;
+	}
 }
 
 void EkfModel::use_encoders(bool use) {
@@ -98,6 +106,7 @@ EkfModel::EkfModel() {
 
 	H.setZero();
 	H(0,2) = 1;
+	H(0,5) = 1;
 	H(1,4) = 1;
 	H(2,3) = 1;
 	H(3,3) = 1;

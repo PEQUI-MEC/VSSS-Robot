@@ -166,12 +166,12 @@ bool Control::backwards_select(float target_theta) {
 bool found_front, found_back;
 TargetVelocity Control::seek_ball(Pose pose, Target target) {
 	if (found_front) {
-//		auto obj = front_apds.get_obj();
-//		if (obj.proximity > 20) {
-//			return vector_control(pose.theta, wrap(pose.theta - obj.theta), target.velocity);
-//		} else {
-//			return vfo.control_law(target, pose);
-//		}
+		auto obj = front_apds->get_obj();
+		if (obj.proximity > 20) {
+			return vector_control(pose.theta, wrap(pose.theta - obj.theta), target.velocity);
+		} else {
+			return vfo.control_law(target, pose);
+		}
 	} else if (found_back) {
 		auto obj = back_apds->get_obj();
 		if (obj.proximity > 20) {

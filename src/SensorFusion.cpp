@@ -129,19 +129,20 @@ void SensorFusion::set_vision_data(float x, float y, float theta) {
 	vision = {x, y, theta};
 	new_vision_data = true;
 	if (no_vision) {
-		mag_offset = vision.theta;
+//		mag_offset = vision.theta;
 		no_vision = false;
 	}
 }
 
 opt_mag SensorFusion::read_magnetometer() {
-	return {false, 0};
+//	return {false, 0};
 
-//	bool use_mag = timer_mag.read_ms() > 10;
-//	if (use_mag) {
-//		timer_mag.reset();
+	bool use_mag = timer_mag.read_ms() > 10;
+	if (use_mag) {
+		timer_mag.reset();
 //		return {true, imu.read_mag() - mag_offset};
-//	} else return {false, prev_mesure.mag_theta};
+		return {true, mag_theta = imu.read_mag()};
+	} else return {false, mag_theta};
 }
 
 void SensorFusion::stop_and_wait() {

@@ -9,33 +9,37 @@ struct Pose {
 	float theta;
 	float v;
 	float w;
+	float mag_offset;
 
-	explicit Pose(const Eigen::Matrix<float, 5, 1> &pose_vec) :
+	explicit Pose(const Eigen::Matrix<float, 6, 1> &pose_vec) :
 			position{pose_vec(0, 0), pose_vec(1, 0)},
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)) {}
+			w(pose_vec(4, 0)),
+			mag_offset(pose_vec(5, 0)) {}
 
-	Pose(float x, float y, float theta, float v, float w) :
-			position{x, y}, theta(theta), v(v), w(w) {}
+	Pose(float x, float y, float theta, float v, float w, float mag_offset) :
+			position{x, y}, theta(theta), v(v), w(w), mag_offset(mag_offset) {}
 
-	Pose(Point position, float theta, float v, float w) :
-			position{position.x, position.y}, theta(theta), v(v), w(w) {}
+	Pose(Point position, float theta, float v, float w, float mag_offset) :
+			position{position.x, position.y}, theta(theta),
+			v(v), w(w), mag_offset(mag_offset) {}
 
-	Pose() : position{0, 0}, theta(0), v(0), w(0) {}
+	Pose() : position{0, 0}, theta(0), v(0), w(0), mag_offset(0) {}
 
-	Eigen::Matrix<float, 5, 1> to_vec() {
-		Eigen::Matrix<float, 5, 1> vec;
+	Eigen::Matrix<float, 6, 1> to_vec() {
+		Eigen::Matrix<float, 6, 1> vec;
 		vec(0, 0) = position.x;
 		vec(1, 0) = position.y;
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
+		vec(5, 0) = mag_offset;
 		return vec;
 	}
 
 	Pose or_backwards(bool backwards) {
 		static constexpr float PI = 3.1415926f;
-		if (backwards) return {position, wrap(theta + PI), -v, w};
+		if (backwards) return {position, wrap(theta + PI), -v, w, mag_offset};
 		else return *this;
 	}
 };

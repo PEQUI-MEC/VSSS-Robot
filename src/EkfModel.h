@@ -10,7 +10,7 @@ class EkfModel {
 	void process_noise(float time);
 
 	public:
-	using EKF = EKFTypes<5, 4, 3, 2>;
+	using EKF = EKFTypes<6, 4, 3, 2>;
 
 	EKF::PoseMat F;
 	EKF::PoseMat R;

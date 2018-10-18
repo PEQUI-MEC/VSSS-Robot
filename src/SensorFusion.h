@@ -32,9 +32,10 @@ class SensorFusion {
 	VisionData vision;
 	bool new_vision_data = false;
 
-	float mag_offset = 0;
+//	float mag_offset = 0;
 
 	float previous_w = 0;
+	float mag_theta = 0;
 	int e_time = 0;
 
 	void ekf_thread();
