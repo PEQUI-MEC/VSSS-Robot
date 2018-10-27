@@ -134,6 +134,8 @@ class EKFTypes {
 	using VisionMat = Matrix<VISION_SIZE, VISION_SIZE>;
 	using HVisionMat = Matrix<VISION_SIZE, POSE_SIZE>;
 	using KVisionMat = Matrix<POSE_SIZE, VISION_SIZE>;
+
+	using UKFSigmaMat = Matrix<POSE_SIZE, 2 * POSE_SIZE + 1>;
 };
 
 #endif //VSSS_TYPES_H

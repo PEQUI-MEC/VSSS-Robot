@@ -7,6 +7,7 @@
 
 #include "EkfModel.h"
 #include "Types.h"
+#include "UKF.h"
 
 class EKF2 {
 	public:
