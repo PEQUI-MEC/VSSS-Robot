@@ -38,8 +38,9 @@ class Control {
 	bool sleep_enabled = true;
 
 	float k1 = 1;
-	float k2 = 8;
-	float B = 0.006;
+	float k2 = 6;
+	float uvf_n = 0.4;
+//	float B = 0.006;
 
 	explicit Control();
 	void start_threads();
@@ -58,6 +59,7 @@ class Control {
 	TargetVelocity seek_ball(Pose pose, Target target);
 	TargetVelocity run_to_ball(Pose pose, Target target);
 
+	TargetVelocity uvf(Pose pose, Target target) const;
 	TargetVelocity control_law(PolarPose pose, float vmax) const;
 	TargetVelocity vector_control(float theta, float target_theta, float velocity) const;
 	WheelVelocity get_target_wheel_velocity(TargetVelocity target) const;

@@ -104,6 +104,11 @@ struct VisionData {
 struct TargetVelocity {
 	float v;
 	float w;
+
+	TargetVelocity or_backwards(bool backwards) {
+		if (backwards) return {-v, w};
+		else return *this;
+	}
 };
 
 struct Target {

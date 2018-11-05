@@ -16,7 +16,7 @@ class VFO {
 //	VFO parameters
 	float n = 1.4;
 	float k1 = 10;
-	float kp = 2.2;
+	float kp = 2;
 	int direction = 1;
 
 //	VFO functions

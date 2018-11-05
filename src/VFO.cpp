@@ -17,8 +17,9 @@
 TargetVelocity VFO::control_law(Target target, const Pose &pose) {
 	H h = convergence_field(target, pose);
 	const Vector g2 = Vector(pose.theta);
-	const float cos_alpha = (g2 * h.hs) / (g2.modulus() * h.hs.modulus());
-	return {h.hs.modulus() * cos_alpha, h.h1};
+//	const float alpha = (g2 * h.hs) / (g2.modulus() * h.hs.modulus());
+	return {target.velocity * std::cos(wrap(h.hs.orientation() - g2.orientation())), h.h1};
+//	return {target.velocity, h.h1};
 }
 
 H VFO::convergence_field(Target target, Pose pose) {

@@ -51,6 +51,9 @@ struct Vector {
 	float modulus() const {
 		return std::sqrt(std::pow(x, 2.0f) + std::pow(y, 2.0f));
 	}
+	float orientation() const {
+		return std::atan2(y, x);
+	}
 	float operator*(const Vector vec) const { return x * vec.x + y * vec.y; }
 	Vector operator+(const Vector vec) const { return {x + vec.x, y + vec.y}; }
 };

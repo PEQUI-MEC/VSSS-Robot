@@ -50,8 +50,10 @@ int main() {
 
 //	control.sensors.timeout.start();
 
-	control.set_target(ControlState::Pose, {{0.5f, 0.5f}, to_rads(180), 0.8}, false);
-//	control.set_target(ControlState::Position, {{1, 1}, to_rads(0), 0.8}, false);
+	control.set_target(ControlState::Pose, {{-0.5f, -0.5f}, to_rads(180), 0.8f}, false);
+//	control.set_target(ControlState::Position, {{-0.5f, -0.5f}, to_rads(0), 0.8}, false);
+//	control.set_target(ControlState::Vector, {{0, 0}, to_rads(45), 0.8}, false);
+//	control.set_target(ControlState::Orientation, {{0, 0}, to_rads(45), 0.8}, false);
 //	control.set_target(ControlState::SeekBall, {{0, 0}, 0, 0.8}, false);
 
 //	control.stop = true;
