@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(VSSS C CXX ASM)
+project(VSSS-Robot C CXX ASM)
 set (CMAKE_CXX_STANDARD 14)
 
 set(LIB_DIR ${PROJECT_SOURCE_DIR}/lib)

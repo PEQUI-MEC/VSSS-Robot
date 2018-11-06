@@ -19,7 +19,7 @@ IMU::IMU(PinName sda, PinName scl) {
 // Configura os sensores
 void IMU::init(I2C *imu_i2c) {
 	i2c = imu_i2c;
-	i2c->frequency(400*1000);
+//	i2c->frequency(400*1000);
 	// Habilita acelerometro nos 3 eixos
 	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);
 
@@ -39,10 +39,10 @@ void IMU::init(I2C *imu_i2c) {
 	write_reg(addr_gyro_acc, CTRL3_C, 0x44);
 
 	// Habilita bussola
-	write_reg(addr_comp, LIS3MDL_CTRL_REG2, 0x00);
-	write_reg(addr_comp, LIS3MDL_CTRL_REG1, 0xFC);
-	write_reg(addr_comp, LIS3MDL_CTRL_REG4, 0x0C);
-	write_reg(addr_comp, LIS3MDL_CTRL_REG3, 0x00);
+//	write_reg(addr_comp, LIS3MDL_CTRL_REG2, 0x00);
+//	write_reg(addr_comp, LIS3MDL_CTRL_REG1, 0xFC);
+//	write_reg(addr_comp, LIS3MDL_CTRL_REG4, 0x0C);
+//	write_reg(addr_comp, LIS3MDL_CTRL_REG3, 0x00);
 
 	Thread::wait(100);
 }

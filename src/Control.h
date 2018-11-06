@@ -50,7 +50,7 @@ class Control {
 	void stop_and_sleep();
 	void set_ekf_vision_data(float x, float y, float theta);
 	void set_target(ControlState control_type, Target target, bool stop_afterwards);
-	bool backwards_select(float target_theta);
+	bool backwards_select(float theta_error);
 
 	void pose_control_thread();
 
@@ -59,11 +59,12 @@ class Control {
 	TargetVelocity seek_ball(Pose pose, Target target);
 	TargetVelocity run_to_ball(Pose pose, Target target);
 
-	TargetVelocity uvf(Pose pose, Target target) const;
-	TargetVelocity control_law(PolarPose pose, float vmax) const;
-	TargetVelocity vector_control(float theta, float target_theta, float velocity) const;
-	WheelVelocity get_target_wheel_velocity(TargetVelocity target) const;
-	PolarPose get_polar_pose(Pose pose, Target target) const;
+	TargetVelocity uvf(Pose pose, Target target);
+	TargetVelocity control_law(PolarPose pose, float vmax);
+	TargetVelocity vector_control(float theta, float target_theta,
+								  float velocity, bool enable_backwards = true);
+	WheelVelocity get_target_wheel_velocity(TargetVelocity target);
+	PolarPose get_polar_pose(Pose pose, Target target);
 	TargetVelocity orientation_control(Pose pose, float theta);
 	TargetVelocity set_stop_and_sleep();
 };
