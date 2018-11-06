@@ -10,7 +10,7 @@
 
 void EKF::predict(float time, float left_accel, float right_accel, float ang_accel) {
 	float linear_accel = (right_accel + left_accel)/2;
-//	float angular_accel = (right_accel - left_accel)/ROBOT_SIZE;
+	float angular_accel = (right_accel - left_accel)/ROBOT_SIZE;
 
 //	Predicts pose
 	float delta_theta = (pose.w * time)/2;
@@ -25,7 +25,7 @@ void EKF::predict(float time, float left_accel, float right_accel, float ang_acc
 	x_p(1,0) = pose.y + y_increment;
 	x_p(2,0) = round_angle(pose.theta + pose.w * time);
 	x_p(3,0) = pose.v + linear_accel;
-	x_p(4,0) = pose.w + ang_accel;
+	x_p(4,0) = pose.w + angular_accel;
 
 //	Computes jacobian
 	F(0,2) = -y_increment;

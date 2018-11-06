@@ -35,10 +35,8 @@ set(SOURCE_FILES
 	${SRC_DIR}/main.cpp
 	${SRC_DIR}/Robot.cpp
 	${SRC_DIR}/Messenger.cpp
-	${SRC_DIR}/IMU.cpp
 	${SRC_DIR}/Controller.cpp
 	${SRC_DIR}/PIN_MAP.h
-	${SRC_DIR}/IMU_regs.h
 	${SRC_DIR}/EKF.cpp
 	${SRC_DIR}/SensorFusion.cpp
 	${SRC_DIR}/ConfigFile.cpp

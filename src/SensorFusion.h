@@ -6,7 +6,6 @@
 #define VSSS_SENSORFUSION_H
 
 #include <lib/QEI/QEI.h>
-#include "IMU.h"
 #include "EKF.h"
 #include "Controller.h"
 
@@ -19,7 +18,6 @@ struct opt_mag {
 
 class SensorFusion {
 	public:
-		IMU imu;
 		Controller* controller;
 
 		EKF ekf;
@@ -33,7 +31,6 @@ class SensorFusion {
 		measurement_data prev_mesure{};
 
 		void ekf_thread();
-		opt_mag read_magnetometer();
 
 	public:
 		bool no_vision = true;

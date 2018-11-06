@@ -69,8 +69,6 @@ class Messenger {
 		 *	@param msg Example: "A2" sets desired acceleration to 2 m/s^2 */
 		void Update_ACC(std::string msg);
 
-		void send_sensor_data(const std::string &msg);
-
 		/**	@brief Sends battery voltage. Example: "B7.53" */
 		void send_battery();
 

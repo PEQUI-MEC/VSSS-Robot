@@ -10,7 +10,6 @@
 #include <Core>
 
 #include "QEI.h"
-#include "IMU.h"
 #include "PIN_MAP.h"
 
 #define POSE_SIZE 5

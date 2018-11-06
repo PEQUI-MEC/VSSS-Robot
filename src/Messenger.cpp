@@ -83,20 +83,6 @@ void Messenger::send_information() {
 	send_msg(pose_msg);
 }
 
-void Messenger::send_sensor_data(const string &msg) {
-	msg_data<1> values = get_values<1>(msg, 1);
-	robot->start_calibration(values[0]);
-	float offset = sensors->gyro_offset;
-	Thread::wait(500);
-	while(robot->target.command != SENSOR_CALIBRATION) {
-		auto vels = robot->controller.encoder_vel;
-		float gyro_w = sensors->imu.read_gyro();
-		std::string send = std::to_string(gyro_w - offset) + std::to_string(vels.vel_left)
-						  + ',' + std::to_string(vels.vel_right);
-		Thread::wait(5);
-	}
-}
-
 string Messenger::decode_strings(const string &msg) {
 	size_t id_pos, end_pos;
 	if ((id_pos = msg.find(ID)) == string::npos ||
@@ -126,9 +112,6 @@ void Messenger::decode_msg(string msg) {
 			return;
 		case 'I':
 			send_information();
-			return;
-		case 'G':
-			send_sensor_data(msg);
 			return;
 		case 'U':
 			uvf_message(msg);

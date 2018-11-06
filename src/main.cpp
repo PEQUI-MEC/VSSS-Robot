@@ -1,7 +1,6 @@
 #include "mbed.h"
 #include "XBeeLib.h"
 #include "Messenger.h"
-#include "IMU.h"
 #include "PIN_MAP.h"
 #include "SensorFusion.h"
 #include "helper_functions.h"
@@ -58,34 +57,6 @@ void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
 	else led_write(LEDs, 0b0001);
 }
 
-void mag_calibration() {
-	IMU imu{};
-	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-	Thread::wait(1000);
-
-	#define sample_size 5000
-	for (int i = 0; i < sample_size; ++i) {
-		robot->start_velocity_control(-0.05f, 0.05f);
-		auto data = imu.read_mag_components();
-		string msg = std::to_string(data.x) + ',' + std::to_string(data.y);
-		messenger->send_msg(msg);
-		Thread::wait(10);
-	}
-}
-
-float gyro_calib() {
-	IMU imu{};
-	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-	float acc = 0;
-
-	#define sample_size_gyro 500
-	for (int i = 0; i < sample_size_gyro; ++i) {
-		acc += imu.read_gyro();
-		wait_ms(5);
-	}
-	return acc/sample_size_gyro;
-}
-
 SensorFusion* sensors;
 int main() {
 	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
@@ -115,12 +86,9 @@ int main() {
 //	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
-	float offset = gyro_calib();
 
 	sensors = new SensorFusion(&robot->controller);
-	sensors->gyro_offset = offset;
 	robot->sensors = sensors;
-	sensors->ekf_thread_start();
 
 	messenger = new Messenger(robot->MY_ID, robot, xbee, sensors);
 
