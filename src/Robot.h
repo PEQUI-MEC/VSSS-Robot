@@ -139,6 +139,7 @@ class Robot {
 
 		/**	@brief Starts main control loop thread */
 		void start_thread();
+		volatile bool enable_timeout = false;
 };
 
 #endif //VSSS_ROBOT2_H

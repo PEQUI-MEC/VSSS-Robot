@@ -1,5 +1,5 @@
 // CONSTANTES DO ROBO
-#define Largura_Robo 6.80f
+#define Largura_Robo 6.30f
 #define Raio_roda 3.0f
 // PINOS DO LEITOR DE BATERIA
 #define ALL_CELLS p16

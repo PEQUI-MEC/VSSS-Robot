@@ -193,7 +193,18 @@ int main() {
 	robot->start_orientation_control(45, 1);
 	wait(0.5);
 
+	robot->enable_timeout = true;
+//	Timer t;
+//	t.start();
+
 	while (true) {
+//		if (t.read() < 2.1) {
+//			robot->start_vector_control(22, 0.8);
+//		} else {
+//			t.stop();
+//			robot->enable_timeout = true;
+//			robot->start_velocity_control(0, 0);
+//		}
 		bat_watcher();
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger

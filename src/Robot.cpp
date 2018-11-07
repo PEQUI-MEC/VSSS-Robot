@@ -17,7 +17,7 @@ void Robot::start_thread() {
 
 void Robot::control_loop() {
 	while(true) {
-		if(msg_timeout_timer.read_ms() > msg_timeout_limit) stop_and_wait();
+		if(msg_timeout_timer.read_ms() > msg_timeout_limit && enable_timeout) stop_and_wait();
 		if(state.command != NO_CONTROL) update_odometry();
 
 		switch (state.command) {

@@ -65,7 +65,7 @@ class Controller {
 
 	public:
 		Thread control_thread;
-		bool stop = true;
+		bool stop = false;
 
 		PID pid = {1.26,0.0481,0};
 		wheel left_wheel = {};
