@@ -72,9 +72,10 @@ class Controller {
 
 	public:
 		Thread control_thread;
-		bool stop = true;
+		volatile bool stop = false;
 
-		PID pid = {1.26,0.0481,0};
+//		PID pid = {1.26,0.0481,0};
+		PID pid = {2,0.8,0};
 		wheel left_wheel = {};
 		wheel right_wheel = {};
 		encoder_data encoder_vel = {};

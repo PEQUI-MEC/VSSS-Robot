@@ -25,7 +25,8 @@ void EKF::predict(float time, float left_accel, float right_accel, float ang_acc
 	x_p(1,0) = pose.y + y_increment;
 	x_p(2,0) = round_angle(pose.theta + pose.w * time);
 	x_p(3,0) = pose.v + linear_accel;
-	x_p(4,0) = pose.w + angular_accel;
+	x_p(4,0) = pose.w;
+//	x_p(4,0) = pose.w + angular_accel;
 
 //	Computes jacobian
 	F(0,2) = -y_increment;
@@ -132,11 +133,11 @@ Eigen::Matrix<float,MEASUREMENT_SIZE_CAM,1> EKF::camera_measurement_model() {
 Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
 	Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> R;
 	R.setZero();
-	R(0,0) = time * 0.0001f;
-	R(1,1) = time * 0.0001f;
-	R(2,2) = time * 0.00001f;
-	R(3,3) = time * 0.0001f;
-	R(4,4) = time * 0.0001f;
+	R(0,0) = time * 0.1f;
+	R(1,1) = time * 0.1f;
+	R(2,2) = time * 10;
+	R(3,3) = time * 100;
+	R(4,4) = time * 100;
 	return R;
 };
 
@@ -151,7 +152,7 @@ EKF::EKF() {
 //	Measurement model for gyroscope, magnetometer and encoders
 	H.setZero();
 	H(0,2) = 1;
-	H(1,4) = 1;
+//	H(1,4) = 1;
 	H(2,3) = 1;
 	H(3,3) = 1;
 	H(2,4) = -ROBOT_SIZE/2;

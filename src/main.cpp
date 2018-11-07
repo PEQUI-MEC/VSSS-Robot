@@ -12,10 +12,10 @@
 
 using std::string;
 
-XBeeLib::XBee802 *xbee;
+//XBeeLib::XBee802 *xbee;
 uint16_t xbee_addr;
 Robot *robot = nullptr;
-Messenger *messenger = nullptr;
+//Messenger *messenger = nullptr;
 Thread* t_rx;
 
 void rx_thread() {
@@ -24,7 +24,7 @@ void rx_thread() {
 			Thread::signal_wait(CONTINUE_SIGNAL);
 			Thread::signal_clr(CONTINUE_SIGNAL);
 		}
-		xbee->process_rx_frames();
+//		xbee->process_rx_frames();
 	}
 }
 
@@ -32,7 +32,7 @@ static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
 					   const uint8_t *const data, uint16_t len) {
 	if (len != 0) {
 		string msg = string((const char *) data, len);
-		messenger->decode_msg(msg);
+//		messenger->decode_msg(msg);
 	}
 }
 
@@ -71,31 +71,35 @@ int main() {
 		configs.configure(*robot, xbee_addr);
 	}
 
-	xbee = new XBeeLib::XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
+//	xbee = new XBeeLib::XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
 
-	xbee->register_receive_cb(&receive_cb);
+//	xbee->register_receive_cb(&receive_cb);
 
-	XBeeLib::RadioStatus const radioStatus = xbee->init();
-	MBED_ASSERT(radioStatus == XBeeLib::Success);
-	xbee->set_network_address(xbee_addr);
+//	XBeeLib::RadioStatus const radioStatus = xbee->init();
+//	MBED_ASSERT(radioStatus == XBeeLib::Success);
+//	xbee->set_network_address(xbee_addr);
 
-	xbee->set_complete_callback(&process_frames);
+//	xbee->set_complete_callback(&process_frames);
 
-	t_rx = new Thread;
-	t_rx->start(&rx_thread); // Handle de erro na thread da serial
+//	t_rx = new Thread;
+//	t_rx->start(&rx_thread); // Handle de erro na thread da serial
 //	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
 
 	sensors = new SensorFusion(&robot->controller);
 	robot->sensors = sensors;
+	sensors->ekf_thread_start();
 
-	messenger = new Messenger(robot->MY_ID, robot, xbee, sensors);
+//	messenger = new Messenger(robot->MY_ID, robot, xbee, sensors);
 
 	robot->start_thread();
 
-//	Serial usb(USBTX, USBRX);
+	Serial usb(USBTX, USBRX);
 
+//	robot->start_velocity_control(0.2, 0.2);
+//	robot->start_velocity_control(0.3, 0);
+//	wait(0.5);
 	robot->start_orientation_control(0, 0.8);
 	wait(0.1);
 	robot->start_orientation_control(-45, 0.8);
@@ -109,11 +113,16 @@ int main() {
 
 	while (true) {
 		bat_watcher(LEDs, battery_vin);
-		if (messenger->debug_mode) {
+//		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
-		}
-		Thread::wait(200);
+//		}
+		Thread::wait(20);
 //		std::string msg = std::to_string(sensors->prev_mesure.gyro_w) + '\n';
+//		std::string msg = std::to_string(robot->controller.left_wheel.velocity) + ", " +
+//				std::to_string(robot->controller.right_wheel.velocity) + '\n';
+//		std::string msg = std::to_string(robot->sensors->get_pose().x) + ", " +
+//						  std::to_string(robot->sensors->get_pose().y) + '\n';
+//		std::string msg = std::to_string(robot->sensors->get_pose().theta) + '\n';
 //		usb.printf(msg.c_str());
 	}
 }
