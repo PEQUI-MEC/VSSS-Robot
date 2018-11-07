@@ -95,23 +95,31 @@ int main() {
 
 	robot->start_thread();
 
-	Serial usb(USBTX, USBRX);
+//	Serial usb(USBTX, USBRX);
 
-//	robot->start_velocity_control(0.2, 0.2);
+//	robot->start_velocity_control(0.5, 0.5);
 //	robot->start_velocity_control(0.3, 0);
 //	wait(0.5);
-	robot->start_orientation_control(0, 0.8);
-	wait(0.1);
-	robot->start_orientation_control(-45, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(0, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(45, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(0, 0.8);
-	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.1);
+//	robot->start_orientation_control(-45, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(45, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.5);
+	Timer t;
+	t.start();
 
 	while (true) {
+		if (t.read() > 0.5) {
+			robot->start_velocity_control(0.5f, -0.5f);
+			if (t.read() > 1) t.reset();
+		} else {
+			robot->start_velocity_control(-0.5f, 0.5f);
+		}
 		bat_watcher(LEDs, battery_vin);
 //		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
