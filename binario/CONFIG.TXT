@@ -1,0 +1,7 @@
+addr:97e7
+my_id:E
+msg_timeout:500
+acc_rate:1.000000
+kgz:1.000000
+max_theta_error:30.000000
+
