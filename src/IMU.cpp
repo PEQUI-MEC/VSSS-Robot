@@ -74,9 +74,9 @@ AccComponents IMU::read_acc_components() {
 	int16_t acc_data[3];
 	read_acc_all(acc_data);
 
-	return {-acc_data[0] * (MAX_ACC / INT16_MAX),
-			-acc_data[1] * (MAX_ACC / INT16_MAX),
-			-acc_data[2] * (MAX_ACC / INT16_MAX)};
+	return {acc_data[0] * (MAX_ACC / INT16_MAX),
+			acc_data[1] * (MAX_ACC / INT16_MAX),
+			acc_data[2] * (MAX_ACC / INT16_MAX)};
 }
 
 AccData IMU::read_acc() {
@@ -84,14 +84,14 @@ AccData IMU::read_acc() {
 	read_reg(addr_gyro_acc, OUTX_L_XL, (char *) acc_data, 4);
 
 //	Same coordinates as robot (x is front, y is sideways)
-	return {-acc_data[1] * (MAX_ACC / INT16_MAX),
-			-acc_data[0] * (MAX_ACC / INT16_MAX)};
+	return {acc_data[1] * (MAX_ACC / INT16_MAX),
+			acc_data[0] * (MAX_ACC / INT16_MAX)};
 }
 
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
-	return -gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
+	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 }
 
 float IMU::read_mag() {

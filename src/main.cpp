@@ -48,6 +48,10 @@ int main() {
 	to_orientation(45);
 	to_orientation(0);
 
+	control.set_target(ControlState::Position,
+					   {0.5, 0.5, 0, 0.8f}, true);
+
+	wait(2);
 	control.sensors.timeout.start();
 
 //	control.stop = true;
@@ -58,8 +62,6 @@ int main() {
 //	float v = 0;
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
-
-//	control.set_target_position(0.5, 0.5);
 
 	while (true) {
 		if (control.state == ControlState::None) {

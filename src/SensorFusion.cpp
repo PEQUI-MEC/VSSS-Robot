@@ -38,12 +38,12 @@ void SensorFusion::ekf_thread() {
 			float gyro_rate = imu.read_gyro() - gyro_offset;
 //			float acc = imu.read_acc_components().y - acc_offset;
 
-			auto acc = imu.read_acc();
+//			auto acc = imu.read_acc();
 //			auto controls = acc_model(acc.y - acc_offset_y,
 //									  -(acc.x - acc_offset_x), gyro_rate);
 
-			x_acc = acc.x - acc_offset_x;
-			y_acc = acc.y - acc_offset_y;
+//			x_acc = acc.x - acc_offset_x;
+//			y_acc = acc.y - acc_offset_y;
 
 //			last_controls.lin_accel = controls.lin_accel;
 //			last_controls.ang_accel = controls.ang_accel;
@@ -55,11 +55,11 @@ void SensorFusion::ekf_thread() {
 //			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.02f * std::sin(0.785398f);
 //			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.02f * std::cos(0.785398f);
 
-			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.01335404f;
-			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.01615549f;
+//			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.01335404f;
+//			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.01615549f;
 
-			x_acc_fixed = x_acc + centripetal_x;
-			y_acc_fixed = y_acc - centripetal_y;
+//			x_acc_fixed = x_acc + centripetal_x;
+//			y_acc_fixed = y_acc - centripetal_y;
 
 //			if (gyro_rate != 0) {
 //				float w_sq = std::pow(gyro_rate, 2.0f);
@@ -67,7 +67,9 @@ void SensorFusion::ekf_thread() {
 //				B = x_acc / w_sq;
 //			}
 
-			Controls controls(x_acc_fixed,
+			float acc = (wheel_vel.vel_left_accel +
+					wheel_vel.vel_right_accel) / (2 * time);
+			Controls controls(acc,
 							  (gyro_rate - previous_w) / time);
 
 			ekf.predict(controls.to_vec(), time);
