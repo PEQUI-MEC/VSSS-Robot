@@ -72,10 +72,10 @@ void SensorFusion::ekf_thread() {
 			Controls controls(acc,
 							  (gyro_rate - previous_w) / time);
 
-			ekf.predict(controls.to_vec(), time);
+			ukf.predict(controls.to_vec(), time);
 
 			if (new_vision_data) {
-				ekf.update_on_vision_data(vision.to_vec());
+//				ukf.update_on_vision_data(vision.to_vec());
 			} else {
 				opt_mag mag_data = read_magnetometer();
 
@@ -84,10 +84,10 @@ void SensorFusion::ekf_thread() {
 									   wheel_vel.vel_left,
 									   wheel_vel.vel_right);
 
-				ekf.model.use_encoders(wheel_vel.new_data);
-				ekf.model.use_magnetometer(mag_data.valid);
+				ukf.model.use_encoders(wheel_vel.new_data);
+				ukf.model.use_magnetometer(mag_data.valid);
 
-				ekf.update_on_sensor_data(sensor_data.to_vec());
+				ukf.update_on_sensor_data(sensor_data.to_vec());
 			}
 
 			previous_w = gyro_rate;
@@ -147,7 +147,7 @@ opt_mag SensorFusion::read_magnetometer() {
 }
 
 void SensorFusion::stop_and_wait() {
-	ekf.COV.setIdentity();
+	ukf.COV.setIdentity();
 	if(thread_ekf.get_state() != Thread::WaitingThreadFlag) {
 		Thread::signal_wait(CONTINUE_SIGNAL);
 		Thread::signal_clr(CONTINUE_SIGNAL);
@@ -162,5 +162,5 @@ void SensorFusion::resume_thread() {
 }
 
 Pose SensorFusion::get_pose() const {
-	return Pose(ekf.x);
+	return Pose(ukf.x);
 }

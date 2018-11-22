@@ -17,16 +17,17 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 
 	pred.x = pose.x + x_increment;
 	pred.y = pose.y + y_increment;
-	pred.theta = wrap(pose.theta + pose.w * time);
+//	pred.theta = wrap(pose.theta + pose.w * time);
+	pred.theta = pose.theta + pose.w * time;
 	pred.v = pose.v + c.lin_accel * time;
 	pred.w = pose.w + c.ang_accel * time;
 
-	F(0, 2) = -y_increment;
-	F(1, 2) = x_increment;
-	F(0, 3) = x_direction;
-	F(1, 3) = y_direction;
-	F(0, 4) = -y_increment * time / 2;
-	F(1, 4) = x_increment * time / 2;
+//	F(0, 2) = -y_increment;
+//	F(1, 2) = x_increment;
+//	F(0, 3) = x_direction;
+//	F(1, 3) = y_direction;
+//	F(0, 4) = -y_increment * time / 2;
+//	F(1, 4) = x_increment * time / 2;
 
 	process_noise(time);
 	return pred.to_vec();
@@ -74,35 +75,35 @@ EKF::VisionVec EkfModel::vision_measurement_model(const EKF::PoseVec &x) {
 
 
 void EkfModel::use_magnetometer(bool use) {
-	if(use) H(0,2) = 1;
-	else H(0,2) = 0;
+//	if(use) H(0,2) = 1;
+//	else H(0,2) = 0;
 }
 
 void EkfModel::use_encoders(bool use) {
-	if(use) {
-		H(2,3) = 1;
-		H(3,3) = 1;
-		H(2,4) = -ROBOT_SIZE / 2;
-		H(3,4) = ROBOT_SIZE / 2;
-	} else {
-		H(2,3) = 0;
-		H(3,3) = 0;
-		H(2,4) = 0;
-		H(3,4) = 0;
-	}
+//	if(use) {
+//		H(2,3) = 1;
+//		H(3,3) = 1;
+//		H(2,4) = -ROBOT_SIZE / 2;
+//		H(3,4) = ROBOT_SIZE / 2;
+//	} else {
+//		H(2,3) = 0;
+//		H(3,3) = 0;
+//		H(2,4) = 0;
+//		H(3,4) = 0;
+//	}
 }
 
 EkfModel::EkfModel() {
-	F.setIdentity();
+//	F.setIdentity();
 	R.setZero();
 
-	H.setZero();
-	H(0,2) = 1;
-	H(1,4) = 1;
-	H(2,3) = 1;
-	H(3,3) = 1;
-	H(2,4) = -ROBOT_SIZE/2;
-	H(3,4) = ROBOT_SIZE/2;
+//	H.setZero();
+//	H(0,2) = 1;
+//	H(1,4) = 1;
+//	H(2,3) = 1;
+//	H(3,3) = 1;
+//	H(2,4) = -ROBOT_SIZE/2;
+//	H(3,4) = ROBOT_SIZE/2;
 
 	Q.setZero();
 	Q(0,0) = 0.00022846f;
@@ -110,13 +111,13 @@ EkfModel::EkfModel() {
 	Q(2,2) = 0.00022096f;
 	Q(3,3) = 0.00022096f;
 
-	Hv.setZero();
-	for (int i = 0; i < 3; ++i) {
-		Hv(i,i) = 1;
-	}
+//	Hv.setZero();
+//	for (int i = 0; i < 3; ++i) {
+//		Hv(i,i) = 1;
+//	}
 
-	Qv.setZero();
-	Qv(0,0) = 3.44048681e-06f;
-	Qv(1,1) = 2.82211659e-06f;
-	Qv(2,2) = 9.75675349e-04f;
+//	Qv.setZero();
+//	Qv(0,0) = 3.44048681e-06f;
+//	Qv(1,1) = 2.82211659e-06f;
+//	Qv(2,2) = 9.75675349e-04f;
 }

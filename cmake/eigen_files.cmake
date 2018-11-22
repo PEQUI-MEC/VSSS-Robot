@@ -307,7 +307,14 @@ ${LIB_DIR}/Eigen/src/IterativeLinearSolvers/IterativeSolverBase.h
 ${LIB_DIR}/Eigen/src/IterativeLinearSolvers/LeastSquareConjugateGradient.h
 ${LIB_DIR}/Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h
 ${LIB_DIR}/Eigen/src/IterativeLinearSolvers/BiCGSTAB.h
-${LIB_DIR}/Eigen/src/IterativeLinearSolvers/SolveWithGuess.h)
+${LIB_DIR}/Eigen/src/IterativeLinearSolvers/SolveWithGuess.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/MatrixExponential.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/MatrixLogarithm.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/MatrixSquareRoot.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/MatrixFunction.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/MatrixPower.h
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions/StemFunction.h
+${LIB_DIR}/EigenUnsuported/Eigen/MatrixFunctions)
 
 set(EIGEN_DIRS
 ${LIB_DIR}/Eigen
@@ -351,4 +358,6 @@ ${LIB_DIR}/Eigen/src/Householder
 ${LIB_DIR}/Eigen/src/KLUSupport
 ${LIB_DIR}/Eigen/src/CholmodSupport
 ${LIB_DIR}/Eigen/src/PaStiXSupport
-${LIB_DIR}/Eigen/src/IterativeLinearSolvers)
+${LIB_DIR}/Eigen/src/IterativeLinearSolvers
+${LIB_DIR}/EigenUnsuported/Eigen/src/MatrixFunctions
+${LIB_DIR}/EigenUnsuported/Eigen)

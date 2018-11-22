@@ -12,14 +12,14 @@ class EkfModel {
 	public:
 	using EKF = EKFTypes<5, 4, 3, 2>;
 
-	EKF::PoseMat F;
+//	EKF::PoseMat F;
 	EKF::PoseMat R;
 
-	EKF::HSensorMat H;
+//	EKF::HSensorMat H;
 	EKF::SensorMat Q;
 
-	EKF::HVisionMat Hv;
-	EKF::VisionMat Qv;
+//	EKF::HVisionMat Hv;
+//	EKF::VisionMat Qv;
 
 	EkfModel();
 	EKF::PoseVec prediction(const EKF::PoseVec &prev_x,

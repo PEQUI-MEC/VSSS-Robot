@@ -3,7 +3,7 @@
 #include "PIN_MAP.h"
 #include "helper_functions.h"
 #include "Control.h"
-#include "EKF2.h"
+//#include "EKF2.h"
 #include "EkfModel.h"
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
@@ -48,11 +48,11 @@ int main() {
 	to_orientation(45);
 	to_orientation(0);
 
-	control.set_target(ControlState::Position,
-					   {0.5, 0.5, 0, 0.8f}, true);
+//	control.set_target(ControlState::Position,
+//					   {0.5, 0.5, 0, 0.8f}, true);
 
-	wait(2);
-	control.sensors.timeout.start();
+//	wait(2);
+//	control.sensors.timeout.start();
 
 //	control.stop = true;
 

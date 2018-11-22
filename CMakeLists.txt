@@ -22,7 +22,7 @@ set(COMMON_FLAGS "-O3 -g -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-
 
 set(CMAKE_C_FLAGS "-std=c11 ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
-set(CMAKE_CXX_FLAGS "-std=c++14 -faligned-new -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
+set(CMAKE_CXX_FLAGS "-std=c++14 -fno-rtti -Wvla ${COMMON_FLAGS} -include ${MBED_DIR}/mbed_config.h")
 
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r \
  -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit \
@@ -47,7 +47,7 @@ set(SOURCE_FILES
 	${MBED_SRC}
 	${XBEELIB_SRC}
 	${LIB_DIR}/QEI/QEI.cpp
-	${EIGEN_FILES} src/EKF2.h src/EkfModel.cpp src/EkfModel.h src/Types.h)
+	${EIGEN_FILES} src/EKF2.h src/EkfModel.cpp src/EkfModel.h src/Types.h src/UKF.h)
 
 include_directories(
 	${SRC_DIR}

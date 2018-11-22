@@ -9,7 +9,8 @@
 #include "IMU.h"
 #include "Controller.h"
 #include "EkfModel.h"
-#include "EKF2.h"
+//#include "EKF2.h"
+#include "UKF.h"
 
 #define EKF_PERIOD_US 1000
 
@@ -23,7 +24,7 @@ class SensorFusion {
 	IMU imu;
 	Controller *controller;
 
-	EKF2 ekf;
+	UKF ukf;
 
 	Thread thread_ekf;
 	Timer timer_mag;
