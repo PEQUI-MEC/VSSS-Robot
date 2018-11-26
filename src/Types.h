@@ -119,6 +119,7 @@ class EKFTypes {
     
     using UKFSigmaMat = Matrix<POSE_SIZE, 2 * POSE_SIZE + 1>;
 	using UKFSensorSigmaMat = Matrix<SENSOR_SIZE, 2 * POSE_SIZE + 1>;
+    using UKFVisionSigmaMat = Matrix<VISION_SIZE, 2 * POSE_SIZE + 1>;
 };
 
 #endif //VSSS_TYPES_H

@@ -98,9 +98,41 @@ class UKF {
 //		Update pose and covariance
 		T::KSensorMat K_GAIN = COV_XY * COV_YY.inverse();
 		T::SensorVec error = data - y_predicted;
-		error(0, 0) = 0;
+		error(0, 0) = wrap(error(0, 0));
+//		error(0, 0) = 0;
 //		error(2, 0) = 0;
 //		error(3, 0) = 0;
+		x = x + K_GAIN * error;
+		COV = COV - K_GAIN * COV_YY * K_GAIN.transpose();
+	}
+
+	void update_on_vision_data(const T::VisionVec &data) {
+//		Predicted measurement sigma points
+//	    set_sigma_points(x);
+		T::UKFVisionSigmaMat Y;
+		for (int i = 0; i <= 2 * L; i++)
+			Y.col(i) = model.vision_measurement_model(X.col(i));
+//		Predicted measurement
+		T::VisionVec y_predicted;
+		y_predicted.setZero();
+		for (int i = 0; i <= 2 * L; i++)
+		    y_predicted += get_weight(i, true) * Y.col(i);
+//		Predicted covariances
+		T::VisionMat COV_YY;
+		T::KVisionMat COV_XY;
+		COV_YY.setZero();
+		COV_XY.setZero();
+		for (int i = 0; i <= 2 * L; i++) {
+			T::VisionVec y_error = Y.col(i) - y_predicted;
+			T::PoseVec x_error = X.col(i) - x;
+			COV_YY += get_weight(i, false) * y_error * y_error.transpose();
+			COV_XY += get_weight(i, false) * x_error * y_error.transpose();
+		}
+		COV_YY += model.Qv;
+//		Update pose and covariance
+		T::KVisionMat K_GAIN = COV_XY * COV_YY.inverse();
+		T::VisionVec error = data - y_predicted;
+		error(2, 0) = wrap(error(2, 0));
 		x = x + K_GAIN * error;
 		COV = COV - K_GAIN * COV_YY * K_GAIN.transpose();
 	}

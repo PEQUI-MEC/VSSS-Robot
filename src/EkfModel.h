@@ -19,7 +19,7 @@ class EkfModel {
 	EKF::SensorMat Q;
 
 //	EKF::HVisionMat Hv;
-//	EKF::VisionMat Qv;
+	EKF::VisionMat Qv;
 
 	EkfModel();
 	EKF::PoseVec prediction(const EKF::PoseVec &prev_x,
