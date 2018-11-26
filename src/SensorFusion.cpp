@@ -143,7 +143,7 @@ opt_mag SensorFusion::read_magnetometer() {
 //	if (use_mag) {
 //		timer_mag.reset();
 //		return {true, imu.read_mag() - mag_offset};
-//	} else return {false, prev_mesure.mag_theta};
+//	} else return {false, prev_mag};
 }
 
 void SensorFusion::stop_and_wait() {
