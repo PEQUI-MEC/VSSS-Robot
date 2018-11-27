@@ -13,9 +13,9 @@
 #include "IMU.h"
 #include "PIN_MAP.h"
 
-#define POSE_SIZE 5
+#define POSE_SIZE 6
 #define MEASUREMENT_SIZE 4
-#define MEASUREMENT_SIZE_CAM 3
+#define MEASUREMENT_SIZE_CAM 4
 #define ROBOT_SIZE 0.0675f
 
 struct pose_data {
@@ -24,6 +24,7 @@ struct pose_data {
 	float theta;
 	float v;
 	float w;
+	float mag_offset;
 };
 
 struct measurement_data {
@@ -62,7 +63,7 @@ class EKF {
 
 		void predict(float time, float left_accel, float right_accel, float ang_accel);
 		void update(measurement_data data, bool use_mag, bool use_enc);
-		void update_camera(vision_data data);
+		void update_camera(vision_data data, float mag);
 		Eigen::Matrix<float,MEASUREMENT_SIZE,1> measurement_model();
 		float round_angle(float angle);
 		EKF();

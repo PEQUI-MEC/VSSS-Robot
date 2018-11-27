@@ -28,7 +28,6 @@ class SensorFusion {
 
 		vision_data vision{};
 		bool new_vision_data = false;
-		float mag_offset = 0;
 		volatile bool wait = false;
 		measurement_data prev_mesure{};
 

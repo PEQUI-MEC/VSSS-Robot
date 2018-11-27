@@ -73,17 +73,19 @@ void mag_calibration() {
 	}
 }
 
-float gyro_calib() {
+std::pair<float, float> gyro_calib() {
 	IMU imu{};
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
 	float acc = 0;
+	float mag_acc = 0;
 
 	#define sample_size_gyro 500
 	for (int i = 0; i < sample_size_gyro; ++i) {
 		acc += imu.read_gyro();
+		mag_acc += imu.read_mag();
 		wait_ms(5);
 	}
-	return acc/sample_size_gyro;
+	return {acc/sample_size_gyro, mag_acc/sample_size_gyro};
 }
 
 SensorFusion* sensors;
@@ -115,10 +117,13 @@ int main() {
 //	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
-	float offset = gyro_calib();
+	auto offsets = gyro_calib();
+//	float offset = gyro_calib();
 
 	sensors = new SensorFusion(&robot->controller);
-	sensors->gyro_offset = offset;
+	sensors->gyro_offset = offsets.first;
+	sensors->ekf.x(5, 0) = offsets.second;
+	sensors->ekf.pose.mag_offset = offsets.second;
 	robot->sensors = sensors;
 	sensors->ekf_thread_start();
 

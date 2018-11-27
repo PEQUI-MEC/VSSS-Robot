@@ -26,6 +26,7 @@ void EKF::predict(float time, float left_accel, float right_accel, float ang_acc
 	x_p(2,0) = round_angle(pose.theta + pose.w * time);
 	x_p(3,0) = pose.v + linear_accel;
 	x_p(4,0) = pose.w + ang_accel;
+	x_p(5,0) = pose.mag_offset;
 
 //	Computes jacobian
 	F(0,2) = -y_increment;
@@ -48,8 +49,13 @@ void EKF::update(measurement_data data, bool use_mag, bool use_enc) {
 	z(3,0) = data.vel_right;
 
 //	Sets magnetometer use
-	if(use_mag) H(0,2) = 1;
-	else H(0,2) = 0;
+	if(use_mag) {
+		H(0,2) = 1;
+		H(0,5) = 1;
+	} else {
+		H(0,2) = 0;
+		H(0,5) = 0;
+	}
 
 	if(use_enc) {
 		H(2,3) = 1;
@@ -79,16 +85,18 @@ void EKF::update(measurement_data data, bool use_mag, bool use_enc) {
 	pose.theta = x(2,0);
 	pose.v = x(3,0);
 	pose.w = x(4,0);
+	pose.mag_offset = x(5,0);
 
 //	Updated Covariance
 	COV = (I - K_GAIN * H) * COV_P;
 }
 
-void EKF::update_camera(vision_data data) {
+void EKF::update_camera(vision_data data, float mag) {
 //	Sets z
 	z_cam(0,0) = data.x;
 	z_cam(1,0) = data.y;
 	z_cam(2,0) = data.theta;
+	z_cam(3,0) = round_angle(mag - data.theta);
 
 //	Kalman Gain
 	Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, MEASUREMENT_SIZE_CAM> S = H_CAM * COV_P * H_CAM.transpose() + Q_CAM;
@@ -98,6 +106,7 @@ void EKF::update_camera(vision_data data) {
 	auto pred_z = camera_measurement_model();
 	Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, 1> error = z_cam - pred_z;
 	error(2,0) = round_angle(error(2,0));
+	error(3,0) = round_angle(error(3,0));
 	x = x_p + K_GAIN * error;
 
 //	std::tie(pose.x, pose.y, pose.theta, pose.v, pose.w) = std::make_tuple(x(0,0), x(1,0), x(2,0), x(3,0), x(4,0));
@@ -106,6 +115,7 @@ void EKF::update_camera(vision_data data) {
 	pose.theta = x(2,0);
 	pose.v = x(3,0);
 	pose.w = x(4,0);
+	pose.mag_offset = x(5,0);
 
 //	Updated Covariance
 	COV = (I - K_GAIN * H_CAM) * COV_P;
@@ -113,7 +123,7 @@ void EKF::update_camera(vision_data data) {
 
 Eigen::Matrix<float,MEASUREMENT_SIZE,1> EKF::measurement_model() {
 	Eigen::Matrix<float,MEASUREMENT_SIZE,1> pred_measurement;
-	pred_measurement(0,0) = x_p(2,0);
+	pred_measurement(0,0) = x_p(2,0) + x_p(5, 0);
 	pred_measurement(1,0) = x_p(4,0);
 	float v_increment = x_p(4,0) * ROBOT_SIZE/2;
 	pred_measurement(2,0) = x_p(3,0) - v_increment;
@@ -126,6 +136,7 @@ Eigen::Matrix<float,MEASUREMENT_SIZE_CAM,1> EKF::camera_measurement_model() {
 	for (int i = 0; i < 3; ++i) {
 		pred_measurement(i,0) = x_p(i,0);
 	}
+	pred_measurement(3,0) = x_p(5,0);
 	return pred_measurement;
 }
 
@@ -137,6 +148,7 @@ Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
 	R(2,2) = time * 0.00001f;
 	R(3,3) = time * 0.0001f;
 	R(4,4) = time * 0.0001f;
+	R(5,5) = time * 0.001f;
 	return R;
 };
 
@@ -151,6 +163,7 @@ EKF::EKF() {
 //	Measurement model for gyroscope, magnetometer and encoders
 	H.setZero();
 	H(0,2) = 1;
+	H(0,5) = 1;
 	H(1,4) = 1;
 	H(2,3) = 1;
 	H(3,3) = 1;
@@ -162,6 +175,7 @@ EKF::EKF() {
 	for (int i = 0; i < 3; ++i) {
 		H_CAM(i,i) = 1;
 	}
+	H_CAM(3, 5) = 1;
 
 	F.setIdentity();
 	x_p.setZero();
@@ -173,7 +187,7 @@ EKF::EKF() {
 
 	Q.setZero();
 	Q(0,0) = 0.00022846f;
-	Q(1,1) = 0.02857541f;
+	Q(1,1) = 0.002857541f;
 	Q(2,2) = 0.00022096f;
 	Q(3,3) = 0.00022096f;
 
@@ -181,4 +195,5 @@ EKF::EKF() {
 	Q_CAM(0,0) = 3.44048681e-06f;
 	Q_CAM(1,1) = 2.82211659e-06f;
 	Q_CAM(2,2) = 9.75675349e-04f;
+	Q_CAM(3,3) = Q_CAM(2,2) + Q(0, 0);
 }
