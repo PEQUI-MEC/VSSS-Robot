@@ -106,6 +106,29 @@ class Messenger {
 		 *	@param msg Message to be sent
 		 *	@param addr 16-bit address of the receiving xbee */
 		void send_msg(const std::string &msg, uint16_t addr = 0x35D0);
+
+		// Appends csv data
+		template <typename T>
+		void append(std::string &buff, T last) {
+			buff.append(std::to_string(last));
+			//	buff += '\n';
+		}
+
+		template <typename First, typename ...Others>
+		void append(std::string &buff,
+					First first, Others ...others) {
+			append(buff, first);
+			buff += ',';
+			append(buff, others...);
+		}
+
+		//	Sends csv logs
+		template <typename ...T>
+		void send_log(T ...data) {
+			std::string msg;
+			append(msg, data...);
+			send_msg(msg);
+		}
 };
 
 #endif /* MESSENGER_H_ */

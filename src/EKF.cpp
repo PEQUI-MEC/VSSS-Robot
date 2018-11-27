@@ -26,7 +26,7 @@ void EKF::predict(float time, float left_accel, float right_accel, float ang_acc
 	x_p(2,0) = round_angle(pose.theta + pose.w * time);
 	x_p(3,0) = pose.v + linear_accel;
 	x_p(4,0) = pose.w + ang_accel;
-	x_p(5,0) = pose.mag_offset;
+	x_p(5,0) = round_angle(pose.mag_offset);
 
 //	Computes jacobian
 	F(0,2) = -y_increment;
@@ -148,7 +148,7 @@ Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
 	R(2,2) = time * 0.00001f;
 	R(3,3) = time * 0.0001f;
 	R(4,4) = time * 0.0001f;
-	R(5,5) = time * 0.001f;
+	R(5,5) = time * 0.0003f;
 	return R;
 };
 

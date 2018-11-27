@@ -147,6 +147,8 @@ int main() {
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(1000);
+		messenger->send_log(sensors->get_pose().theta,
+							sensors->get_pose().mag_offset);
+		Thread::wait(200);
 	}
 }
