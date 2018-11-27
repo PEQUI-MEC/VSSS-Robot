@@ -27,10 +27,10 @@ void IMU::init(PinName sda, PinName scl) {
 	write_reg(addr_gyro_acc, CTRL1_XL, 0x88);
 
 	// Habilita giroscopio nos 3 eixos
-//	write_reg(addr_gyro_acc, CTRL10_C, 0x38);
+	write_reg(addr_gyro_acc, CTRL10_C, 0x38);
 
 	// Habilita giroscopio no eixo z
-	write_reg(addr_gyro_acc, CTRL10_C, 0x20);
+//	write_reg(addr_gyro_acc, CTRL10_C, 0x20);
 
 	// Gyro no modo de alta performance, 1.66KHz, 2000dps max
 	write_reg(addr_gyro_acc, CTRL2_G, 0x7C);
@@ -91,6 +91,12 @@ AccData IMU::read_acc() {
 float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
+	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
+}
+
+float IMU::read_gyro_x() {
+	int16_t gyro_data;
+	read_reg(addr_gyro_acc, OUTX_L_G, (char *) &gyro_data, 2);
 	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 }
 

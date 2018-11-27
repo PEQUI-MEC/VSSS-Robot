@@ -57,6 +57,7 @@ class IMU {
 		AccComponents read_acc_components();
 		AccData read_acc();
 		float read_gyro();
+		float read_gyro_x();
 		void read_acc_all(int16_t *data);
 		void read_gyro_all(int16_t *data);
 		void read_comp_all(int16_t *data);

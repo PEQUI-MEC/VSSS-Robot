@@ -75,7 +75,12 @@ void Control::pose_control_thread() {
 					return TargetVelocity{0, 0};
 			}
 		}();
-		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+
+		theta_x_acc += sensors.theta_x;
+		float deriv = sensors.theta_x - last_theta_x;
+		last_theta_x = sensors.theta_x;
+		TargetVelocity targ = {2 * sensors.theta_x + 0.5f * theta_x_acc + 0.3f * deriv, 0};
+		auto target_wheel_vel = get_target_wheel_velocity(targ);
 		controller.set_target_velocity(target_wheel_vel);
 		Thread::wait(10);
 	}

@@ -36,6 +36,7 @@ class SensorFusion {
 
 	float previous_w = 0;
 	int e_time = 0;
+	float theta_x = 0;
 
 	void ekf_thread();
 	opt_mag read_magnetometer();
@@ -50,6 +51,7 @@ class SensorFusion {
 	public:
 	bool no_vision = true;
 	float gyro_offset = 0;
+	float gyro_offset_x = 0;
 	volatile float acc_offset_x = 0;
 	volatile float acc_offset_y = 0;
 

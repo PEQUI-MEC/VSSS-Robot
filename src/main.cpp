@@ -48,11 +48,11 @@ int main() {
 	to_orientation(45);
 	to_orientation(0);
 
-	control.set_target(ControlState::Position,
-					   {0.5, 0.5, 0, 0.8f}, true);
+//	control.set_target(ControlState::Position,
+//					   {0.5, 0.5, 0, 0.8f}, true);
 
-	wait(2);
-	control.sensors.timeout.start();
+//	wait(2);
+//	control.sensors.timeout.start();
 
 //	control.stop = true;
 
@@ -93,6 +93,7 @@ int main() {
 //		messenger.send_log(control.sensors.get_pose().v,
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);
+//		messenger.send_log(control.sensors.theta_x);
 //		std::string msg = str(control.sensors.get_pose().v) + ',' +
 //				str(control.sensors.x_acc) + ',' +
 //				str(control.sensors.x_acc_fixed);

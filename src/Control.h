@@ -44,6 +44,10 @@ class Control {
 	Timer backwards_timer;
 	bool backwards = false;
 
+	float theta_x_acc = 0;
+	float last_theta_x = 0;
+
+
 	bool sleep_enabled = true;
 
 	float k1 = 1;

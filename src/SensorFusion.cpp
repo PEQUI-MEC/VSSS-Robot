@@ -36,6 +36,7 @@ void SensorFusion::ekf_thread() {
 			float time = time_us / 1E6f;
 
 			float gyro_rate = imu.read_gyro() - gyro_offset;
+			theta_x += (imu.read_gyro_x() - gyro_offset_x) * time;
 //			float acc = imu.read_acc_components().y - acc_offset;
 
 //			auto acc = imu.read_acc();
@@ -97,17 +98,20 @@ void SensorFusion::ekf_thread() {
 
 void SensorFusion::gyro_calib() {
 	float gyro_acc = 0;
+	float gyro_acc_x = 0;
 	float acc_ax = 0;
 	float acc_ay = 0;
 	constexpr uint32_t sample_size_gyro = 500;
 	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
 		gyro_acc += imu.read_gyro();
+		gyro_acc_x += imu.read_gyro_x();
 		auto acc = imu.read_acc();
 		acc_ax += acc.x;
 		acc_ay += acc.y;
 		wait_ms(5);
 	}
 	gyro_offset = gyro_acc / sample_size_gyro;
+	gyro_offset_x = gyro_acc_x / sample_size_gyro;
 	acc_offset_x = acc_ax / sample_size_gyro;
 	acc_offset_y = acc_ay / sample_size_gyro;
 }
