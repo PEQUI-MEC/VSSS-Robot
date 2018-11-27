@@ -75,7 +75,7 @@ void SensorFusion::ekf_thread() {
 			ukf.predict(controls.to_vec(), time);
 
 			if (new_vision_data) {
-//				ukf.update_on_vision_data(vision.to_vec());
+				ukf.update_on_vision_data(vision.to_vec());
 			} else {
 				opt_mag mag_data = read_magnetometer();
 
@@ -142,7 +142,7 @@ opt_mag SensorFusion::read_magnetometer() {
 //	bool use_mag = timer_mag.read_ms() > 10;
 //	if (use_mag) {
 //		timer_mag.reset();
-//		return {true, imu.read_mag() - mag_offset};
+		return {true, imu.read_mag() - mag_offset};
 //	} else return {false, prev_mag};
 }
 

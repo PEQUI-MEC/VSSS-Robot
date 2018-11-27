@@ -98,8 +98,8 @@ class UKF {
 //		Update pose and covariance
 		T::KSensorMat K_GAIN = COV_XY * COV_YY.inverse();
 		T::SensorVec error = data - y_predicted;
-		error(0, 0) = wrap(error(0, 0));
-//		error(0, 0) = 0;
+//		error(0, 0) = wrap(error(0, 0));
+		error(0, 0) = 0;
 //		error(2, 0) = 0;
 //		error(3, 0) = 0;
 		x = x + K_GAIN * error;
