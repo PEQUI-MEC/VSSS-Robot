@@ -19,10 +19,10 @@
 #define MAG_X_MAX_e 0.1886219f
 #define MAG_Y_MAX_e 0.1955043f
 
-#define MAG_X_OFF_b 1.0294917f
-#define MAG_Y_OFF_b (-0.24693936f)
-#define MAG_X_MAX_b 0.1941387f
-#define MAG_Y_MAX_b 0.2118146f
+#define MAG_X_OFF_b 1.3047560f
+#define MAG_Y_OFF_b (-0.293932505f)
+#define MAG_X_MAX_b 0.18069801f
+#define MAG_Y_MAX_b 0.17239049f
 
 // Configura os sensores
 void IMU::init(PinName sda, PinName scl) {
@@ -102,10 +102,10 @@ float IMU::read_mag() {
 mag_components IMU::read_mag_components() {
 	int16_t mag_data[2];
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
-//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
-//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
+//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
+//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
 	return {mag_x, mag_y};
 }
 
