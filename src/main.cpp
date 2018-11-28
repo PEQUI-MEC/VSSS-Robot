@@ -88,6 +88,13 @@ std::pair<float, float> gyro_calib() {
 	return {acc/sample_size_gyro, mag_acc/sample_size_gyro};
 }
 
+float round_angle(float angle) {
+	float theta = std::fmod(angle, 2*PI);
+	if(theta > PI) theta = theta - 2*PI;
+	else if(theta < -PI) theta = theta + 2*PI;
+	return theta;
+}
+
 SensorFusion* sensors;
 int main() {
 	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
@@ -151,7 +158,7 @@ int main() {
 //		messenger->send_log(sensors->mag.x, sensors->mag.y);
 		messenger->send_log(sensors->get_pose().theta,
 							sensors->get_pose().mag_offset,
-							sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset,
+							round_angle(sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset),
 							sensors->prev_mesure.mag_theta);
 		Thread::wait(10);
 	}
