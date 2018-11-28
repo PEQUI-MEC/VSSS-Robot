@@ -102,10 +102,10 @@ float IMU::read_mag() {
 mag_components IMU::read_mag_components() {
 	int16_t mag_data[2];
 	read_reg(addr_comp, LIS3MDL_OUT_X_L, (char *) &mag_data, 4);
-	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
-	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
-//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
-//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
+//	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX + MAG_X_OFF_b) / MAG_X_MAX_b;
+//	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX + MAG_Y_OFF_b) / MAG_Y_MAX_b;
+	float mag_x = (mag_data[0] * MAX_MAG / INT16_MAX);
+	float mag_y = (mag_data[1] * MAX_MAG / INT16_MAX);
 	return {mag_x, mag_y};
 }
 

@@ -38,6 +38,7 @@ void SensorFusion::ekf_thread() {
 			ekf.update_camera(vision, imu.read_mag());
 
 		} else if(time_us > EKF_PERIOD_US && !wait) {
+			mag = imu.read_mag_components();
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
 

@@ -30,6 +30,7 @@ class SensorFusion {
 		bool new_vision_data = false;
 		volatile bool wait = false;
 		measurement_data prev_mesure{};
+		mag_components mag;
 
 		void ekf_thread();
 		opt_mag read_magnetometer();

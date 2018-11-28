@@ -147,10 +147,12 @@ int main() {
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		messenger->send_log(sensors->get_pose().theta,
-							sensors->get_pose().mag_offset,
-							sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset,
-							sensors->prev_mesure.mag_theta);
-		Thread::wait(200);
+		robot->start_velocity_control(-0.05f, 0.05f);
+		messenger->send_log(sensors->mag.x, sensors->mag.y);
+//		messenger->send_log(sensors->get_pose().theta,
+//							sensors->get_pose().mag_offset,
+//							sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset,
+//							sensors->prev_mesure.mag_theta);
+		Thread::wait(10);
 	}
 }
