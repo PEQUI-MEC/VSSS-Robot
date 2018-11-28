@@ -148,7 +148,7 @@ Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> EKF::process_noise(float time) {
 	R(2,2) = time * 0.00001f;
 	R(3,3) = time * 0.0001f;
 	R(4,4) = time * 0.0001f;
-	R(5,5) = time * 0.0003f;
+	R(5,5) = time * 0.0005f;
 	return R;
 };
 

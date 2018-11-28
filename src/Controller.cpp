@@ -35,7 +35,7 @@ void Controller::set_pwm(wheel &w, float pwm) {
 	if(pwm > 1) pwm = 1;
 	if(pwm < -1) pwm = -1;
 	if(std::abs(pwm) < 0.05) pwm = 0;
-//	pwm = 0;
+	pwm = 0;
 
 	if (pwm < 0) {
 		w.pwm_out1->write(1);
