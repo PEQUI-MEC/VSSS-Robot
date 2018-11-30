@@ -69,7 +69,7 @@ int main() {
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-		Thread::wait(200);
+		Thread::wait(10);
 //		control.set_ang_vel_control(20);
 //		Thread::wait(8);
 
@@ -90,6 +90,8 @@ int main() {
 //		auto msg = str(control.sensors.get_pose().w) + '\n';
 //		auto msg = str(control.sensors.get_pose().v) + ',' +
 //		auto msg = str(control.sensors.last_x_acc) + ',' +
+		auto pose = control.sensors.get_pose();
+		messenger.send_log(pose.x, pose.y, pose.theta);
 //		messenger.send_log(control.sensors.get_pose().v,
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);

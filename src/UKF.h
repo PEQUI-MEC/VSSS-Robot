@@ -17,8 +17,8 @@ class UKF {
 	T::PoseMat COV{};
 	T::UKFSigmaMat X{};
 
-	static constexpr float alpha = 1;
-	static constexpr float k = 0.1;
+	static constexpr float alpha = 1.5;
+	static constexpr float k = 0;
 	static constexpr int L = 5;
 
 	const float lambda = std::pow(alpha, 2.0f) * (L + k) - L;
@@ -98,8 +98,8 @@ class UKF {
 //		Update pose and covariance
 		T::KSensorMat K_GAIN = COV_XY * COV_YY.inverse();
 		T::SensorVec error = data - y_predicted;
-//		error(0, 0) = wrap(error(0, 0));
-		error(0, 0) = 0;
+		error(0, 0) = wrap(error(0, 0));
+//		error(0, 0) = 0;
 //		error(2, 0) = 0;
 //		error(3, 0) = 0;
 		x = x + K_GAIN * error;
