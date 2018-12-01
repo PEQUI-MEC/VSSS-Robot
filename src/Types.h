@@ -10,31 +10,33 @@ struct Pose {
 	float theta;
 	float v;
 	float w;
+	float mag_offset;
 
-	explicit Pose(const Eigen::Matrix<float, 5, 1> &pose_vec) :
+	explicit Pose(const Eigen::Matrix<float, 6, 1> &pose_vec) :
 			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)) {}
+			w(pose_vec(4, 0)), mag_offset(pose_vec(5, 0)) {}
 
-	Pose(float x, float y, float theta, float v, float w) :
-			x(x), y(y), theta(theta), v(v), w(w) {}
+	Pose(float x, float y, float theta, float v, float w, float mag_offset) :
+			x(x), y(y), theta(theta), v(v), w(w), mag_offset(mag_offset) {}
 
-	Pose() : x(0), y(0), theta(0), v(0), w(0) {}
+	Pose() : x(0), y(0), theta(0), v(0), w(0), mag_offset(0) {}
 
-	Eigen::Matrix<float, 5, 1> to_vec() {
-		Eigen::Matrix<float, 5, 1> vec;
+	Eigen::Matrix<float, 6, 1> to_vec() {
+		Eigen::Matrix<float, 6, 1> vec;
 		vec(0, 0) = x;
 		vec(1, 0) = y;
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
+		vec(5, 0) = mag_offset;
 		return vec;
 	}
 
 	Pose or_backwards(bool backwards) {
 		static constexpr float PI = 3.1415926f;
 		if (!backwards) return *this;
-		else return {x, y, wrap(theta + PI), -v, w};
+		else return {x, y, wrap(theta + PI), -v, w, mag_offset};
 	}
 };
 
@@ -84,17 +86,19 @@ struct VisionData {
 	float x = 0;
 	float y = 0;
 	float theta = 0;
+	float mag_offset = 0;
 
 	VisionData() = default;
 
-	VisionData(float x, float y, float theta) :
-			x(x), y(y), theta(theta) {}
+	VisionData(float x, float y, float theta, float mag_offset) :
+			x(x), y(y), theta(theta), mag_offset(mag_offset) {}
 
-	Eigen::Matrix<float, 3, 1> to_vec() {
-		Eigen::Matrix<float, 3, 1> vec;
+	Eigen::Matrix<float, 4, 1> to_vec() {
+		Eigen::Matrix<float, 4, 1> vec;
 		vec(0, 0) = x;
 		vec(1, 0) = y;
 		vec(2, 0) = theta;
+		vec(3, 0) = mag_offset;
 		return vec;
 	}
 };

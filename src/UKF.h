@@ -19,7 +19,7 @@ class UKF {
 
 	static constexpr float alpha = 1.5;
 	static constexpr float k = 0;
-	static constexpr int L = 5;
+	static constexpr int L = 6;
 
 	const float lambda = std::pow(alpha, 2.0f) * (L + k) - L;
 	const float weight0_m = lambda / (L + lambda);
@@ -68,6 +68,7 @@ class UKF {
 		}
 //		Update pose and covariance
         x_predicted(2, 0) = wrap(x_predicted(2, 0));
+		x_predicted(5, 0) = wrap(x_predicted(5, 0));
 		x = x_predicted;
 		COV = COV_predicted + model.R;
 	}
@@ -133,6 +134,7 @@ class UKF {
 		T::KVisionMat K_GAIN = COV_XY * COV_YY.inverse();
 		T::VisionVec error = data - y_predicted;
 		error(2, 0) = wrap(error(2, 0));
+		error(3, 0) = wrap(error(3, 0));
 		x = x + K_GAIN * error;
 		COV = COV - K_GAIN * COV_YY * K_GAIN.transpose();
 	}

@@ -21,13 +21,7 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	pred.theta = pose.theta + pose.w * time;
 	pred.v = pose.v + c.lin_accel * time;
 	pred.w = pose.w + c.ang_accel * time;
-
-//	F(0, 2) = -y_increment;
-//	F(1, 2) = x_increment;
-//	F(0, 3) = x_direction;
-//	F(1, 3) = y_direction;
-//	F(0, 4) = -y_increment * time / 2;
-//	F(1, 4) = x_increment * time / 2;
+	pred.mag_offset = pose.mag_offset;
 
 	process_noise(time);
 	return pred.to_vec();
@@ -39,6 +33,7 @@ void EkfModel::process_noise(float time) {
 	R(2, 2) = time * 0.00001f;
 	R(3, 3) = time * 0.0001f;
 	R(4, 4) = time * 0.0001f;
+	R(5, 5) = time * 0.0005f;
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z) {
@@ -50,7 +45,7 @@ EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const E
 
 EKF::SensorVec EkfModel::sensor_measurement_model(const EKF::PoseVec &x) {
 	EKF::SensorVec z;
-	z(0,0) = x(2,0);
+	z(0,0) = x(2,0) + x(5, 0);
 	z(1,0) = x(4,0);
 	float v_increment = x(4,0) * ROBOT_SIZE/2;
 	z(2,0) = x(3,0) - v_increment;
@@ -70,6 +65,7 @@ EKF::VisionVec EkfModel::vision_measurement_model(const EKF::PoseVec &x) {
 	for (int i = 0; i < 3; ++i) {
 		z(i,0) = x(i,0);
 	}
+	z(3, 0) = x(5, 0);
 	return z;
 }
 
@@ -94,16 +90,7 @@ void EkfModel::use_encoders(bool use) {
 }
 
 EkfModel::EkfModel() {
-//	F.setIdentity();
 	R.setZero();
-
-//	H.setZero();
-//	H(0,2) = 1;
-//	H(1,4) = 1;
-//	H(2,3) = 1;
-//	H(3,3) = 1;
-//	H(2,4) = -ROBOT_SIZE/2;
-//	H(3,4) = ROBOT_SIZE/2;
 
 	Q.setZero();
 	Q(0,0) = 0.0022846f;
@@ -111,13 +98,9 @@ EkfModel::EkfModel() {
 	Q(2,2) = 0.0022096f;
 	Q(3,3) = 0.0022096f;
 
-//	Hv.setZero();
-//	for (int i = 0; i < 3; ++i) {
-//		Hv(i,i) = 1;
-//	}
-
 	Qv.setZero();
 	Qv(0,0) = 3.44048681e-06f;
 	Qv(1,1) = 2.82211659e-06f;
 	Qv(2,2) = 9.75675349e-04f;
+	Qv(3,3) = Qv(2, 2) + Q(0,0);
 }

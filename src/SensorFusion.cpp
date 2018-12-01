@@ -75,7 +75,9 @@ void SensorFusion::ekf_thread() {
 			ukf.predict(controls.to_vec(), time);
 
 			if (new_vision_data) {
-				ukf.update_on_vision_data(vision.to_vec());
+				VisionData vision_with_mag = vision;
+				vision_with_mag.mag_offset = imu.read_mag() - vision.theta;
+				ukf.update_on_vision_data(vision_with_mag.to_vec());
 			} else {
 				opt_mag mag_data = read_magnetometer();
 
@@ -99,14 +101,19 @@ void SensorFusion::gyro_calib() {
 	float gyro_acc = 0;
 	float acc_ax = 0;
 	float acc_ay = 0;
+	float acc_mag = 0;
 	constexpr uint32_t sample_size_gyro = 500;
 	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
 		gyro_acc += imu.read_gyro();
 		auto acc = imu.read_acc();
+		auto mag = imu.read_mag();
 		acc_ax += acc.x;
 		acc_ay += acc.y;
+		acc_mag += mag;
 		wait_ms(5);
 	}
+	ukf.x(5, 0) = acc_mag / sample_size_gyro;
+//	ukf.COV(5, 5) = 0.001;
 	gyro_offset = gyro_acc / sample_size_gyro;
 	acc_offset_x = acc_ax / sample_size_gyro;
 	acc_offset_y = acc_ay / sample_size_gyro;
@@ -128,7 +135,7 @@ void SensorFusion::gyro_calib() {
 //}
 
 void SensorFusion::set_vision_data(float x, float y, float theta) {
-	vision = {x, y, theta};
+	vision = {x, y, theta, 0};
 	new_vision_data = true;
 	if (no_vision) {
 //		mag_offset = vision.theta;
@@ -142,7 +149,7 @@ opt_mag SensorFusion::read_magnetometer() {
 //	bool use_mag = timer_mag.read_ms() > 10;
 //	if (use_mag) {
 //		timer_mag.reset();
-		return {true, imu.read_mag() - mag_offset};
+		return {true, imu.read_mag()};
 //	} else return {false, prev_mag};
 }
 

@@ -33,7 +33,6 @@ class SensorFusion {
 	VisionData vision;
 	bool new_vision_data = false;
 
-	float mag_offset = 0;
 	float prev_mag = 0;
 
 	float previous_w = 0;
