@@ -43,6 +43,7 @@ class SensorFusion {
 		void ekf_thread_start();
 		pose_data get_pose();
 		void set_vision_data(float x, float y, float theta);
+		float elapsed = 0;
 };
 
 #endif //VSSS_SENSORFUSION_H

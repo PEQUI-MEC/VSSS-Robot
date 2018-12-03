@@ -51,9 +51,13 @@ void SensorFusion::ekf_thread() {
 									 wheel_vel.vel_left,
 									 wheel_vel.vel_right};
 
+			Timer t;
+			t.start();
 			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
 			prev_mesure = data;
 			ekf.update(data, mag_data.valid, wheel_vel.new_data);
+			t.stop();
+			elapsed = t.read_us() / 1000.0f;
 		}
 	}
 }

@@ -156,10 +156,11 @@ int main() {
 		}
 //		robot->start_velocity_control(-0.05f, 0.05f);
 //		messenger->send_log(sensors->mag.x, sensors->mag.y);
-		messenger->send_log(sensors->get_pose().theta,
-							sensors->get_pose().mag_offset,
-							round_angle(sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset),
-							sensors->prev_mesure.mag_theta);
+//		messenger->send_log(sensors->get_pose().theta,
+//							sensors->get_pose().mag_offset,
+//							round_angle(sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset),
+//							sensors->prev_mesure.mag_theta);
+		messenger->send_log(sensors->elapsed);
 		Thread::wait(10);
 	}
 }
