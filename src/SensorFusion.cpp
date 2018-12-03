@@ -72,6 +72,8 @@ void SensorFusion::ekf_thread() {
 			Controls controls(acc,
 							  (gyro_rate - previous_w) / time);
 
+			Timer t;
+			t.start();
 			ukf.predict(controls.to_vec(), time);
 
 			if (new_vision_data) {
@@ -91,6 +93,8 @@ void SensorFusion::ekf_thread() {
 
 				ukf.update_on_sensor_data(sensor_data.to_vec());
 			}
+			t.stop();
+			elapsed = t.read_us();
 
 			previous_w = gyro_rate;
 		}

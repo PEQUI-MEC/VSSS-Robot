@@ -63,6 +63,7 @@ class SensorFusion {
 	void set_vision_data(float x, float y, float theta);
 	void stop_and_wait();
 	void resume_thread();
+	int elapsed = 0;
 };
 
 #endif //VSSS_SENSORFUSION_H

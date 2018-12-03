@@ -95,6 +95,7 @@ int main() {
 //		messenger.send_log(control.sensors.get_pose().v,
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);
+		messenger.send_log(control.sensors.elapsed);
 //		std::string msg = str(control.sensors.get_pose().v) + ',' +
 //				str(control.sensors.x_acc) + ',' +
 //				str(control.sensors.x_acc_fixed);
