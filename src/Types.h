@@ -10,49 +10,54 @@ struct Pose {
 	float theta;
 	float v;
 	float w;
+	float theta_y;
 
-	explicit Pose(const Eigen::Matrix<float, 5, 1> &pose_vec) :
+	explicit Pose(const Eigen::Matrix<float, 6, 1> &pose_vec) :
 			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)) {}
+			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)) {}
 
-	Pose(float x, float y, float theta, float v, float w) :
-			x(x), y(y), theta(theta), v(v), w(w) {}
+	Pose(float x, float y, float theta, float v, float w, float theta_y) :
+			x(x), y(y), theta(theta), v(v), w(w), theta_y(theta_y) {}
 
-	Pose() : x(0), y(0), theta(0), v(0), w(0) {}
+	Pose() : x(0), y(0), theta(0), v(0), w(0), theta_y(0) {}
 
-	Eigen::Matrix<float, 5, 1> to_vec() {
-		Eigen::Matrix<float, 5, 1> vec;
+	Eigen::Matrix<float, 6, 1> to_vec() {
+		Eigen::Matrix<float, 6, 1> vec;
 		vec(0, 0) = x;
 		vec(1, 0) = y;
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
+		vec(5, 0) = theta_y;
 		return vec;
 	}
 
 	Pose or_backwards(bool backwards) {
 		static constexpr float PI = 3.1415926f;
 		if (!backwards) return *this;
-		else return {x, y, wrap(theta + PI), -v, w};
+		else return {x, y, wrap(theta + PI), -v, w, theta_y};
 	}
 };
 
 struct Controls {
 	float lin_accel;
 	float ang_accel;
+	float gyro_y;
 
-	explicit Controls(Eigen::Matrix<float, 2, 1> control_vec) :
+	explicit Controls(Eigen::Matrix<float, 3, 1> control_vec) :
 			lin_accel(control_vec(0, 0)),
-			ang_accel(control_vec(1, 0)) {}
+			ang_accel(control_vec(1, 0)),
+			gyro_y(control_vec(2, 0)) {}
 
-	Controls(float lin_accel, float ang_accel) :
-			lin_accel(lin_accel), ang_accel(ang_accel) {}
+	Controls(float lin_accel, float ang_accel, float gyro_y) :
+			lin_accel(lin_accel), ang_accel(ang_accel), gyro_y(gyro_y) {}
 
-	Eigen::Matrix<float, 2, 1> to_vec() {
-		Eigen::Matrix<float, 2, 1> vec;
+	Eigen::Matrix<float, 3, 1> to_vec() {
+		Eigen::Matrix<float, 3, 1> vec;
 		vec(0, 0) = lin_accel;
 		vec(1, 0) = ang_accel;
+		vec(2, 0) = gyro_y;
 		return vec;
 	}
 };

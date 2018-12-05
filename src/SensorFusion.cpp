@@ -16,7 +16,8 @@ SensorFusion::SensorFusion(Controller *controler_ptr) {
 
 void SensorFusion::ekf_thread_start() {
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-	gyro_calib();
+	wait(5);
+	calibration();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }
 
@@ -36,8 +37,10 @@ void SensorFusion::ekf_thread() {
 			float time = time_us / 1E6f;
 
 			float gyro_rate = imu.read_gyro() - gyro_offset;
-			theta_x += (imu.read_gyro_x() - gyro_offset_x) * time;
+			float gyro_rate_y = imu.read_gyro_x() - gyro_offset_y;
 //			float acc = imu.read_acc_components().y - acc_offset;
+
+			auto acc = imu.read_acc_components();
 
 //			auto acc = imu.read_acc();
 //			auto controls = acc_model(acc.y - acc_offset_y,
@@ -68,10 +71,11 @@ void SensorFusion::ekf_thread() {
 //				B = x_acc / w_sq;
 //			}
 
-			float acc = (wheel_vel.vel_left_accel +
-					wheel_vel.vel_right_accel) / (2 * time);
-			Controls controls(acc,
-							  (gyro_rate - previous_w) / time);
+//			float acc = (wheel_vel.vel_left_accel +
+//					wheel_vel.vel_right_accel) / (2 * time);
+			Controls controls(acc_model(acc),
+							  (gyro_rate - previous_w) / time,
+							  gyro_rate_y);
 
 			ekf.predict(controls.to_vec(), time);
 
@@ -96,22 +100,36 @@ void SensorFusion::ekf_thread() {
 	}
 }
 
-void SensorFusion::gyro_calib() {
+float SensorFusion::acc_model(AccComponents &acc) {
+	float theta = get_pose().theta_y;
+	return (acc.y - gravity * std::sin(theta))
+		   / std::cos(theta);
+}
+
+void SensorFusion::calibration() {
 	float gyro_acc = 0;
 	float gyro_acc_x = 0;
 	float acc_ax = 0;
 	float acc_ay = 0;
+	float gravity_acc  = 0;
+	float theta_acc = 0;
 	constexpr uint32_t sample_size_gyro = 500;
 	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
 		gyro_acc += imu.read_gyro();
 		gyro_acc_x += imu.read_gyro_x();
-		auto acc = imu.read_acc();
+		auto acc = imu.read_acc_components();
+		gravity_acc += std::sqrt(std::pow(acc.y, 2.0f)
+							 + std::pow(acc.z, 2.0f));
+		theta_acc += std::atan2(-acc.z, acc.y) + PI/2;
 		acc_ax += acc.x;
 		acc_ay += acc.y;
 		wait_ms(5);
 	}
+	gravity = gravity_acc / sample_size_gyro;
+	ekf.x(5, 0) = theta_acc / sample_size_gyro;
+	ekf.COV(5, 5) = 0.0001f;
 	gyro_offset = gyro_acc / sample_size_gyro;
-	gyro_offset_x = gyro_acc_x / sample_size_gyro;
+	gyro_offset_y = gyro_acc_x / sample_size_gyro;
 	acc_offset_x = acc_ax / sample_size_gyro;
 	acc_offset_y = acc_ay / sample_size_gyro;
 }
@@ -135,7 +153,6 @@ void SensorFusion::set_vision_data(float x, float y, float theta) {
 	vision = {x, y, theta};
 	new_vision_data = true;
 	if (no_vision) {
-		mag_offset = vision.theta;
 		no_vision = false;
 	}
 }

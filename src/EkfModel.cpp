@@ -20,6 +20,7 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	pred.theta = wrap(pose.theta + pose.w * time);
 	pred.v = pose.v + c.lin_accel * time;
 	pred.w = pose.w + c.ang_accel * time;
+	pred.theta_y = wrap(pose.theta_y + c.gyro_y * time);
 
 	F(0, 2) = -y_increment;
 	F(1, 2) = x_increment;
@@ -38,6 +39,7 @@ void EkfModel::process_noise(float time) {
 	R(2, 2) = time * 0.00001f;
 	R(3, 3) = time * 0.01f;
 	R(4, 4) = time * 0.0001f;
+	R(5, 5) = time * 0.00001f;
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z) {

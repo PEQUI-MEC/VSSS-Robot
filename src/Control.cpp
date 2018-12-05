@@ -41,7 +41,7 @@ void Control::set_ekf_vision_data(float x, float y, float theta) {
 
 void Control::set_target(ControlState control_type, Target target,
 						 bool stop_afterwards) {
-	this->stop_afterwards = stop_afterwards;
+//	this->stop_afterwards = stop_afterwards;
 	this->target = target;
 	state = control_type;
 	resume_threads();
@@ -76,11 +76,11 @@ void Control::pose_control_thread() {
 			}
 		}();
 
-		theta_x_acc += sensors.theta_x;
-		float deriv = sensors.theta_x - last_theta_x;
-		last_theta_x = sensors.theta_x;
-		TargetVelocity targ = {2 * sensors.theta_x + 0.5f * theta_x_acc + 0.3f * deriv, 0};
-		auto target_wheel_vel = get_target_wheel_velocity(targ);
+//		theta_x_acc += sensors.theta_x;
+//		float deriv = sensors.theta_x - last_theta_x;
+//		last_theta_x = sensors.theta_x;
+//		TargetVelocity targ = {2 * sensors.theta_x + 0.5f * theta_x_acc + 0.3f * deriv, 0};
+		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
 		controller.set_target_velocity(target_wheel_vel);
 		Thread::wait(10);
 	}

@@ -5,6 +5,7 @@
 #include "Control.h"
 #include "EKF2.h"
 #include "EkfModel.h"
+#define PI 3.1415926f
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
 	LEDs[0] = ((num >> 0) & 1);
@@ -29,8 +30,8 @@ int main() {
 	AnalogIn battery_vin(ALL_CELLS);
 	bat_watcher(LEDs, battery_vin);
 
-	static Control control;
-	static Messenger messenger(&control);
+	Control control;
+	Messenger messenger(&control);
 
 	control.start_threads();
 	messenger.start_thread();
@@ -56,10 +57,10 @@ int main() {
 
 //	control.stop = true;
 
-//	Timer t;
-//	t.start();
+	Timer t;
+	t.start();
 
-//	float v = 0;
+	float v = 0;
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
 
@@ -69,7 +70,7 @@ int main() {
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-		Thread::wait(200);
+		Thread::wait(10);
 //		control.set_ang_vel_control(20);
 //		Thread::wait(8);
 
@@ -94,6 +95,24 @@ int main() {
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);
 //		messenger.send_log(control.sensors.theta_x);
+//		messenger.send_log(control.sensors.get_pose().theta_y);
+//		auto acc = control.sensors.acc_test;
+//		float ag = std::sqrt(std::pow(acc.y, 2.0f)
+//							 + std::pow(acc.z, 2.0f));
+//		float theta = std::atan2(-acc.z, acc.y) + PI/2;
+//		float theta = control.sensors.get_pose().theta_y;
+//		float ag = control.sensors.gravity;
+//		float ar = (acc.y - ag * std::sin(theta)) / std::cos(theta);
+//		float elapsed = t.read();
+//		t.reset();
+//		float v0 = v;
+//		v += ar * elapsed;
+		auto pose = control.sensors.get_pose();
+		messenger.send_log(pose.x, pose.y, pose.v, pose.theta_y);
+//		messenger.send_log(v, ar, ag, theta);
+//		messenger.send_log(control.sensors.acc_test.x,
+//						   control.sensors.acc_test.y,
+//						   control.sensors.acc_test.z);
 //		std::string msg = str(control.sensors.get_pose().v) + ',' +
 //				str(control.sensors.x_acc) + ',' +
 //				str(control.sensors.x_acc_fixed);

@@ -32,28 +32,27 @@ class SensorFusion {
 	VisionData vision;
 	bool new_vision_data = false;
 
-	float mag_offset = 0;
-
 	float previous_w = 0;
-	int e_time = 0;
-	float theta_x = 0;
 
 	void ekf_thread();
 	opt_mag read_magnetometer();
-	void gyro_calib();
+	void calibration();
+	float acc_model(AccComponents &acc);
 
-	volatile Controls last_controls{0,0};
-	volatile float x_acc = 0;
-	volatile float x_acc_fixed = 0;
-	volatile float y_acc = 0;
-	volatile float y_acc_fixed = 0;
+//	volatile float x_acc = 0;
+//	volatile float x_acc_fixed = 0;
+//	volatile float y_acc = 0;
+//	volatile float y_acc_fixed = 0;
+	AccComponents acc_test{};
 
 	public:
 	bool no_vision = true;
 	float gyro_offset = 0;
-	float gyro_offset_x = 0;
+	float gyro_offset_y = 0;
 	volatile float acc_offset_x = 0;
 	volatile float acc_offset_y = 0;
+
+	float gravity = 0;
 
 	volatile float A = 0;
 	volatile float B = 0;

@@ -38,15 +38,10 @@ class Control {
 	Thread control_thread;
 
 	volatile ControlState state = ControlState::None;
-	bool stop_afterwards = true;
 	Target target{0, 0, 0, 0};
 
 	Timer backwards_timer;
 	bool backwards = false;
-
-	float theta_x_acc = 0;
-	float last_theta_x = 0;
-
 
 	bool sleep_enabled = true;
 
