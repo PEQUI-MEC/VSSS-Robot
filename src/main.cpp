@@ -52,15 +52,22 @@ int main() {
 //	control.set_target(ControlState::Position,
 //					   {0.5, 0.5, 0, 0.8f}, true);
 
-//	wait(2);
+	control.set_target(ControlState::AngularVel,
+					   {0, 0, 0, 20}, false);
+
 //	control.sensors.timeout.start();
+	wait(3);
 
 //	control.stop = true;
 
 	Timer t;
 	t.start();
 
-	float v = 0;
+//	float avg_acc = 0;
+	float avg_rsin_acc = 0;
+	float avg_rcos_acc = 0;
+	float offset_acc = 0;
+	int count = 0;
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
 
@@ -71,7 +78,6 @@ int main() {
 			bat_watcher(LEDs, battery_vin);
 		}
 		Thread::wait(10);
-//		control.set_ang_vel_control(20);
 //		Thread::wait(8);
 
 //		auto msg = str(control.sensors.e_time) + "\n";
@@ -107,12 +113,49 @@ int main() {
 //		t.reset();
 //		float v0 = v;
 //		v += ar * elapsed;
-		auto pose = control.sensors.get_pose();
-		messenger.send_log(pose.x, pose.y, pose.v, pose.theta_y);
+//		auto pose = control.sensors.get_pose();
+//		messenger.send_log(pose.x, pose.y, pose.v, pose.theta_y);
+//		auto acc = control.sensors.acc_test;
+		if (count == 1000) {
+			avg_rsin_acc = 0;
+			avg_rcos_acc = 0;
+			offset_acc = 0;
+//			avg_acc = 0;
+			count = 0;
+		}
+//		avg_acc += acc.x;
+		avg_rsin_acc += control.sensors.r_sin;
+		avg_rcos_acc += control.sensors.r_cos;
+//		offset_acc += control.sensors.gyro_yx_m;
+		count++;
+//		messenger.send_log(offset_acc / count,
+//						   control.sensors.gyro_yx_m);
+
+		messenger.send_log(control.sensors.ar,
+							control.sensors.ar_alpha_fix,
+							control.sensors.alpha);
+//		messenger.send_log(avg_rsin_acc / count,
+//						   control.sensors.r_sin,
+//						   avg_rcos_acc / count,
+//						   control.sensors.r_cos,
+//						   control.sensors.get_pose().theta_y);
+//						   control.sensors.ax, control.sensors.ay,
+//						   control.sensors.ax_raw,
+//						   control.sensors.get_pose().theta_y);
+//						   offset_acc / count, offset);
+//		messenger.send_log(avg_acc/count, acc.x, acc.y, acc.z);
 //		messenger.send_log(v, ar, ag, theta);
-//		messenger.send_log(control.sensors.acc_test.x,
-//						   control.sensors.acc_test.y,
-//						   control.sensors.acc_test.z);
+//		auto acc = control.sensors.acc_real;
+//		float ag = control.sensors.gravity;
+//		auto ar = std::sqrt(std::pow(acc.x, 2.0f)
+//							+ std::pow(acc.z, 2.0f) - std::pow(ag, 2.0f));
+//		auto theta = 2 * (std::atan( (ar - acc.x) / (acc.z + ag) ) + 0 * PI);
+//		messenger.send_log(acc.x,
+//						   acc.y,
+//						   acc.z,
+//		messenger.send_log(control.sensors.ay,
+//						   control.sensors.ax,
+//						   control.sensors.get_pose().theta_y);
 //		std::string msg = str(control.sensors.get_pose().v) + ',' +
 //				str(control.sensors.x_acc) + ',' +
 //				str(control.sensors.x_acc_fixed);

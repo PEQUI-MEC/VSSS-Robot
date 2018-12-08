@@ -37,13 +37,13 @@ class SensorFusion {
 	void ekf_thread();
 	opt_mag read_magnetometer();
 	void calibration();
-	float acc_model(AccComponents &acc);
+	float acc_model(AccRealData &acc, float gyro_rate);
 
 //	volatile float x_acc = 0;
 //	volatile float x_acc_fixed = 0;
 //	volatile float y_acc = 0;
 //	volatile float y_acc_fixed = 0;
-	AccComponents acc_test{};
+	AccRealData acc_real{};
 
 	public:
 	bool no_vision = true;
@@ -52,6 +52,19 @@ class SensorFusion {
 	volatile float acc_offset_x = 0;
 	volatile float acc_offset_y = 0;
 
+//	float gyro_yx = 0.049127f;
+	const float gyro_yx = 0.052512;
+	float gyro_yx_m = 0;
+	const float r_sin = 0.028734f;
+	const float r_cos = 0.010513;
+	float ax = 0;
+	float ax_raw = 0;
+	float ay = 0;
+	float ar = 0;
+	float ar_alpha_fix = 0;
+	float alpha = 0;
+	float rsin = -0.028737f;
+	float rcos = 0.008833f;
 	float gravity = 0;
 
 	volatile float A = 0;
@@ -63,6 +76,8 @@ class SensorFusion {
 	void set_vision_data(float x, float y, float theta);
 	void stop_and_wait();
 	void resume_thread();
+	float gyro_rate_y_m = 0;
+	float gyro_rate = 0;
 };
 
 #endif //VSSS_SENSORFUSION_H

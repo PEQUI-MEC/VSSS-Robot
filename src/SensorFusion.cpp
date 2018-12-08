@@ -36,11 +36,15 @@ void SensorFusion::ekf_thread() {
 			timer_ekf.reset();
 			float time = time_us / 1E6f;
 
-			float gyro_rate = imu.read_gyro() - gyro_offset;
-			float gyro_rate_y = imu.read_gyro_x() - gyro_offset_y;
+			gyro_rate = imu.read_gyro() - gyro_offset;
+			float gyro_rate_y_raw = (imu.read_gyro_x() - gyro_offset_y);
+			float gyro_rate_y = gyro_rate_y_raw - gyro_yx * gyro_rate;
+//			gyro_yx_m = gyro_rate_y_raw / gyro_rate;
+			gyro_rate_y_m = gyro_rate_y;
 //			float acc = imu.read_acc_components().y - acc_offset;
 
-			auto acc = imu.read_acc_components();
+			auto acc = imu.read_acc_real();
+			acc_real = acc;
 
 //			auto acc = imu.read_acc();
 //			auto controls = acc_model(acc.y - acc_offset_y,
@@ -73,7 +77,7 @@ void SensorFusion::ekf_thread() {
 
 //			float acc = (wheel_vel.vel_left_accel +
 //					wheel_vel.vel_right_accel) / (2 * time);
-			Controls controls(acc_model(acc),
+			Controls controls(acc_model(acc, gyro_rate),
 							  (gyro_rate - previous_w) / time,
 							  gyro_rate_y);
 
@@ -100,16 +104,27 @@ void SensorFusion::ekf_thread() {
 	}
 }
 
-float SensorFusion::acc_model(AccComponents &acc) {
+float SensorFusion::acc_model(AccRealData &acc, float gyro_rate) {
 	float theta = get_pose().theta_y;
-	return (acc.y - gravity * std::sin(theta))
-		   / std::cos(theta);
+	float w2 = std::pow(gyro_rate, 2.0f);
+	ax_raw = acc.x;
+	ay = acc.y - acc_offset_y;
+	ax = (acc.x + gravity * std::sin(theta))
+		 / std::cos(theta);
+
+	alpha = (w2 * r_cos - ay) / r_sin;
+	ar = ax - w2 * r_sin;
+	ar_alpha_fix = ax - w2 * r_sin - alpha * r_cos;
+//	if (w2 != 0) {
+//		r_sin = ax / w2;
+//		r_cos = ay / w2;
+//	}
+	return ar;
 }
 
 void SensorFusion::calibration() {
 	float gyro_acc = 0;
 	float gyro_acc_x = 0;
-	float acc_ax = 0;
 	float acc_ay = 0;
 	float gravity_acc  = 0;
 	float theta_acc = 0;
@@ -117,11 +132,10 @@ void SensorFusion::calibration() {
 	for (uint32_t i = 0; i < sample_size_gyro; ++i) {
 		gyro_acc += imu.read_gyro();
 		gyro_acc_x += imu.read_gyro_x();
-		auto acc = imu.read_acc_components();
-		gravity_acc += std::sqrt(std::pow(acc.y, 2.0f)
-							 + std::pow(acc.z, 2.0f));
-		theta_acc += std::atan2(-acc.z, acc.y) + PI/2;
-		acc_ax += acc.x;
+		auto acc = imu.read_acc_real();
+		gravity_acc += std::sqrt(std::pow(acc.x, 2.0f)
+								 + std::pow(acc.z, 2.0f));
+		theta_acc += std::atan2(-acc.z, -acc.x) + PI/2;
 		acc_ay += acc.y;
 		wait_ms(5);
 	}
@@ -130,7 +144,6 @@ void SensorFusion::calibration() {
 	ekf.COV(5, 5) = 0.0001f;
 	gyro_offset = gyro_acc / sample_size_gyro;
 	gyro_offset_y = gyro_acc_x / sample_size_gyro;
-	acc_offset_x = acc_ax / sample_size_gyro;
 	acc_offset_y = acc_ay / sample_size_gyro;
 }
 
