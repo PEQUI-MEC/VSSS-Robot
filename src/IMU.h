@@ -17,23 +17,10 @@ struct mag_components {
 	float y;
 };
 
-struct AccData {
-	float x = 0;
-	float y = 0;
-
-	std::string to_string() {
-		return str(x) + ", " + str(y);
-	}
-};
-
-struct AccComponents {
+struct AccRealData {
 	float x = 0;
 	float y = 0;
 	float z = 0;
-
-	std::string to_string() {
-		return str(x) + ", " + str(y) + ", " + str(z);
-	}
 };
 
 class IMU {
@@ -54,8 +41,7 @@ class IMU {
 		imu_data read_imu_data(bool use_mag);
 		float read_mag();
 		mag_components read_mag_components();
-		AccComponents read_acc_components();
-		AccData read_acc();
+		AccRealData read_acc_real();
 		float read_gyro();
 		float read_gyro_x();
 		void read_acc_all(int16_t *data);

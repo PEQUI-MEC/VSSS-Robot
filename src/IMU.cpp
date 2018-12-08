@@ -70,22 +70,13 @@ imu_data IMU::read_imu_data(bool use_mag) {
 	return data;
 }
 
-AccComponents IMU::read_acc_components() {
+AccRealData IMU::read_acc_real() {
 	int16_t acc_data[3];
 	read_acc_all(acc_data);
 
-	return {acc_data[0] * (MAX_ACC / INT16_MAX),
-			acc_data[1] * (MAX_ACC / INT16_MAX),
+	return {-acc_data[1] * (MAX_ACC / INT16_MAX),
+			acc_data[0] * (MAX_ACC / INT16_MAX),
 			acc_data[2] * (MAX_ACC / INT16_MAX)};
-}
-
-AccData IMU::read_acc() {
-	int16_t acc_data[2];
-	read_reg(addr_gyro_acc, OUTX_L_XL, (char *) acc_data, 4);
-
-//	Same coordinates as robot (x is front, y is sideways)
-	return {acc_data[1] * (MAX_ACC / INT16_MAX),
-			acc_data[0] * (MAX_ACC / INT16_MAX)};
 }
 
 float IMU::read_gyro() {
