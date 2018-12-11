@@ -37,7 +37,7 @@ void EkfModel::process_noise(float time) {
 	R(0, 0) = time * 0.001f;
 	R(1, 1) = time * 0.001f;
 	R(2, 2) = time * 0.00001f;
-	R(3, 3) = time * 0.01f;
+	R(3, 3) = time * 0.0001f;
 	R(4, 4) = time * 0.0001f;
 	R(5, 5) = time * 0.00001f;
 }

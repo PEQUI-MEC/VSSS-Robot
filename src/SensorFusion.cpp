@@ -112,9 +112,9 @@ float SensorFusion::acc_model(AccRealData &acc, float gyro_rate) {
 	ax = (acc.x + gravity * std::sin(theta))
 		 / std::cos(theta);
 
-	alpha = (w2 * r_cos - ay) / r_sin;
+//	alpha = (w2 * r_cos - ay) / r_sin;
 	ar = ax - w2 * r_sin;
-	ar_alpha_fix = ax - w2 * r_sin - alpha * r_cos;
+//	ar_alpha_fix = ax - w2 * r_sin - alpha * r_cos;
 //	if (w2 != 0) {
 //		r_sin = ax / w2;
 //		r_cos = ay / w2;
