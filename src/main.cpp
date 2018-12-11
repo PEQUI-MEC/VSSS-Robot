@@ -131,9 +131,12 @@ int main() {
 //		messenger.send_log(offset_acc / count,
 //						   control.sensors.gyro_yx_m);
 
-		messenger.send_log(control.sensors.ar,
-							control.sensors.ar_alpha_fix,
-							control.sensors.alpha);
+//		messenger.send_log(control.sensors.get_pose().theta,
+//						   control.sensors.get_pose().w,
+//						   control.sensors.alpha);
+		messenger.send_log(control.sensors.get_pose().x,
+						   control.sensors.get_pose().y,
+						   control.sensors.get_pose().v);
 //		messenger.send_log(avg_rsin_acc / count,
 //						   control.sensors.r_sin,
 //						   avg_rcos_acc / count,
