@@ -183,6 +183,7 @@ EKF::EKF() {
 	z_cam.setConstant(1.2);
 	I.setIdentity();
 	COV.setIdentity();
+	COV = COV * 0.1f;
 	COV_P.setZero();
 
 	Q.setZero();
