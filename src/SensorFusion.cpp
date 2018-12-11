@@ -16,6 +16,7 @@ SensorFusion::SensorFusion(Controller *controler_ptr) {
 
 void SensorFusion::ekf_thread_start() {
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
+	wait(5);
 	gyro_calib();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }

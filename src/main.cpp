@@ -90,8 +90,8 @@ int main() {
 //		auto msg = str(control.sensors.get_pose().w) + '\n';
 //		auto msg = str(control.sensors.get_pose().v) + ',' +
 //		auto msg = str(control.sensors.last_x_acc) + ',' +
-//		auto pose = control.sensors.get_pose();
-//		messenger.send_log(pose.x, pose.y, pose.theta);
+		auto pose = control.sensors.get_pose();
+		messenger.send_log(pose.x, pose.y, pose.theta, pose.v, pose.w);
 //		messenger.send_log(control.sensors.get_pose().v,
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);
