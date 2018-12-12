@@ -91,7 +91,9 @@ int main() {
 //		auto msg = str(control.sensors.get_pose().v) + ',' +
 //		auto msg = str(control.sensors.last_x_acc) + ',' +
 		auto pose = control.sensors.get_pose();
-		messenger.send_log(pose.x, pose.y, pose.theta, pose.v, pose.w);
+		auto& cov = control.sensors.ukf.COV;
+		messenger.send_log(pose.x, pose.y, pose.theta,
+						   cov(0,0), cov(1,1), cov(2,2));
 //		messenger.send_log(control.sensors.get_pose().v,
 //						   control.sensors.x_acc,
 //						   control.sensors.get_pose().w);

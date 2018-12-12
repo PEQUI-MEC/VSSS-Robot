@@ -29,6 +29,7 @@ class UKF {
 	UKF() {
 		x.setZero();
 		COV.setIdentity();
+		COV = COV * 0.1;
 		X.setZero();
 	}
 
@@ -75,7 +76,7 @@ class UKF {
 
 	void update_on_sensor_data(const T::SensorVec &data) {
 //		Predicted measurement sigma points
-//	    set_sigma_points(x);
+	    set_sigma_points(x);
 		T::UKFSensorSigmaMat Y;
 		for (int i = 0; i <= 2 * L; i++)
 			Y.col(i) = model.sensor_measurement_model(X.col(i));
@@ -109,7 +110,7 @@ class UKF {
 
 	void update_on_vision_data(const T::VisionVec &data) {
 //		Predicted measurement sigma points
-//	    set_sigma_points(x);
+	    set_sigma_points(x);
 		T::UKFVisionSigmaMat Y;
 		for (int i = 0; i <= 2 * L; i++)
 			Y.col(i) = model.vision_measurement_model(X.col(i));
