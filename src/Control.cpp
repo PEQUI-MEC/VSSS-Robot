@@ -59,24 +59,29 @@ void Control::pose_control_thread() {
 
 		auto pose = sensors.get_pose();
 
-		auto target_vel = [&]() {
-			switch (state) {
-				case ControlState::Pose:
-					return pose_control(sensors.get_pose(), this->target);
-				case ControlState::Position:
-					return position_control(pose, target);
-				case ControlState::Vector:
-					return vector_control(pose.theta, target.theta, target.velocity, true);
-				case ControlState::Orientation:
-					return orientation_control(pose, target.theta);
-				case ControlState::AngularVel:
-					return TargetVelocity{0, target.velocity};
-				default:
-					return TargetVelocity{0, 0};
-			}
-		}();
-		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
-		controller.set_target_velocity(target_wheel_vel);
+		if (state == ControlState::WheelVel) {
+			controller.set_target_velocity({target.x, target.y});
+		} else {
+
+			auto target_vel = [&]() {
+				switch (state) {
+					case ControlState::Pose:
+						return pose_control(sensors.get_pose(), this->target);
+					case ControlState::Position:
+						return position_control(pose, target);
+					case ControlState::Vector:
+						return vector_control(pose.theta, target.theta, target.velocity, true);
+					case ControlState::Orientation:
+						return orientation_control(pose, target.theta);
+					case ControlState::AngularVel:
+						return TargetVelocity{0, target.velocity};
+					default:
+						return TargetVelocity{0, 0};
+				}
+			}();
+			auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+			controller.set_target_velocity(target_wheel_vel);
+		}
 		Thread::wait(10);
 	}
 }

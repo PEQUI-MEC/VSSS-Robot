@@ -17,7 +17,7 @@ class UKF {
 	T::PoseMat COV{};
 	T::UKFSigmaMat X{};
 
-	static constexpr float alpha = 1.5;
+	static constexpr float alpha = 0.1;
 	static constexpr float k = 0;
 	static constexpr int L = 6;
 

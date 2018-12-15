@@ -43,14 +43,20 @@ int main() {
 		wait(0.5);
 	};
 
-	to_orientation(-45);
-	to_orientation(0);
-	to_orientation(45);
-	to_orientation(0);
+//	to_orientation(-45);
+//	to_orientation(0);
+//	to_orientation(45);
+//	to_orientation(0);
 
 //	control.set_target(ControlState::Position,
 //					   {0.5, 0.5, 0, 0.8f}, true);
 
+
+//	control.set_target(ControlState::Position,
+//					   {0.5, 0.5, 0, 0.8f}, true);
+
+	control.set_target(ControlState::WheelVel,
+					   {0.5, 0.6, 0, 0.8f}, true);
 //	wait(2);
 //	control.sensors.timeout.start();
 

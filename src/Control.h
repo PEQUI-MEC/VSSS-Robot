@@ -16,7 +16,7 @@ struct TargetVelocity {
 };
 
 enum class ControlState {
-	Pose, Position, Vector, Orientation, AngularVel, None
+	Pose, Position, Vector, Orientation, AngularVel, WheelVel, None
 };
 
 struct Target {
