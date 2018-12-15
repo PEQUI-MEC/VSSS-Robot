@@ -157,10 +157,15 @@ int main() {
 		}
 //		robot->start_velocity_control(-0.05f, 0.05f);
 //		messenger->send_log(sensors->mag.x, sensors->mag.y);
-		auto pose = sensors->get_pose();
-		auto& cov = sensors->ekf.COV;
-		messenger->send_log(pose.x, pose.y, pose.theta,
-							cov(0,0), cov(1,1), cov(2,2));
+//		auto pose = sensors->get_pose();
+//		auto& cov = sensors->ekf.COV;
+//		messenger->send_log(pose.x, pose.y, pose.theta,
+//							cov(0,0), cov(1,1), cov(2,2));
+		auto& e = robot->sensors->ekf;
+		if (e.new_log) {
+			messenger->send_log(e.x_error, e.y_error, e.theta_error);
+			e.new_log = false;
+		}
 //		messenger->send_log(sensors->get_pose().theta,
 //							sensors->get_pose().mag_offset,
 //							round_angle(sensors->prev_mesure.mag_theta - sensors->get_pose().mag_offset),

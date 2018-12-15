@@ -44,6 +44,11 @@ class EKF {
 	public:
 		pose_data pose{};
 
+		bool new_log = false;
+		float x_error = 0;
+		float y_error = 0;
+		float theta_error = 0;
+
 		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> F;
 		Eigen::Matrix<float, POSE_SIZE, 1> x;
 		Eigen::Matrix<float, POSE_SIZE, 1> x_p;

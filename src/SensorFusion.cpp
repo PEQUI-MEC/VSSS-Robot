@@ -69,12 +69,12 @@ void SensorFusion::set_vision_data(float x, float y, float theta) {
 opt_mag SensorFusion::read_magnetometer() {
 //	return {false, 0};
 
-	bool use_mag = timer_mag.read_ms() > 10;
-	if(use_mag) {
-		timer_mag.reset();
+//	bool use_mag = timer_mag.read_ms() > 10;
+//	if(use_mag) {
+//		timer_mag.reset();
 //		return {true, imu.read_mag() - mag_offset};
 		return {true, imu.read_mag()};
-	} else return {false, prev_mesure.mag_theta};
+//	} else return {false, prev_mesure.mag_theta};
 }
 
 pose_data SensorFusion::get_pose() {

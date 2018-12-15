@@ -49,25 +49,25 @@ void EKF::update(measurement_data data, bool use_mag, bool use_enc) {
 	z(3,0) = data.vel_right;
 
 //	Sets magnetometer use
-	if(use_mag) {
+//	if(use_mag) {
 		H(0,2) = 1;
 		H(0,5) = 1;
-	} else {
-		H(0,2) = 0;
-		H(0,5) = 0;
-	}
+//	} else {
+//		H(0,2) = 0;
+//		H(0,5) = 0;
+//	}
 
-	if(use_enc) {
+//	if(use_enc) {
 		H(2,3) = 1;
 		H(3,3) = 1;
 		H(2,4) = -ROBOT_SIZE/2;
 		H(3,4) = ROBOT_SIZE/2;
-	} else {
-		H(2,3) = 0;
-		H(3,3) = 0;
-		H(2,4) = 0;
-		H(3,4) = 0;
-	}
+//	} else {
+//		H(2,3) = 0;
+//		H(3,3) = 0;
+//		H(2,4) = 0;
+//		H(3,4) = 0;
+//	}
 
 //	Kalman Gain
 	Eigen::Matrix<float, MEASUREMENT_SIZE, MEASUREMENT_SIZE> S = H * COV_P * H.transpose() + Q;
@@ -107,6 +107,10 @@ void EKF::update_camera(vision_data data, float mag) {
 	Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, 1> error = z_cam - pred_z;
 	error(2,0) = round_angle(error(2,0));
 	error(3,0) = round_angle(error(3,0));
+	x_error = error(0, 0);
+	y_error = error(1, 0);
+	theta_error = error(2, 0);
+	new_log = true;
 	x = x_p + K_GAIN * error;
 
 //	std::tie(pose.x, pose.y, pose.theta, pose.v, pose.w) = std::make_tuple(x(0,0), x(1,0), x(2,0), x(3,0), x(4,0));
@@ -183,7 +187,7 @@ EKF::EKF() {
 	z_cam.setConstant(1.2);
 	I.setIdentity();
 	COV.setIdentity();
-	COV = COV * 0.1f;
+//	COV = COV * 0.1f;
 	COV_P.setZero();
 
 	Q.setZero();
