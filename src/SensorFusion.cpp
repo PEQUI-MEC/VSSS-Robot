@@ -137,7 +137,12 @@ void SensorFusion::gyro_calib() {
 
 void SensorFusion::set_vision_data(float x, float y, float theta) {
 	vision = {x, y, theta, 0};
+	auto pose = get_pose();
+	x_error = x - pose.x;
+	y_error = y - pose.y;
+	theta_error = wrap(theta - pose.theta);
 	new_vision_data = true;
+	new_log = true;
 	if (no_vision) {
 //		mag_offset = vision.theta;
 		no_vision = false;

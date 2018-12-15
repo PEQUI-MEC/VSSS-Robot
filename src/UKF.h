@@ -17,14 +17,19 @@ class UKF {
 	T::PoseMat COV{};
 	T::UKFSigmaMat X{};
 
-	static constexpr float alpha = 0.1;
+	bool new_log = false;
+	float x_error = 0;
+	float y_error = 0;
+	float theta_error = 0;
+
+	static constexpr float alpha = 1.5;
 	static constexpr float k = 0;
 	static constexpr int L = 6;
 
-	const float lambda = std::pow(alpha, 2.0f) * (L + k) - L;
-	const float weight0_m = lambda / (L + lambda);
-	const float weight0_c = lambda / (L + lambda) + (3 - std::pow(alpha, 2.0f));
-	const float weight = 1 / (2 * (L + lambda));
+	static constexpr float lambda = std::pow(alpha, 2.0f) * (L + k) - L;
+	static constexpr float weight0_m = lambda / (L + lambda);
+	static constexpr float weight0_c = lambda / (L + lambda) + (3 - std::pow(alpha, 2.0f));
+	static constexpr float weight = 1 / (2 * (L + lambda));
 
 	UKF() {
 		x.setZero();
@@ -134,6 +139,12 @@ class UKF {
 //		Update pose and covariance
 		T::KVisionMat K_GAIN = COV_XY * COV_YY.inverse();
 		T::VisionVec error = data - y_predicted;
+
+		x_error = error(0, 0);
+		y_error = error(1, 0);
+		theta_error = wrap(error(2, 0));
+		new_log = true;
+
 		error(2, 0) = wrap(error(2, 0));
 		error(3, 0) = wrap(error(3, 0));
 		x = x + K_GAIN * error;

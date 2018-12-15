@@ -42,6 +42,11 @@ class SensorFusion {
 	opt_mag read_magnetometer();
 	void gyro_calib();
 
+	bool new_log = false;
+	float x_error = 0;
+	float y_error = 0;
+	float theta_error = 0;
+
 	volatile Controls last_controls{0,0};
 	volatile float x_acc = 0;
 	volatile float x_acc_fixed = 0;
