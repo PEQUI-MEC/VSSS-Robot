@@ -44,10 +44,10 @@ int main() {
 		wait(0.5);
 	};
 
-	to_orientation(-45);
-	to_orientation(0);
-	to_orientation(45);
-	to_orientation(0);
+//	to_orientation(-45);
+//	to_orientation(0);
+//	to_orientation(45);
+//	to_orientation(0);
 
 //	control.set_target(ControlState::Position,
 //					   {0.5, 0.5, 0, 0.8f}, true);
@@ -68,6 +68,7 @@ int main() {
 	float avg_rcos_acc = 0;
 	float offset_acc = 0;
 	int count = 0;
+	float ax_acc = 0, ay_acc = 0, az_acc = 0;
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
 
@@ -119,11 +120,18 @@ int main() {
 		if (count == 1000) {
 			avg_rsin_acc = 0;
 			avg_rcos_acc = 0;
+			ax_acc = 0;
+			ay_acc = 0;
+			az_acc = 0;
 			offset_acc = 0;
 //			avg_acc = 0;
 			count = 0;
 		}
+		auto acc = control.sensors.acc_real;
 //		avg_acc += acc.x;
+		ax_acc += acc.x;
+		ay_acc += acc.y;
+		az_acc += acc.z;
 		avg_rsin_acc += control.sensors.r_sin;
 		avg_rcos_acc += control.sensors.r_cos;
 //		offset_acc += control.sensors.gyro_yx_m;
@@ -134,9 +142,10 @@ int main() {
 //		messenger.send_log(control.sensors.get_pose().theta,
 //						   control.sensors.get_pose().w,
 //						   control.sensors.alpha);
-		messenger.send_log(control.sensors.get_pose().x,
-						   control.sensors.get_pose().y,
-						   control.sensors.get_pose().v);
+//		auto mod = std::sqrt(std::pow(ax_acc / count, 2.0f)
+//							+ std::pow(ay_acc / count, 2.0f) + std::pow(az_acc / count, 2.0f));
+//		messenger.send_log(ax_acc / count, ay_acc / count, az_acc / count, mod);
+		messenger.send_log(acc.x, acc.y);
 //		messenger.send_log(avg_rsin_acc / count,
 //						   control.sensors.r_sin,
 //						   avg_rcos_acc / count,
