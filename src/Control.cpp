@@ -54,8 +54,8 @@ TargetVelocity Control::set_stop_and_sleep() {
 
 void Control::pose_control_thread() {
 	while (true) {
-		if (state == ControlState::None ||
-				sensors.timeout.read_ms() > 500) stop_and_sleep();
+//		if (state == ControlState::None ||
+//				sensors.timeout.read_ms() > 500) stop_and_sleep();
 
 		auto pose = sensors.get_pose();
 
