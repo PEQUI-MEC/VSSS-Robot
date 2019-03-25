@@ -502,20 +502,20 @@ ApiFrame * XBee::get_this_api_frame(uint8_t id, ApiFrame::ApiFrameType type,
     while (timer.read_ms() < _timeout_ms) {
         ApiFrame * frame = _framebuf_syncr.get_next_complete_frame();
         if (frame == NULL) {
-            wait_ms(10);
+            Thread::wait(1);
             continue;
         }
 
         if ((frame->get_frame_type() != type) &&
             (frame->get_frame_type() != type2)) {
             _framebuf_syncr.complete_frame(frame);
-            wait_ms(1);
+            Thread::wait(1);
             continue;
         }
 
         if (frame->get_data_at(ATCMD_RESP_FRAME_ID_OFFSET) != id) {
             _framebuf_syncr.complete_frame(frame);
-            wait_ms(1);
+            Thread::wait(1);
             continue;
         }
 

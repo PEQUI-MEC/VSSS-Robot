@@ -106,11 +106,12 @@ string Messenger::decode_strings(const string &msg) {
 }
 
 void Messenger::send_battery() {
-	AnalogIn vin_all_cells(ALL_CELLS);
-	float vbat = vin_all_cells.read() * (3.3f * 1470.0f/470.0f);
-	float vbat_round = std::round(vbat*1000)/1000;
-	string msg_bat = "B" + std::to_string(vbat_round);
-	send_msg(msg_bat);
+//	AnalogIn vin_all_cells(ALL_CELLS);
+//	float vbat = vin_all_cells.read() * (3.3f * 1470.0f/470.0f);
+//	float vbat_round = std::round(vbat*1000)/1000;
+//	string msg_bat = "B" + std::to_string(vbat_round);
+	auto test = string("A");
+	send_msg(test);
 }
 
 void Messenger::decode_msg(string msg) {
