@@ -1,108 +1,64 @@
 #include "mbed.h"
-#include "Messenger.h"
-#include "PIN_MAP.h"
-#include "helper_functions.h"
-#include "Control.h"
-#include "EKF2.h"
-#include "EkfModel.h"
+#include "nRF24L01P.h"
 
-void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
-	LEDs[0] = ((num >> 0) & 1);
-	LEDs[1] = ((num >> 1) & 1);
-	LEDs[2] = ((num >> 2) & 1);
-	LEDs[3] = ((num >> 3) & 1);
-}
-
-void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
-	double vbat = battery_vin.read() * (3.3 * 1470 / 470);
-	double threshold = (vbat - 6.6) / 1.4;
-
-	if (threshold >= 0.75) led_write(LEDs, 0b1111);
-	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
-	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
-	else led_write(LEDs, 0b0001);
-}
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+Serial pc(USBTX, USBRX); // tx, rx
+nRF24L01P nrf(p5, p6, p7, p8, p9, p10);    // mosi, miso, sck, csn, ce, irq
 
 int main() {
-	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
-									  DigitalOut(LED3), DigitalOut(LED4)};
-	AnalogIn battery_vin(ALL_CELLS);
-	bat_watcher(LEDs, battery_vin);
+	constexpr int TRANSFER_SIZE = 4;
+	pc.baud(115200);
 
-	static Control control;
-	static Messenger messenger(&control);
+	nrf.powerUp();
 
-	control.start_threads();
-	messenger.start_thread();
+	wait(5);
+	nrf.setTransferSize(4, 0);
+	nrf.setRfOutputPower();
+	nrf.setTxAddress(0xE7E7E7E7E7, 3);
+	nrf.setRxAddress(0xE727E7E7E6, 3, 0);
+	nrf.setAirDataRate(2000);
 
-//	Serial usb(USBTX, USBRX);
+//	nrf.enableAutoAcknowledge();
+//	nrf.enableAutoRetransmit(250, 2);
+	wait(2);
+	// Display the (default) setup of the nRF24L01+ chip
+	pc.printf("nRF24L01+ Frequency    : %d MHz\r\n", nrf.getRfFrequency());
+	pc.printf("nRF24L01+ Output power : %d dBm\r\n", nrf.getRfOutputPower());
+	pc.printf("nRF24L01+ Data Rate    : %d kbps\r\n", nrf.getAirDataRate());
+	pc.printf("nRF24L01+ TX Address   : %x\r\n", static_cast<unsigned int>(nrf.getTxAddress()));
+	pc.printf("nRF24L01+ RX Address   : %x\r\n", static_cast<unsigned int>(nrf.getRxAddress()));
+//	pc.printf("nRF24L01+ TX Address   : 0x%010llX\r\n", nrf.getTxAddress());
+//	pc.printf("nRF24L01+ RX Address   : 0x%010llX\r\n", nrf.getRxAddress());
 
-	auto to_orientation = [&](float degrees) {
-		control.set_target(ControlState::Orientation,
-						   {{0, 0}, to_rads(degrees), 0}, true);
-		wait(0.5);
-	};
+	nrf.setTransferSize(TRANSFER_SIZE);
 
-	to_orientation(-45);
-	to_orientation(0);
-	to_orientation(45);
-	to_orientation(0);
+	nrf.setReceiveMode();
+	nrf.enable();
 
-//	control.sensors.timeout.start();
+	int sent = 0;
+	int lost = 0;
+	int wrong = 0;
+	int received = 0;
 
-	control.set_target(ControlState::Position, {{-1, -1}, to_rads(-180), 0.8}, false);
-
-//	control.stop = true;
-
-//	Timer t;
-//	t.start();
-
-//	float v = 0;
-//	float y = 0;
-//	float off = control.sensors.acc_offset;
-
-//	control.set_target_position(0.5, 0.5);
-
+	Timer t;
+	t.start();
 	while (true) {
-		if (control.state == ControlState::None) {
-			led_write(LEDs, 0);
+		nrf.write(0, (char *) &sent, 4);
+		t.reset();
+		while (!nrf.readable() && t.read() < 0.066);
+		if (nrf.readable()) {
+			nrf.read(0, (char *) &received, 4);
+			if (received != sent) {
+				wrong++;
+			}
 		} else {
-			bat_watcher(LEDs, battery_vin);
+			lost++;
 		}
-		Thread::wait(200);
-//		control.set_ang_vel_control(20);
-//		Thread::wait(8);
-
-//		auto msg = str(control.sensors.e_time) + "\n";
-//		auto acc_y = control.sensors.imu.read_acc().y - off;
-//		float time = t.read_us() / 1E6f;
-//		t.reset();
-//		float v0 = v;
-//		v += acc_y * time;
-//		y += v0*time + acc_y * std::pow(time,2)/2;
-
-//		auto msg = "$" + str((int) std::round(y * 100)) + ' ' + str((int) std::round(v * 100)) + ";\n";
-//		auto msg = str(v) + '\n';
-//		auto msg = str(control.sensors.get_pose().theta) + '\n';
-//		auto msg = str(control.sensors.last_y_acc) + '\n';
-//		auto msg = str(control.sensors.last_controls.ang_accel) + '\n';
-//		auto msg = str(control.sensors.last_y_acc) + '\n';
-//		auto msg = str(control.sensors.get_pose().w) + '\n';
-//		auto msg = str(control.sensors.get_pose().v) + ',' +
-//		auto msg = str(control.sensors.last_x_acc) + ',' +
-//		messenger.send_log(control.sensors.get_pose().v,
-//						   control.sensors.x_acc,
-//						   control.sensors.get_pose().w);
-//		std::string msg = str(control.sensors.get_pose().v) + ',' +
-//				str(control.sensors.x_acc) + ',' +
-//				str(control.sensors.x_acc_fixed);
-//		std::string msg = str(control.sensors.A) + ',' +
-//				str(control.sensors.B);
-//				str(control.sensors.previous_w) + '\n';
-//		messenger.send_msg(msg);
-//		auto msg = str(y) + ',' + str(v) + '\n';
-//		auto msg = acc.to_string() + "\n";
-//		usb.printf(msg.c_str());
-//		usb.printf(msg2.c_str());
+		pc.printf("lost: %lf (%i), wrong: %lf, sent: %i, received: %i\n", (lost * 100.0) / (sent + 1), lost,
+				  (wrong * 100.0) / (sent + 1), sent, received);
+		sent++;
 	}
 }
+
+#pragma clang diagnostic pop
