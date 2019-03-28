@@ -184,7 +184,7 @@ nRF24L01P::nRF24L01P(PinName mosi,
 
     nCS_ = 1;
 
-    spi_.frequency(_NRF24L01P_SPI_MAX_DATA_RATE/5);     // 2Mbit, 1/5th the maximum transfer rate for the SPI bus
+    spi_.frequency(_NRF24L01P_SPI_MAX_DATA_RATE);     // 2Mbit, 1/5th the maximum transfer rate for the SPI bus
     spi_.format(8,0);                                   // 8-bit, ClockPhase = 0, ClockPolarity = 0
 
     wait_us(_NRF24L01P_TIMING_Tundef2pd_us);    // Wait for Power-on reset

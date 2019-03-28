@@ -7,7 +7,7 @@ Serial pc(USBTX, USBRX); // tx, rx
 nRF24L01P nrf(p5, p6, p7, p8, p9, p10);    // mosi, miso, sck, csn, ce, irq
 
 int main() {
-	constexpr int TRANSFER_SIZE = 4;
+	constexpr int TRANSFER_SIZE = 12;
 	pc.baud(115200);
 
 	nrf.powerUp();
@@ -43,20 +43,26 @@ int main() {
 
 	Timer t;
 	t.start();
+	Timer t2;
+	t2.start();
 	while (true) {
-		nrf.write(0, (char *) &sent, 4);
+		auto elapsed = -1000000;
+		t2.reset();
+		nrf.write(0, (char *) &sent, 12);
 		t.reset();
 		while (!nrf.readable() && t.read() < 0.066);
 		if (nrf.readable()) {
-			nrf.read(0, (char *) &received, 4);
+			nrf.read(0, (char *) &received, 12);
+			elapsed = t2.read_us();
 			if (received != sent) {
 				wrong++;
 			}
 		} else {
 			lost++;
 		}
-		pc.printf("lost: %lf (%i), wrong: %lf, sent: %i, received: %i\n", (lost * 100.0) / (sent + 1), lost,
-				  (wrong * 100.0) / (sent + 1), sent, received);
+		pc.printf("lost: %lf (%i), wrong: %lf, sent: %i, received: %i, time: %i\n",
+				(lost * 100.0) / (sent + 1), lost,
+				  (wrong * 100.0) / (sent + 1), sent, received, elapsed);
 		sent++;
 	}
 }
