@@ -43,6 +43,8 @@ class EKF {
 	public:
 		pose_data pose{};
 
+		Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, 1> last_error_vision;
+
 		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> F;
 		Eigen::Matrix<float, POSE_SIZE, 1> x;
 		Eigen::Matrix<float, POSE_SIZE, 1> x_p;

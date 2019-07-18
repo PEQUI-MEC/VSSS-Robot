@@ -98,6 +98,7 @@ void EKF::update_camera(vision_data data) {
 	auto pred_z = camera_measurement_model();
 	Eigen::Matrix<float, MEASUREMENT_SIZE_CAM, 1> error = z_cam - pred_z;
 	error(2,0) = round_angle(error(2,0));
+	last_error_vision = error;
 	x = x_p + K_GAIN * error;
 
 //	std::tie(pose.x, pose.y, pose.theta, pose.v, pose.w) = std::make_tuple(x(0,0), x(1,0), x(2,0), x(3,0), x(4,0));
@@ -174,8 +175,8 @@ EKF::EKF() {
 	Q.setZero();
 	Q(0,0) = 0.00022846f;
 	Q(1,1) = 0.02857541f;
-	Q(2,2) = 0.00022096f;
-	Q(3,3) = 0.00022096f;
+	Q(2,2) = 0.00022096f*2;
+	Q(3,3) = 0.00022096f*2;
 
 	Q_CAM.setZero();
 	Q_CAM(0,0) = 3.44048681e-06f;

@@ -138,10 +138,13 @@ int main() {
 	wait(0.5);
 
 	while (true) {
+		robot->start_velocity_control(0.7, 0.8);
 		bat_watcher(LEDs, battery_vin);
+		auto& err = robot->sensors->ekf.last_error_vision;
+		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(1000);
+//		Thread::wait(1000);
 	}
 }
