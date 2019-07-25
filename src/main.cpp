@@ -136,15 +136,21 @@ int main() {
 	wait(0.5);
 	robot->start_orientation_control(0, 0.8);
 	wait(0.5);
+	Timer t;
+	t.start();
 
 	while (true) {
-		robot->start_velocity_control(0.7, 0.8);
-		bat_watcher(LEDs, battery_vin);
-		auto& err = robot->sensors->ekf.last_error_vision;
-		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
+		if(t.read_ms() > 3 * 1000) robot->stop_and_wait();
+		else robot->start_velocity_control(0.7, 0.7);
+//		auto& err = robot->sensors->ekf.last_error_vision;
+//		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
+		auto& left = robot->sensors->controller->left_wheel;
+		auto& right = robot->sensors->controller->right_wheel;
+		messenger->send_msg(std::to_string(left.velocity) + ", " + std::to_string(right.velocity));
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
+		bat_watcher(LEDs, battery_vin);
 //		Thread::wait(1000);
 	}
 }

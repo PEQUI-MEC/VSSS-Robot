@@ -52,6 +52,7 @@ float Controller::get_pid_output(wheel& w) {
 	float error = w.target_velocity - w.velocity;
 	float error_deriv = error - w.last_error;
 	w.error_acc += error;
+	w.last_error = error;
 	return error * pid.kp + w.error_acc * pid.ki + error_deriv * pid.kd;
 }
 
