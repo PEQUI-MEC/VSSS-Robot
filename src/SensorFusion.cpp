@@ -73,11 +73,10 @@ void SensorFusion::ekf_thread() {
 			Controls controls(acc,
 							  (gyro_rate - previous_w) / time);
 
-			ukf.predict(controls.to_vec(), time);
-
 			if (new_vision_data) {
 				VisionData vision_with_mag = vision;
 				vision_with_mag.mag_offset = imu.read_mag() - vision.theta;
+				ukf.predict(controls.to_vec(), time);
 				ukf.update_on_vision_data(vision_with_mag.to_vec());
 			} else {
 				opt_mag mag_data = read_magnetometer();
@@ -90,8 +89,15 @@ void SensorFusion::ekf_thread() {
 				ukf.model.use_encoders(wheel_vel.new_data);
 				ukf.model.use_magnetometer(mag_data.valid);
 
+				int begin = timer_ekf.read_us();
+
+				ukf.predict(controls.to_vec(), time);
 				ukf.update_on_sensor_data(sensor_data.to_vec());
+
+				int end = timer_ekf.read_us();
+				bench = end - begin;
 			}
+
 
 			previous_w = gyro_rate;
 		}
