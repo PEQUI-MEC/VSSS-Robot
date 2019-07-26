@@ -25,6 +25,7 @@ class SensorFusion {
 	Controller *controller;
 
 	UKF ukf;
+	int bench = 0;
 
 	Thread thread_ekf;
 	Timer timer_mag;

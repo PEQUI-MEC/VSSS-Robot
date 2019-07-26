@@ -43,81 +43,24 @@ int main() {
 		wait(0.5);
 	};
 
-//	to_orientation(-45);
-//	to_orientation(0);
-//	to_orientation(45);
-//	to_orientation(0);
+	to_orientation(-45);
+	to_orientation(0);
+	to_orientation(45);
+	to_orientation(0);
 
 //	control.set_target(ControlState::Position,
 //					   {0.5, 0.5, 0, 0.8f}, true);
-
-
-//	control.set_target(ControlState::Position,
-//					   {0.5, 0.5, 0, 0.8f}, true);
-
-	control.set_target(ControlState::WheelVel,
-					   {0.5, 0.6, 0, 0.8f}, true);
-//	wait(2);
-//	control.sensors.timeout.start();
-
-//	control.stop = true;
-
-//	Timer t;
-//	t.start();
-
-//	float v = 0;
-//	float y = 0;
-//	float off = control.sensors.acc_offset;
 
 	while (true) {
-		if (control.state == ControlState::None) {
-			led_write(LEDs, 0);
-		} else {
-			bat_watcher(LEDs, battery_vin);
-		}
+//		if (control.state == ControlState::None) {
+//			led_write(LEDs, 0);
+//		} else {
+//			bat_watcher(LEDs, battery_vin);
+//		}
 		Thread::wait(10);
-//		control.set_ang_vel_control(20);
-//		Thread::wait(8);
+		messenger.send_log(control.sensors.bench);
 
-//		auto msg = str(control.sensors.e_time) + "\n";
-//		auto acc_y = control.sensors.imu.read_acc().y - off;
-//		float time = t.read_us() / 1E6f;
-//		t.reset();
-//		float v0 = v;
-//		v += acc_y * time;
-//		y += v0*time + acc_y * std::pow(time,2)/2;
-
-//		auto msg = "$" + str((int) std::round(y * 100)) + ' ' + str((int) std::round(v * 100)) + ";\n";
-//		auto msg = str(v) + '\n';
-//		auto msg = str(control.sensors.get_pose().theta) + '\n';
-//		auto msg = str(control.sensors.last_y_acc) + '\n';
-//		auto msg = str(control.sensors.last_controls.ang_accel) + '\n';
-//		auto msg = str(control.sensors.last_y_acc) + '\n';
-//		auto msg = str(control.sensors.get_pose().w) + '\n';
-//		auto msg = str(control.sensors.get_pose().v) + ',' +
-//		auto msg = str(control.sensors.last_x_acc) + ',' +
-//		auto pose = control.sensors.get_pose();
-//		auto& cov = control.sensors.ukf.COV;
-		auto& u = control.sensors.ukf;
-		if (u.new_log) {
-			messenger.send_log(u.x_error, u.y_error, u.theta_error);
-			u.new_log = false;
-		}
-//		messenger.send_log(pose.x, pose.y, pose.theta,
-//						   cov(0,0), cov(1,1), cov(2,2));
-//		messenger.send_log(control.sensors.get_pose().v,
-//						   control.sensors.x_acc,
-//						   control.sensors.get_pose().w);
-//		std::string msg = str(control.sensors.get_pose().v) + ',' +
-//				str(control.sensors.x_acc) + ',' +
-//				str(control.sensors.x_acc_fixed);
-//		std::string msg = str(control.sensors.A) + ',' +
-//				str(control.sensors.B);
-//				str(control.sensors.previous_w) + '\n';
-//		messenger.send_msg(msg);
-//		auto msg = str(y) + ',' + str(v) + '\n';
-//		auto msg = acc.to_string() + "\n";
-//		usb.printf(msg.c_str());
-//		usb.printf(msg2.c_str());
+//		print(messenger, control.sensors.ukf.X);
+//		messenger.send_log(0);
 	}
 }
