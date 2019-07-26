@@ -23,6 +23,17 @@ void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
 	else led_write(LEDs, 0b0001);
 }
 
+void print(Messenger &msg, const UKF::T::UKFSigmaMat &sig) {
+	for (int i = 0; i < 6; i++) {
+		std::string m;
+		for (int j = 0; j < 13; ++j) {
+			m.append(str(sig(i, j)));
+			m.append(",");
+		}
+		msg.send_msg(m);
+	}
+}
+
 int main() {
 	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
 									  DigitalOut(LED3), DigitalOut(LED4)};
@@ -98,11 +109,13 @@ int main() {
 //		auto msg = str(control.sensors.last_x_acc) + ',' +
 //		auto pose = control.sensors.get_pose();
 //		auto& cov = control.sensors.ukf.COV;
-		auto& u = control.sensors.ukf;
-		if (u.new_log) {
-			messenger.send_log(u.x_error, u.y_error, u.theta_error);
-			u.new_log = false;
-		}
+//		auto& u = control.sensors.ukf;
+//		if (u.new_log) {
+//			messenger.send_log(u.x_error, u.y_error, u.theta_error);
+//			u.new_log = false;
+//		}
+		print(messenger, control.sensors.ukf.X);
+		messenger.send_log(0);
 //		messenger.send_log(pose.x, pose.y, pose.theta,
 //						   cov(0,0), cov(1,1), cov(2,2));
 //		messenger.send_log(control.sensors.get_pose().v,
