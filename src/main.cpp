@@ -1,5 +1,4 @@
 #include "mbed.h"
-#include "XBeeLib.h"
 #include "Messenger.h"
 #include "IMU.h"
 #include "PIN_MAP.h"
@@ -9,36 +8,32 @@
 #include <cmath>
 #include <fstream>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 #define PI 3.141592f
 
 using std::string;
 
-XBeeLib::XBee802 *xbee;
 uint16_t xbee_addr;
 Robot *robot = nullptr;
 Messenger *messenger = nullptr;
 Thread* t_rx;
 
 void rx_thread() {
+	auto& nrf = messenger->nrf;
 	while (true) {
 		if(t_rx->get_state() != Thread::WaitingThreadFlag) {
 			Thread::signal_wait(CONTINUE_SIGNAL);
 			Thread::signal_clr(CONTINUE_SIGNAL);
 		}
-		xbee->process_rx_frames();
+		char data[4];
+		while (!nrf.readable()) Thread::wait(1);
+		if (nrf.readable()) {
+			nrf.read(0, (char *) &data, 12);
+			string msg = string((const char *) data, 12);
+			messenger->decode_msg(msg);
+		}
 	}
-}
-
-static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
-					   const uint8_t *const data, uint16_t len) {
-	if (len != 0) {
-		string msg = string((const char *) data, len);
-		messenger->decode_msg(msg);
-	}
-}
-
-static void process_frames() {
-	t_rx->signal_set(CONTINUE_SIGNAL);
 }
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
@@ -100,16 +95,6 @@ int main() {
 		configs.configure(*robot, xbee_addr);
 	}
 
-	xbee = new XBeeLib::XBee802(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200);
-
-	xbee->register_receive_cb(&receive_cb);
-
-	XBeeLib::RadioStatus const radioStatus = xbee->init();
-	MBED_ASSERT(radioStatus == XBeeLib::Success);
-	xbee->set_network_address(xbee_addr);
-
-	xbee->set_complete_callback(&process_frames);
-
 	t_rx = new Thread;
 	t_rx->start(&rx_thread); // Handle de erro na thread da serial
 //	t_rx.set_priority(osPriorityHigh);
@@ -122,7 +107,7 @@ int main() {
 	robot->sensors = sensors;
 	sensors->ekf_thread_start();
 
-	messenger = new Messenger(robot->MY_ID, robot, xbee, sensors);
+	messenger = new Messenger(robot->MY_ID, robot, sensors);
 
 	robot->start_thread();
 
@@ -138,13 +123,15 @@ int main() {
 	wait(0.5);
 
 	while (true) {
-		robot->start_velocity_control(0.7, 0.8);
+//		robot->start_velocity_control(0.7, 0.8);
 		bat_watcher(LEDs, battery_vin);
-		auto& err = robot->sensors->ekf.last_error_vision;
-		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
+//		auto& err = robot->sensors->ekf.last_error_vision;
+//		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
 //		Thread::wait(1000);
 	}
 }
+
+#pragma clang diagnostic pop

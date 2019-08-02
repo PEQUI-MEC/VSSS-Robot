@@ -7,8 +7,11 @@
 using std::string;
 
 void Messenger::send_msg(const string &msg, uint16_t addr) {
-	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
-	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
+	char msg2[12];
+	memcpy(msg2, msg.c_str(), 12);
+	nrf.write(0, msg2, 12);
+//	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
+//	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
 }
 
 template<int size>
@@ -164,10 +167,16 @@ void Messenger::decode_msg(string msg) {
 		robot->start_velocity_control(values[1], values[0]);
 }
 
-Messenger::Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee,
-					 SensorFusion *sensors_ptr) {
+Messenger::Messenger(char id, Robot *robot, SensorFusion *sensors_ptr) : nrf(p5, p6, p7, p8, p9, p10) {
 	setlocale(LC_ALL, "C");
-	xbee = this_xbee;
+	nrf.powerUp();
+	nrf.setRfOutputPower();
+	nrf.setTransferSize(TRANSFER_SIZE);
+	nrf.setTxAddress(0xE7E7E7E7E7, 3);
+	nrf.setRxAddress(0xE727E7E7E6, 3, 0);
+	nrf.setAirDataRate(2000);
+	nrf.setReceiveMode();
+	nrf.enable();
 	debug_mode = false;
 	this->robot = robot;
 	sensors = sensors_ptr;

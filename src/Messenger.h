@@ -2,9 +2,9 @@
 #define MESSENGER_H_
 
 #include "mbed.h"
-#include "XBeeLib.h"
 #include "Robot.h"
 #include "SensorFusion.h"
+#include "nRF24L01P.h"
 #include <string>
 #include <array>
 #include <sstream>
@@ -26,9 +26,10 @@ struct msg_data {
 
 class Messenger {
 
-	private:
+	public:
 		char ID;
-		XBeeLib::XBee802 *xbee;
+		static constexpr int TRANSFER_SIZE = 12;
+		nRF24L01P nrf;
 
 		Robot *robot;
 		SensorFusion *sensors;
@@ -96,7 +97,7 @@ class Messenger {
 		 *	@param robot Pointer to Robot, used to set constants and start controllers
 		 *	@param this_xbee XBee802 object, used for sending and receiving messages
 		 *	@param sensors_ptr Pointer to SensorFusion, used to set new data for an EKF vision update*/
-		Messenger(char id, Robot *robot, XBeeLib::XBee802 *this_xbee, SensorFusion *sensors_ptr);
+		Messenger(char id, Robot *robot, SensorFusion *sensors_ptr);
 
 		/**	@brief Decodes received message and executes command
 		 *	@param msg Message containing command to be executed */
