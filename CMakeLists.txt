@@ -43,7 +43,7 @@ set(SOURCE_FILES
 	${SRC_DIR}/SensorFusion.cpp
 	${SRC_DIR}/ConfigFile.cpp
 	${SRC_DIR}/helper_functions.h
-
+	${LIB_DIR}/nRF24L01p/nRF24L01P.cpp
 	${MBED_SRC}
 	${XBEELIB_SRC}
 	${LIB_DIR}/QEI/QEI.cpp
@@ -55,6 +55,7 @@ include_directories(
 	${MBED_DIRECTORIES}
 	${XBEELIB_DIR}
 	${LIB_DIR}/QEI
+	${LIB_DIR}/nRF24L01p
 	${EIGEN_DIRS})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCE_FILES})
