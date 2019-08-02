@@ -31,7 +31,7 @@ struct PID {
 };
 
 class Controller {
-	private:
+	public:
 		Timer timer;
 
 		/**	@brief Wheel velocity control loop. Also updates odometry data */
