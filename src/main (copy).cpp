@@ -1,17 +1,15 @@
 #include "mbed.h"
 #include "nRF24L01P.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 nRF24L01P nrf(p5, p6, p7, p8, p9, p10);    // mosi, miso, sck, csn, ce, irq
-Serial pc(USBTX, USBRX); // tx, rx
 
 int main() {
-	constexpr int TRANSFER_SIZE = 4;
-	pc.baud(115200);
+	constexpr int TRANSFER_SIZE = 12;
+
 	nrf.powerUp();
 
 	wait(5);
+	nrf.setTransferSize(4, 0);
 	nrf.setRxAddress(0xE7E7E7E7E7, 3, 0);
 	nrf.setTxAddress(0xE727E7E7E6, 3);
 	nrf.setAirDataRate(2000);
@@ -23,12 +21,9 @@ int main() {
 	nrf.enable();
 
 	while (true) {
-		float data;
-		while (!nrf.readable(0)) Thread::wait(1);
-		nrf.read(0, (char *) &data, TRANSFER_SIZE);
-		pc.printf("%f\n", data);
-		memset(&data, 0, TRANSFER_SIZE);
+		int input;
+		while (!nrf.readable(0));
+		nrf.read(0, (char *) &input, 12);
+		nrf.write(0, (char *) &input, 12);
 	}
 }
-
-#pragma clang diagnostic pop

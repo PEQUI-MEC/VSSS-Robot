@@ -48,6 +48,7 @@ set(SOURCE_FILES
 	${MBED_SRC}
 	${XBEELIB_SRC}
 	${LIB_DIR}/QEI/QEI.cpp
+	${LIB_DIR}/nRF24L01p/nRF24L01P.cpp
 	${EIGEN_FILES} src/EKF2.h src/EkfModel.cpp src/EkfModel.h src/Types.h)
 
 include_directories(
@@ -56,6 +57,7 @@ include_directories(
 	${MBED_DIRECTORIES}
 	${XBEELIB_DIR}
 	${LIB_DIR}/QEI
+	${LIB_DIR}/nRF24L01p
 	${EIGEN_DIRS})
 
 add_executable(${PROJECT_NAME}.elf ${SOURCE_FILES})
