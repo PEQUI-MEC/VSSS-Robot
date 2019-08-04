@@ -7,9 +7,10 @@
 using std::string;
 
 void Messenger::send_msg(const string &msg, uint16_t addr) {
-	char msg2[12];
-	memcpy(msg2, msg.c_str(), 12);
-	nrf.write(0, msg2, 12);
+	char msg2[TRANSFER_SIZE];
+	memset(msg2, 0, TRANSFER_SIZE);
+	memcpy(msg2, msg.c_str(), TRANSFER_SIZE);
+	nrf.write(0, msg2, TRANSFER_SIZE);
 //	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
 //	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
 }

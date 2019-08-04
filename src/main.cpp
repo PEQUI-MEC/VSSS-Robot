@@ -22,15 +22,15 @@ Thread* t_rx;
 void rx_thread() {
 	auto& nrf = messenger->nrf;
 	while (true) {
-		if(t_rx->get_state() != Thread::WaitingThreadFlag) {
-			Thread::signal_wait(CONTINUE_SIGNAL);
-			Thread::signal_clr(CONTINUE_SIGNAL);
-		}
-		char data[4];
-		while (!nrf.readable()) Thread::wait(1);
+//		if(t_rx->get_state() != Thread::WaitingThreadFlag) {
+//			Thread::signal_wait(CONTINUE_SIGNAL);
+//			Thread::signal_clr(CONTINUE_SIGNAL);
+//		}
+		char data[TRANSFER_SIZE];
+		while (!nrf.readable());
 		if (nrf.readable()) {
-			nrf.read(0, (char *) &data, 12);
-			string msg = string((const char *) data, 12);
+			nrf.read(0, (char *) &data, TRANSFER_SIZE);
+			string msg = string(data);
 			messenger->decode_msg(msg);
 		}
 	}
@@ -95,8 +95,6 @@ int main() {
 		configs.configure(*robot, xbee_addr);
 	}
 
-	t_rx = new Thread;
-	t_rx->start(&rx_thread); // Handle de erro na thread da serial
 //	t_rx.set_priority(osPriorityHigh);
 
 	robot->controller.set_target_velocity(0,0,0);
@@ -122,9 +120,16 @@ int main() {
 	robot->start_orientation_control(0, 0.8);
 	wait(0.5);
 
+	t_rx = new Thread;
+	t_rx->start(&rx_thread); // Handle de erro na thread da serial
+
 	while (true) {
 //		robot->start_velocity_control(0.7, 0.8);
 		bat_watcher(LEDs, battery_vin);
+//		auto theta = sensors->get_pose().theta;
+//		auto msg = std::to_string(theta);
+//		messenger->send_msg(msg);
+//		messenger->nrf.write(0, (char *) &theta, TRANSFER_SIZE);
 //		auto& err = robot->sensors->ekf.last_error_vision;
 //		messenger->send_msg(std::to_string(err(0, 0)) + "," + std::to_string(err(1, 0)) + "," + std::to_string(err(2, 0)));
 		if (messenger->debug_mode) {

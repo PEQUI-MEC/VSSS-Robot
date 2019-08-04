@@ -24,11 +24,12 @@ struct msg_data {
 	}
 };
 
+constexpr int TRANSFER_SIZE = 12;
+
 class Messenger {
 
 	public:
 		char ID;
-		static constexpr int TRANSFER_SIZE = 12;
 		nRF24L01P nrf;
 
 		Robot *robot;
