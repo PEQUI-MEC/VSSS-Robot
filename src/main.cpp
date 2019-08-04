@@ -21,13 +21,21 @@ int main() {
 
 	nrf.setReceiveMode();
 	nrf.enable();
-	char data[12];
+	char from_nrf[TRANSFER_SIZE], from_pc[TRANSFER_SIZE];
+	pc.printf("it works!\r\n");
 
 	while (true) {
-		while (!nrf.readable(0)) Thread::wait(1);
-		nrf.read(0, data, TRANSFER_SIZE);
-		pc.printf("%s\r\n", data);
-		memset(&data, 0, TRANSFER_SIZE);
+		while (!nrf.readable(0) && !pc.readable()) Thread::wait(1);
+		if (pc.readable()) {
+			pc.scanf("%s", from_pc);
+//			pc.printf("%s", from_pc);
+			nrf.write(0, from_pc, TRANSFER_SIZE);
+//			pc.printf("%s\r\n", from_pc);
+		} else {
+			nrf.read(0, from_nrf, TRANSFER_SIZE);
+			pc.printf("%s", from_nrf);
+			memset(&from_nrf, 0, TRANSFER_SIZE);
+		}
 	}
 }
 
