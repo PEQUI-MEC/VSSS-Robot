@@ -1,3 +1,4 @@
+#include <array>
 #include "mbed.h"
 #include "nRF24L01P.h"
 
@@ -6,7 +7,18 @@
 nRF24L01P nrf(p5, p6, p7, p8, p9, p10);    // mosi, miso, sck, csn, ce, irq
 Serial pc(USBTX, USBRX); // tx, rx
 
+void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
+	LEDs[0] = ((num >> 0) & 1);
+	LEDs[1] = ((num >> 1) & 1);
+	LEDs[2] = ((num >> 2) & 1);
+	LEDs[3] = ((num >> 3) & 1);
+}
+
 int main() {
+	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
+									  DigitalOut(LED3), DigitalOut(LED4)};
+
+
 	constexpr int TRANSFER_SIZE = 12;
 	pc.baud(921600);
 	nrf.powerUp();
@@ -27,13 +39,15 @@ int main() {
 	while (true) {
 		while (!nrf.readable(0) && !pc.readable()) Thread::wait(1);
 		if (pc.readable()) {
-			pc.scanf("%s", from_pc);
+			pc.scanf("%s\n", from_pc);
+			led_write(LEDs, strlen(from_pc));
 //			pc.printf("%s", from_pc);
 			nrf.write(0, from_pc, TRANSFER_SIZE);
 //			pc.printf("%s\r\n", from_pc);
 		} else {
 			nrf.read(0, from_nrf, TRANSFER_SIZE);
-			pc.printf("%s", from_nrf);
+			led_write(LEDs, strlen(from_nrf));
+			pc.printf("%s\n", from_nrf);
 			memset(&from_nrf, 0, TRANSFER_SIZE);
 		}
 	}
