@@ -8,7 +8,7 @@ Serial pc(USBTX, USBRX); // tx, rx
 
 int main() {
 	constexpr int TRANSFER_SIZE = 12;
-	pc.baud(115200);
+	pc.baud(921600);
 	nrf.powerUp();
 
 	wait(5);
