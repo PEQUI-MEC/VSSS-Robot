@@ -19,6 +19,16 @@ Robot *robot = nullptr;
 Messenger *messenger = nullptr;
 Thread* t_rx;
 
+std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
+								  DigitalOut(LED3), DigitalOut(LED4)};
+
+void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
+	LEDs[0] = ((num >> 0) & 1);
+	LEDs[1] = ((num >> 1) & 1);
+	LEDs[2] = ((num >> 2) & 1);
+	LEDs[3] = ((num >> 3) & 1);
+}
+
 void rx_thread() {
 	auto& nrf = messenger->nrf;
 	while (true) {
@@ -31,16 +41,10 @@ void rx_thread() {
 		if (nrf.readable()) {
 			nrf.read(0, (char *) &data, TRANSFER_SIZE);
 			string msg = string(data);
+			led_write(LEDs, msg[0]);
 			messenger->decode_msg(msg);
 		}
 	}
-}
-
-void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
-	LEDs[0] = ((num >> 0) & 1);
-	LEDs[1] = ((num >> 1) & 1);
-	LEDs[2] = ((num >> 2) & 1);
-	LEDs[3] = ((num >> 3) & 1);
 }
 
 void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
@@ -83,8 +87,6 @@ float gyro_calib() {
 
 SensorFusion* sensors;
 int main() {
-	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
-									  DigitalOut(LED3), DigitalOut(LED4)};
 	AnalogIn battery_vin(ALL_CELLS);
 	bat_watcher(LEDs, battery_vin);
 
@@ -125,7 +127,7 @@ int main() {
 
 	while (true) {
 //		robot->start_velocity_control(0.7, 0.8);
-		bat_watcher(LEDs, battery_vin);
+//		bat_watcher(LEDs, battery_vin);
 //		auto theta = sensors->get_pose().theta;
 //		auto msg = std::to_string(theta);
 //		messenger->send_msg(msg);
