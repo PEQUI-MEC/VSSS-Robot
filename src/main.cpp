@@ -19,15 +19,6 @@ Robot *robot = nullptr;
 Messenger *messenger = nullptr;
 Thread* t_rx;
 
-std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
-								  DigitalOut(LED3), DigitalOut(LED4)};
-
-void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
-	LEDs[0] = ((num >> 0) & 1);
-	LEDs[1] = ((num >> 1) & 1);
-	LEDs[2] = ((num >> 2) & 1);
-	LEDs[3] = ((num >> 3) & 1);
-}
 
 void rx_thread() {
 	auto& nrf = messenger->nrf;
@@ -41,21 +32,20 @@ void rx_thread() {
 		if (nrf.readable()) {
 			nrf.read(0, (char *) &data, TRANSFER_SIZE);
 			string msg = string(data);
-			led_write(LEDs, msg[0]);
 			messenger->decode_msg(msg);
 		}
 	}
 }
 
-void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
-	double vbat = battery_vin.read() * (3.3 * 1470 / 470);
-	double threshold = (vbat - 6.6) / 1.4;
-
-	if (threshold >= 0.75) led_write(LEDs, 0b1111);
-	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
-	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
-	else led_write(LEDs, 0b0001);
-}
+//void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
+//	double vbat = battery_vin.read() * (3.3 * 1470 / 470);
+//	double threshold = (vbat - 6.6) / 1.4;
+//
+//	if (threshold >= 0.75) led_write(LEDs, 0b1111);
+//	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
+//	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
+//	else led_write(LEDs, 0b0001);
+//}
 
 void mag_calibration() {
 	IMU imu{};
@@ -88,7 +78,7 @@ float gyro_calib() {
 SensorFusion* sensors;
 int main() {
 	AnalogIn battery_vin(ALL_CELLS);
-	bat_watcher(LEDs, battery_vin);
+//	bat_watcher(LEDs, battery_vin);
 
 	robot = new Robot();
 

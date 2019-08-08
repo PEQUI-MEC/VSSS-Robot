@@ -6,10 +6,25 @@
 #define PI 3.1415926f
 using std::string;
 
+std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
+								  DigitalOut(LED3), DigitalOut(LED4)};
+
+void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
+	LEDs[0] = ((num >> 0) & 1);
+	LEDs[1] = ((num >> 1) & 1);
+	LEDs[2] = ((num >> 2) & 1);
+	LEDs[3] = ((num >> 3) & 1);
+}
+
 void Messenger::send_msg(const string &msg, uint16_t addr) {
 	char msg2[TRANSFER_SIZE];
 	memset(msg2, 0, TRANSFER_SIZE);
 	memcpy(msg2, msg.c_str(), TRANSFER_SIZE);
+	led_write(LEDs, strlen(msg2));
+//	for (size_t i = 0; i < strlen(msg2); i++) {
+//		led_write(LEDs, msg2[i]);
+//		Thread::wait(5000);
+//	}
 	nrf.write(0, msg2, TRANSFER_SIZE);
 //	XBeeLib::RemoteXBee802 remoteDevice = XBeeLib::RemoteXBee802(addr);
 //	xbee->send_data(remoteDevice, (const uint8_t *) msg.c_str(), (uint16_t ) msg.size(), true);
