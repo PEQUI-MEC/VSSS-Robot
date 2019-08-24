@@ -74,7 +74,7 @@ class Controller {
 		Thread control_thread;
 		bool stop = true;
 
-		PID pid = {1.26,0.0481,0};
+		PID pid = {2.5f, 0.01, 0};
 		wheel left_wheel = {};
 		wheel right_wheel = {};
 		encoder_data encoder_vel = {};

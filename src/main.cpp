@@ -126,18 +126,20 @@ int main() {
 
 	robot->start_thread();
 
-	robot->start_orientation_control(0, 0.8);
-	wait(0.1);
-	robot->start_orientation_control(-45, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(0, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(45, 0.8);
-	wait(0.5);
-	robot->start_orientation_control(0, 0.8);
-	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.1);
+//	robot->start_orientation_control(-45, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(45, 0.8);
+//	wait(0.5);
+//	robot->start_orientation_control(0, 0.8);
+//	wait(0.5);
 
 	while (true) {
+		robot->start_velocity_control(0.7, 0.7);
+
 		bat_watcher(LEDs, battery_vin);
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger

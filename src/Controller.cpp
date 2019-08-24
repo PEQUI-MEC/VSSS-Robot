@@ -3,7 +3,7 @@
 #include <cmath>
 
 #define PI 3.1415926f
-#define CONTROL_LOOP_MS 10
+#define CONTROL_LOOP_MS 5
 
 Controller::Controller() {
 	init_wheel(left_wheel, ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
@@ -51,6 +51,7 @@ void Controller::set_pwm(wheel &w, float pwm) {
 float Controller::get_pid_output(wheel& w) {
 	float error = w.target_velocity - w.velocity;
 	float error_deriv = error - w.last_error;
+	w.last_error = error;
 	w.error_acc += error;
 	return error * pid.kp + w.error_acc * pid.ki + error_deriv * pid.kd;
 }
