@@ -8,6 +8,7 @@
 #include "ConfigFile.h"
 #include <cmath>
 #include <fstream>
+#include <array>
 
 #define PI 3.141592f
 

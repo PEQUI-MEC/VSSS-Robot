@@ -22,6 +22,7 @@ void SensorFusion::ekf_thread() {
 	Timer timer_ekf;
 	timer_ekf.start();
 	timer_mag.start();
+	offset_update_timer.start();
 
 	while(true) {
 		int time_us = timer_ekf.read_us();
@@ -40,11 +41,24 @@ void SensorFusion::ekf_thread() {
 		} else if(time_us > EKF_PERIOD_US && !wait) {
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
-
 			opt_mag mag_data = read_magnetometer();
 			float gyro_rate = imu.read_gyro();
+
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
+
+			if(std::abs(gyro_rate - gyro_offset) < 0.05 && wheel_vel.vel_left == 0 && wheel_vel.vel_right == 0) {
+//				Predict
+				auto offset_pred = gyro_offset;
+				auto cov_pred = gyro_offset_cov + 0.00001f * time;
+
+//				Update
+				auto offset_measured = gyro_rate;
+				auto K = cov_pred / (cov_pred + 0.02857541f);
+				gyro_offset = offset_pred + K * (offset_measured - offset_pred);
+				gyro_offset_cov = (1 - K) * cov_pred;
+			}
+
 			measurement_data data = {mag_data.mag_theta,
 									 gyro_rate - gyro_offset,
 									 wheel_vel.vel_left,

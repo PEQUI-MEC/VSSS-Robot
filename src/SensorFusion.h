@@ -37,7 +37,10 @@ class SensorFusion {
 
 	public:
 		bool no_vision = true;
+
 		float gyro_offset = 0;
+		float gyro_offset_cov = 0.0001;
+		Timer offset_update_timer;
 
 		explicit SensorFusion(Controller *controler_ptr);
 		void ekf_thread_start();
