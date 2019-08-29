@@ -139,10 +139,13 @@ int main() {
 	wait(0.5);
 
 	while (true) {
+		std::string msg = std::to_string(sensors->gyro_measured) + ", " + std::to_string(sensors->gyro_offset)
+						  + ", " + std::to_string(sensors->gyro_measured - sensors->gyro_offset);
+		messenger->send_msg(msg);
 		bat_watcher(LEDs, battery_vin);
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(1000);
+		Thread::wait(50);
 	}
 }

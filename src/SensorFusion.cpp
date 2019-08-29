@@ -43,14 +43,16 @@ void SensorFusion::ekf_thread() {
 			float time = time_us/1E6f; // Time in seconds
 			opt_mag mag_data = read_magnetometer();
 			float gyro_rate = imu.read_gyro();
+			gyro_measured = gyro_rate;
 
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
 
-			if(std::abs(gyro_rate - gyro_offset) < 0.05 && wheel_vel.vel_left == 0 && wheel_vel.vel_right == 0) {
+			if(std::abs(gyro_rate - gyro_offset) < 0.01 && wheel_vel.vel_left == 0 && wheel_vel.vel_right == 0) {
 //				Predict
 				auto offset_pred = gyro_offset;
-				auto cov_pred = gyro_offset_cov + 0.00001f * time;
+				auto cov_pred = gyro_offset_cov + 0.00001f * offset_update_timer.read_us()/1E6f;
+				offset_update_timer.reset();
 
 //				Update
 				auto offset_measured = gyro_rate;

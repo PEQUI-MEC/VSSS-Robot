@@ -40,6 +40,7 @@ class SensorFusion {
 
 		float gyro_offset = 0;
 		float gyro_offset_cov = 0.0001;
+		float gyro_measured = 0;
 		Timer offset_update_timer;
 
 		explicit SensorFusion(Controller *controler_ptr);
