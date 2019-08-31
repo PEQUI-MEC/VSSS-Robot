@@ -23,7 +23,7 @@ class EKF2 {
 		x.setZero();
 	}
 
-	void predict(const T::ControlVec &controls, float time) {
+	void predict(const Controls &controls, float time) {
 		x = model.prediction(x, controls, time);
 		COV = model.F * COV * model.F.transpose() + model.R;
 	}

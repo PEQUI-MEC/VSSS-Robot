@@ -85,6 +85,14 @@ float IMU::read_gyro() {
 	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 }
 
+Eigen::Vector3f IMU::read_gyro_full() {
+	int16_t gyro_data[3];
+	read_reg(addr_gyro_acc, OUTX_L_G, (char *) &gyro_data, 6);
+	return { gyro_data[0] * (MAX_GYRO/INT16_MAX) * gyro_scale,
+			 gyro_data[1] * (MAX_GYRO/INT16_MAX) * gyro_scale,
+			 gyro_data[2] * (MAX_GYRO/INT16_MAX) * gyro_scale };
+}
+
 float IMU::read_gyro_x() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTX_L_G, (char *) &gyro_data, 2);

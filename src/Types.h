@@ -5,82 +5,93 @@
 #include "helper_functions.h"
 
 struct Pose {
-	float x;
-	float y;
-	float theta;
-	float v;
-	float w;
-	float theta_y;
+	float x = 0;
+	float y = 0;
+	float theta = 0;
+	float v = 0;
+	float w = 0;
+	float theta_y = 0;
+	float w_y = 0;
 
-	explicit Pose(const Eigen::Matrix<float, 6, 1> &pose_vec) :
+	static constexpr uint32_t SIZE = 7;
+
+	Pose() = default;
+
+	explicit Pose(const Eigen::Matrix<float, SIZE, 1> &pose_vec) :
 			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)) {}
+			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)), w_y(pose_vec(6,0)) {}
 
-	Pose(float x, float y, float theta, float v, float w, float theta_y) :
-			x(x), y(y), theta(theta), v(v), w(w), theta_y(theta_y) {}
-
-	Pose() : x(0), y(0), theta(0), v(0), w(0), theta_y(0) {}
-
-	Eigen::Matrix<float, 6, 1> to_vec() {
-		Eigen::Matrix<float, 6, 1> vec;
+	Eigen::Matrix<float, SIZE, 1> to_vec() {
+		Eigen::Matrix<float, SIZE, 1> vec;
 		vec(0, 0) = x;
 		vec(1, 0) = y;
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
 		vec(5, 0) = theta_y;
+		vec(6, 0) = w_y;
 		return vec;
 	}
 
-	Pose or_backwards(bool backwards) {
-		static constexpr float PI = 3.1415926f;
-		if (!backwards) return *this;
-		else return {x, y, wrap(theta + PI), -v, w, theta_y};
-	}
+//	Pose or_backwards(bool backwards) {
+//		static constexpr float PI = 3.1415926f;
+//		if (!backwards) return *this;
+//		else return {x, y, wrap(theta + PI), -v, w, theta_y, w_y};
+//	}
 };
 
 struct Controls {
-	float lin_accel;
-	float ang_accel;
-	float gyro_y;
+	using Vec3 = Eigen::Vector3f;
+	Vec3 acc;
 
-	explicit Controls(Eigen::Matrix<float, 3, 1> control_vec) :
-			lin_accel(control_vec(0, 0)),
-			ang_accel(control_vec(1, 0)),
-			gyro_y(control_vec(2, 0)) {}
-
-	Controls(float lin_accel, float ang_accel, float gyro_y) :
-			lin_accel(lin_accel), ang_accel(ang_accel), gyro_y(gyro_y) {}
-
-	Eigen::Matrix<float, 3, 1> to_vec() {
-		Eigen::Matrix<float, 3, 1> vec;
-		vec(0, 0) = lin_accel;
-		vec(1, 0) = ang_accel;
-		vec(2, 0) = gyro_y;
-		return vec;
-	}
+	static constexpr uint32_t SIZE = 3;
 };
 
-struct SensorData {
-	float mag_theta;
-	float gyro_w;
-	float vel_left;
-	float vel_right;
+//struct Controls {
+//	float lin_accel;
+//	float ang_accel;
+//	float gyro_y;
+//
+//	explicit Controls(Eigen::Matrix<float, 3, 1> control_vec) :
+//			lin_accel(control_vec(0, 0)),
+//			ang_accel(control_vec(1, 0)),
+//			gyro_y(control_vec(2, 0)) {}
+//
+//	Controls(float lin_accel, float ang_accel, float gyro_y) :
+//			lin_accel(lin_accel), ang_accel(ang_accel), gyro_y(gyro_y) {}
+//
+//	Eigen::Matrix<float, 3, 1> to_vec() {
+//		Eigen::Matrix<float, 3, 1> vec;
+//		vec(0, 0) = lin_accel;
+//		vec(1, 0) = ang_accel;
+//		vec(2, 0) = gyro_y;
+//		return vec;
+//	}
+//};
 
-	SensorData(float mag_theta, float gyro_w,
-			   float vel_left, float vel_right) :
-			mag_theta(mag_theta), gyro_w(gyro_w),
+struct SensorData {
+	using Vec2 = Eigen::Vector2f;
+	float mag_theta = 0;
+	Vec2 gyro{};
+	float vel_left = 0;
+	float vel_right = 0;
+
+	static constexpr uint32_t SIZE = 5;
+
+	SensorData() = default;
+
+	SensorData(float mag_theta, Vec2& gyro, float vel_left, float vel_right) :
+			mag_theta(mag_theta), gyro(gyro),
 			vel_left(vel_left), vel_right(vel_right) {}
 
-	SensorData() : mag_theta(0), gyro_w(0), vel_left(0), vel_right(0) {}
-
-	Eigen::Matrix<float, 4, 1> to_vec() {
-		Eigen::Matrix<float, 4, 1> vec;
+	Eigen::Matrix<float, SIZE, 1> to_vec() {
+		Eigen::Matrix<float, SIZE, 1> vec;
 		vec(0, 0) = mag_theta;
-		vec(1, 0) = gyro_w;
+		vec(1, 0) = gyro(0, 0);
 		vec(2, 0) = vel_left;
 		vec(3, 0) = vel_right;
+		vec(4, 0) = gyro(1, 0);
 		return vec;
 	}
 };
@@ -89,6 +100,8 @@ struct VisionData {
 	float x = 0;
 	float y = 0;
 	float theta = 0;
+
+	static constexpr uint32_t SIZE = 3;
 
 	VisionData() = default;
 

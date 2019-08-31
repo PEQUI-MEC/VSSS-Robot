@@ -3,6 +3,7 @@
 
 #include "mbed.h"
 #include "IMU_regs.h"
+#include <Core>
 #include "helper_functions.h"
 
 struct imu_data {
@@ -49,6 +50,7 @@ class IMU {
 		void read_comp_all(int16_t *data);
 		void read_reg(int addr, uint8_t reg, char *data, int num_bytes);
 		void write_reg(int addr, uint8_t reg, uint8_t data);
+		Eigen::Vector3f read_gyro_full();
 };
 
 #endif

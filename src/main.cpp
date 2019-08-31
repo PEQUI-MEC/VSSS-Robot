@@ -1,3 +1,4 @@
+#include <array>
 #include "mbed.h"
 #include "Messenger.h"
 #include "PIN_MAP.h"
@@ -6,6 +7,8 @@
 #include "EKF2.h"
 #include "EkfModel.h"
 #define PI 3.1415926f
+
+Serial usb(USBTX, USBRX, 115200);
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
 	LEDs[0] = ((num >> 0) & 1);
@@ -60,15 +63,15 @@ int main() {
 
 //	control.stop = true;
 
-	Timer t;
-	t.start();
+//	Timer t;
+//	t.start();
 
 //	float avg_acc = 0;
-	float avg_rsin_acc = 0;
-	float avg_rcos_acc = 0;
-	float offset_acc = 0;
-	int count = 0;
-	float ax_acc = 0, ay_acc = 0, az_acc = 0;
+//	float avg_rsin_acc = 0;
+//	float avg_rcos_acc = 0;
+//	float offset_acc = 0;
+//	int count = 0;
+//	float ax_acc = 0, ay_acc = 0, az_acc = 0;
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
 
@@ -78,7 +81,12 @@ int main() {
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-		Thread::wait(10);
+		Thread::wait(100);
+
+//		messenger.send_log(control.sensors.btime);
+
+		auto msg = std::to_string(control.sensors.btime);
+		usb.printf("%s\r\n", msg.c_str());
 //		Thread::wait(8);
 
 //		auto msg = str(control.sensors.e_time) + "\n";
@@ -117,25 +125,25 @@ int main() {
 //		auto pose = control.sensors.get_pose();
 //		messenger.send_log(pose.x, pose.y, pose.v, pose.theta_y);
 //		auto acc = control.sensors.acc_test;
-		if (count == 1000) {
-			avg_rsin_acc = 0;
-			avg_rcos_acc = 0;
-			ax_acc = 0;
-			ay_acc = 0;
-			az_acc = 0;
-			offset_acc = 0;
+//		if (count == 1000) {
+//			avg_rsin_acc = 0;
+//			avg_rcos_acc = 0;
+//			ax_acc = 0;
+//			ay_acc = 0;
+//			az_acc = 0;
+//			offset_acc = 0;
 //			avg_acc = 0;
-			count = 0;
-		}
-		auto acc = control.sensors.acc_real;
+//			count = 0;
+//		}
+//		auto acc = control.sensors.acc_real;
 //		avg_acc += acc.x;
-		ax_acc += acc.x;
-		ay_acc += acc.y;
-		az_acc += acc.z;
-		avg_rsin_acc += control.sensors.r_sin;
-		avg_rcos_acc += control.sensors.r_cos;
+//		ax_acc += acc.x;
+//		ay_acc += acc.y;
+//		az_acc += acc.z;
+//		avg_rsin_acc += control.sensors.r_sin;
+//		avg_rcos_acc += control.sensors.r_cos;
 //		offset_acc += control.sensors.gyro_yx_m;
-		count++;
+//		count++;
 //		messenger.send_log(offset_acc / count,
 //						   control.sensors.gyro_yx_m);
 
@@ -145,7 +153,7 @@ int main() {
 //		auto mod = std::sqrt(std::pow(ax_acc / count, 2.0f)
 //							+ std::pow(ay_acc / count, 2.0f) + std::pow(az_acc / count, 2.0f));
 //		messenger.send_log(ax_acc / count, ay_acc / count, az_acc / count, mod);
-		messenger.send_log(acc.x, acc.y);
+//		messenger.send_log(acc.x, acc.y);
 //		messenger.send_log(avg_rsin_acc / count,
 //						   control.sensors.r_sin,
 //						   avg_rcos_acc / count,

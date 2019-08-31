@@ -78,6 +78,7 @@ class SensorFusion {
 	void resume_thread();
 	float gyro_rate_y_m = 0;
 	float gyro_rate = 0;
+	int btime = 0;
 };
 
 #endif //VSSS_SENSORFUSION_H

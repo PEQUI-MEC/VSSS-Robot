@@ -25,6 +25,8 @@ void SensorFusion::ekf_thread() {
 	Timer timer_ekf;
 	timer_ekf.start();
 	timer_mag.start();
+	Timer bench;
+	bench.start();
 
 	while (true) {
 		if (timeout.read_ms() > 500) {
@@ -35,6 +37,9 @@ void SensorFusion::ekf_thread() {
 		if (time_us > EKF_PERIOD_US || new_vision_data) {
 			timer_ekf.reset();
 			float time = time_us / 1E6f;
+
+			auto gyro = imu.read_gyro_full();
+			Eigen::Vector2f gyro1 = {gyro(0,0), gyro(1,0)};
 
 			gyro_rate = imu.read_gyro() - gyro_offset;
 			float gyro_rate_y_raw = (imu.read_gyro_x() - gyro_offset_y);
@@ -77,11 +82,14 @@ void SensorFusion::ekf_thread() {
 
 //			float acc = (wheel_vel.vel_left_accel +
 //					wheel_vel.vel_right_accel) / (2 * time);
-			Controls controls(acc_model(acc, gyro_rate),
-							  (gyro_rate - previous_w) / time,
-							  gyro_rate_y);
+			Controls controls{ {0, acc.y, acc.z} };
+//			Controls controls(acc_model(acc, gyro_rate),
+//							  (gyro_rate - previous_w) / time,
+//							  gyro_rate_y);
 
-			ekf.predict(controls.to_vec(), time);
+			bench.reset();
+
+			ekf.predict(controls, time);
 
 			if (new_vision_data) {
 				ekf.update_on_vision_data(vision.to_vec());
@@ -89,7 +97,7 @@ void SensorFusion::ekf_thread() {
 				opt_mag mag_data = read_magnetometer();
 
 				SensorData sensor_data(mag_data.mag_theta,
-									   gyro_rate,
+									   gyro1,
 									   wheel_vel.vel_left,
 									   wheel_vel.vel_right);
 
@@ -98,6 +106,8 @@ void SensorFusion::ekf_thread() {
 
 				ekf.update_on_sensor_data(sensor_data.to_vec());
 			}
+
+			btime = bench.read_us();
 
 			previous_w = gyro_rate;
 		}
