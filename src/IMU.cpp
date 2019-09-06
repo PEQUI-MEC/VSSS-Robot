@@ -1,5 +1,6 @@
 #include "IMU.h"
 #include "ConfigFile.h"
+#include "Types.h"
 
 #define PI 3.1415926f
 
@@ -19,7 +20,7 @@ IMU::IMU() {
 // Configura os sensores
 void IMU::init(PinName sda, PinName scl) {
 	i2c = new I2C(sda, scl);
-	i2c->frequency(400*1000);
+	i2c->frequency(1000*1000);
 	// Habilita acelerometro nos 3 eixos
 	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);
 
@@ -83,6 +84,20 @@ float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
 	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
+}
+
+Controls IMU::read_gyro_acc() {
+	int16_t data[6];
+	read_reg(addr_gyro_acc, OUTX_L_G, (char *) &data, 12);
+	return { Controls::Vec3 {
+			-data[1] * (MAX_GYRO/INT16_MAX) * gyro_scale,
+			data[0] * (MAX_GYRO/INT16_MAX) * gyro_scale,
+			data[2] * (MAX_GYRO/INT16_MAX) * gyro_scale
+			}, Controls::Vec3 {
+			-data[4] * (MAX_ACC/INT16_MAX),
+			data[3] * (MAX_ACC/INT16_MAX),
+			data[5] * (MAX_ACC/INT16_MAX)
+	}};
 }
 
 Eigen::Vector3f IMU::read_gyro_full() {

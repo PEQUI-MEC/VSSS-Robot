@@ -45,6 +45,8 @@ class SensorFusion {
 //	volatile float y_acc_fixed = 0;
 	AccRealData acc_real{};
 
+	Controls ctrl;
+
 	public:
 	bool no_vision = true;
 	float gyro_offset = 0;

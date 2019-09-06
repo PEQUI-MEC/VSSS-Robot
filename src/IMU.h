@@ -5,6 +5,7 @@
 #include "IMU_regs.h"
 #include <Core>
 #include "helper_functions.h"
+#include "Types.h"
 
 struct imu_data {
 	float gyro_z_rate;
@@ -44,6 +45,7 @@ class IMU {
 		mag_components read_mag_components();
 		AccRealData read_acc_real();
 		float read_gyro();
+		Controls read_gyro_acc();
 		float read_gyro_x();
 		void read_acc_all(int16_t *data);
 		void read_gyro_all(int16_t *data);

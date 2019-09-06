@@ -16,16 +16,16 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	float y_increment = pose.v * y_direction;
 
 	auto acc = apply_rotation(controls.acc);
+	auto w3 = apply_rotation(controls.gyro);
 
 	pred.x = pose.x + x_increment;
 	pred.y = pose.y + y_increment;
 
-	pred.theta = wrap(pose.theta + pose.w * time);
-	pred.theta_y = wrap(pose.theta_y + pose.w_y * time);
+	pred.theta = wrap(pose.theta + w3(1) * time);
+	pred.theta_y = wrap(pose.theta_y + w3(2) * time);
 
 	pred.v = pose.v + acc(0, 0) * time;
 	pred.w = pose.w + ang_acc_z * time;
-	pred.w_y = pose.w_y + ang_acc_y * time;
 
 	F(0, 2) = -y_increment;
 	F(1, 2) = x_increment;
@@ -70,7 +70,6 @@ void EkfModel::process_noise(float time) {
 	R(3, 3) = time * 0.0001f;
 	R(4, 4) = time * 0.0001f;
 	R(5, 5) = time * 0.00001f;
-	R(6, 6) = time * 0.0001f;
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z) {
@@ -87,7 +86,6 @@ EKF::SensorVec EkfModel::sensor_measurement_model(const EKF::PoseVec &x) {
 	float v_increment = x(4,0) * ROBOT_SIZE/2;
 	z(2,0) = x(3,0) - v_increment;
 	z(3,0) = x(3,0) + v_increment;
-	z(4, 0) = 0;
 	return z;
 }
 

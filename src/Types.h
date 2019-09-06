@@ -11,16 +11,15 @@ struct Pose {
 	float v = 0;
 	float w = 0;
 	float theta_y = 0;
-	float w_y = 0;
 
-	static constexpr uint32_t SIZE = 7;
+	static constexpr uint32_t SIZE = 6;
 
 	Pose() = default;
 
 	explicit Pose(const Eigen::Matrix<float, SIZE, 1> &pose_vec) :
 			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)), w_y(pose_vec(6,0)) {}
+			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)) {}
 
 	Eigen::Matrix<float, SIZE, 1> to_vec() {
 		Eigen::Matrix<float, SIZE, 1> vec;
@@ -30,7 +29,6 @@ struct Pose {
 		vec(3, 0) = v;
 		vec(4, 0) = w;
 		vec(5, 0) = theta_y;
-		vec(6, 0) = w_y;
 		return vec;
 	}
 
@@ -43,9 +41,18 @@ struct Pose {
 
 struct Controls {
 	using Vec3 = Eigen::Vector3f;
+	Vec3 gyro;
 	Vec3 acc;
 
-	static constexpr uint32_t SIZE = 3;
+	static constexpr uint32_t SIZE = 6;
+
+	std::string to_str() {
+		return "[ " + str(gyro(0)) + ", " + str(gyro(1)) +
+				", " + str(gyro(2)) + "], [ " +
+				str(acc(0)) + ", " + str(acc(1)) +
+				", " + str(acc(2)) + " ]";
+
+	}
 };
 
 //struct Controls {
@@ -71,27 +78,25 @@ struct Controls {
 //};
 
 struct SensorData {
-	using Vec2 = Eigen::Vector2f;
 	float mag_theta = 0;
-	Vec2 gyro{};
+	float gyro;
 	float vel_left = 0;
 	float vel_right = 0;
 
-	static constexpr uint32_t SIZE = 5;
+	static constexpr uint32_t SIZE = 4;
 
 	SensorData() = default;
 
-	SensorData(float mag_theta, Vec2& gyro, float vel_left, float vel_right) :
+	SensorData(float mag_theta, float gyro, float vel_left, float vel_right) :
 			mag_theta(mag_theta), gyro(gyro),
 			vel_left(vel_left), vel_right(vel_right) {}
 
 	Eigen::Matrix<float, SIZE, 1> to_vec() {
 		Eigen::Matrix<float, SIZE, 1> vec;
 		vec(0, 0) = mag_theta;
-		vec(1, 0) = gyro(0, 0);
+		vec(1, 0) = gyro;
 		vec(2, 0) = vel_left;
 		vec(3, 0) = vel_right;
-		vec(4, 0) = gyro(1, 0);
 		return vec;
 	}
 };

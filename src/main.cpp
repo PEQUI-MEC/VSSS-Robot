@@ -85,8 +85,8 @@ int main() {
 
 //		messenger.send_log(control.sensors.btime);
 
-		auto msg = std::to_string(control.sensors.btime);
-		usb.printf("%s\r\n", msg.c_str());
+//		auto msg = std::to_string(control.sensors.btime);
+		usb.printf("%s\r\n", control.sensors.ctrl.to_str().c_str());
 //		Thread::wait(8);
 
 //		auto msg = str(control.sensors.e_time) + "\n";
