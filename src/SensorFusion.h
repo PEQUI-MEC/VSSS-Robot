@@ -37,6 +37,7 @@ class SensorFusion {
 	void ekf_thread();
 	opt_mag read_magnetometer();
 	void calibration();
+	void calib();
 	float acc_model(AccRealData &acc, float gyro_rate);
 
 //	volatile float x_acc = 0;
@@ -53,6 +54,8 @@ class SensorFusion {
 	float gyro_offset_y = 0;
 	volatile float acc_offset_x = 0;
 	volatile float acc_offset_y = 0;
+
+	Controls offsets{};
 
 //	float gyro_yx = 0.049127f;
 	const float gyro_yx = 0.052512;
@@ -81,6 +84,9 @@ class SensorFusion {
 	float gyro_rate_y_m = 0;
 	float gyro_rate = 0;
 	int btime = 0;
+	float theta_x = 0;
+	float theta_y = 0;
+	float theta_z = 0;
 };
 
 #endif //VSSS_SENSORFUSION_H

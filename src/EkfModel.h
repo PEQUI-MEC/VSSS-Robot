@@ -37,7 +37,8 @@ class EkfModel {
 	EKF::SensorVec sensor_measurement_model(const EKF::PoseVec &x);
 	EKF::VisionVec vision_measurement_error(const EKF::PoseVec &x, const EKF::VisionVec &z);
 	EKF::VisionVec vision_measurement_model(const EKF::PoseVec &x);
-	Vec3 apply_rotation(const Vec3 &x);
+	Vec3 robot_to_imu_rot(const Vec3 &x);
+	Vec3 imu_to_robot_rot(const Vec3 &x);
 	void update_rot_mats(float theta_x, float theta_y, float theta_z);
 	void use_magnetometer(bool use);
 	void use_encoders(bool use);

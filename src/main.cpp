@@ -27,6 +27,21 @@ void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
 	else led_write(LEDs, 0b0001);
 }
 
+float rd(float value) {
+	return std::round(value * 100) / 100;
+}
+
+template <typename ...T>
+void send(T ...data) {
+	std::string msg;
+	append(msg, data...);
+	usb.printf("%s\r\n", msg.c_str());
+}
+
+float deg(float rad) {
+	return rd(rad * (180.0f/PI));
+}
+
 int main() {
 	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
 									  DigitalOut(LED3), DigitalOut(LED4)};
@@ -75,6 +90,8 @@ int main() {
 //	float y = 0;
 //	float off = control.sensors.acc_offset;
 
+	auto& s = control.sensors;
+
 	while (true) {
 		if (control.state == ControlState::None) {
 			led_write(LEDs, 0);
@@ -86,7 +103,17 @@ int main() {
 //		messenger.send_log(control.sensors.btime);
 
 //		auto msg = std::to_string(control.sensors.btime);
-		usb.printf("%s\r\n", control.sensors.ctrl.to_str().c_str());
+//		usb.printf("%s\r\n", msg.c_str());
+//		usb.printf("%f, %f, %f\r\n", control.sensors.gravity, control.sensors.theta_x,
+//				   control.sensors.theta_y);
+//		usb.printf("%f, %f, %f\r\n", control.sensors.theta_x, control.sensors.theta_y,
+//				   control.sensors.theta_z);
+//		send(control.sensors.theta_x, control.sensors.theta_y, control.sensors.theta_z);
+		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), deg(control.sensors.theta_z));
+//		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), control.sensors.gravity);
+//		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2), deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
+//		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2));
+//		usb.printf("%s\r\n", control.sensors.ctrl.to_str().c_str());
 //		Thread::wait(8);
 
 //		auto msg = str(control.sensors.e_time) + "\n";

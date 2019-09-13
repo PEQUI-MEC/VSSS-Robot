@@ -7,7 +7,7 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 								  const Controls &controls, float time) {
 	Pose pose(prev_x);
 	Pose pred;
-	update_rot_mats(0, pose.theta_y, pose.theta);
+//	update_rot_mats(pose.v, pose.theta_y, pose.theta);
 
 	float delta_theta = (pose.w * time) / 2;
 	float x_direction = time * std::cos(pose.theta + delta_theta);
@@ -15,8 +15,8 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	float y_direction = time * std::sin(pose.theta + delta_theta);
 	float y_increment = pose.v * y_direction;
 
-	auto acc = apply_rotation(controls.acc);
-	auto w3 = apply_rotation(controls.gyro);
+	auto acc = robot_to_imu_rot(controls.acc);
+	auto w3 = robot_to_imu_rot(controls.gyro);
 
 	pred.x = pose.x + x_increment;
 	pred.y = pose.y + y_increment;
@@ -59,8 +59,12 @@ void EkfModel::update_rot_mats(float theta_x, float theta_y, float theta_z) {
 	Rz(1,1) = cosz;
 }
 
-EkfModel::Vec3 EkfModel::apply_rotation(const Vec3 &x) {
-	return Rz * Ry * Rx * x;
+EkfModel::Vec3 EkfModel::robot_to_imu_rot(const Vec3 &x) {
+	return Rx * Ry * Rz * x;
+}
+
+EkfModel::Vec3 EkfModel::imu_to_robot_rot(const Vec3 &x) {
+	return (Rx * Ry * Rz).transpose() * x;
 }
 
 void EkfModel::process_noise(float time) {
