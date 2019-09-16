@@ -46,6 +46,14 @@ struct Controls {
 
 	static constexpr uint32_t SIZE = 6;
 
+	std::string to_csv() {
+		return str(gyro(0)) + ", " + str(gyro(1)) +
+			   ", " + str(gyro(2)) + ", " +
+			   str(acc(0)) + ", " + str(acc(1)) +
+			   ", " + str(acc(2));
+
+	}
+
 	std::string to_str() {
 		return "[ " + str(gyro(0)) + ", " + str(gyro(1)) +
 				", " + str(gyro(2)) + "], [ " +

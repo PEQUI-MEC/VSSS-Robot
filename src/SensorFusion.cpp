@@ -55,8 +55,8 @@ void SensorFusion::ekf_thread() {
 //			controls.acc -= offset;
 
 			controls.gyro -= offsets.gyro;
-			controls.gyro = ekf.model.imu_to_robot_rot(controls.gyro);
 			ctrl = controls;
+			controls.gyro = ekf.model.imu_to_robot_rot(controls.gyro);
 
 //			auto ac = model(controls, gravity);
 			theta_x = wrap(theta_x + controls.gyro(0) * time);

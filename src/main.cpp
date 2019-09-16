@@ -93,23 +93,25 @@ int main() {
 	auto& s = control.sensors;
 
 	while (true) {
+		control.set_target(ControlState::AngularVel,
+						   {0, 0, 0, 20}, false);
 		if (control.state == ControlState::None) {
 			led_write(LEDs, 0);
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-		Thread::wait(100);
+		Thread::wait(10);
 
 //		messenger.send_log(control.sensors.btime);
 
 //		auto msg = std::to_string(control.sensors.btime);
-//		usb.printf("%s\r\n", msg.c_str());
+		messenger.send_msg(control.sensors.ctrl.to_csv());
 //		usb.printf("%f, %f, %f\r\n", control.sensors.gravity, control.sensors.theta_x,
 //				   control.sensors.theta_y);
 //		usb.printf("%f, %f, %f\r\n", control.sensors.theta_x, control.sensors.theta_y,
 //				   control.sensors.theta_z);
 //		send(control.sensors.theta_x, control.sensors.theta_y, control.sensors.theta_z);
-		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), deg(control.sensors.theta_z));
+//		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), deg(control.sensors.theta_z));
 //		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), control.sensors.gravity);
 //		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2), deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
 //		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2));
