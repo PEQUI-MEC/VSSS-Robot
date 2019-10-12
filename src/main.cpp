@@ -8,7 +8,7 @@
 #include "EkfModel.h"
 #define PI 3.1415926f
 
-Serial usb(USBTX, USBRX, 115200);
+//Serial usb(USBTX, USBRX, 115200);
 
 void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
 	LEDs[0] = ((num >> 0) & 1);
@@ -31,12 +31,12 @@ float rd(float value) {
 	return std::round(value * 100) / 100;
 }
 
-template <typename ...T>
-void send(T ...data) {
-	std::string msg;
-	append(msg, data...);
-	usb.printf("%s\r\n", msg.c_str());
-}
+//template <typename ...T>
+//void send(T ...data) {
+//	std::string msg;
+//	append(msg, data...);
+//	usb.printf("%s\r\n", msg.c_str());
+//}
 
 float deg(float rad) {
 	return rd(rad * (180.0f/PI));
@@ -109,7 +109,7 @@ int main() {
 //		usb.printf("%f, %f, %f\r\n", control.sensors.theta_x, control.sensors.theta_y,
 //				   control.sensors.theta_z);
 //		send(control.sensors.theta_x, control.sensors.theta_y, control.sensors.theta_z);
-		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), deg(control.sensors.theta_z));
+		messenger.send_log(deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
 //		send(deg(control.sensors.theta_x), deg(control.sensors.theta_y), control.sensors.gravity);
 //		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2), deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
 //		send(s.ctrl.gyro(0), s.ctrl.gyro(1), s.ctrl.gyro(2));

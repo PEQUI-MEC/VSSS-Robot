@@ -64,7 +64,7 @@ EkfModel::Vec3 EkfModel::robot_to_imu_rot(const Vec3 &x) {
 }
 
 EkfModel::Vec3 EkfModel::imu_to_robot_rot(const Vec3 &x) {
-	return (Rx * Ry * Rz).transpose() * x;
+	return Rz.transpose() * Ry.transpose() * Rx.transpose() * x;
 }
 
 void EkfModel::process_noise(float time) {
