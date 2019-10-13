@@ -19,6 +19,7 @@
 #define MOTOR_RIGHT_PIN_2 p25
 #define MOTOR_LEFT_PIN_1 p24   //MOTOR B -> MOTOR DA ((((ESQUERDA))))
 #define MOTOR_LEFT_PIN_2 p23
+#define WHEEL_SIZE (0.061f)
 
 //PINOS I2C PARA O IMU
 #define IMU_SDA_PIN p28
