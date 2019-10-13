@@ -62,7 +62,7 @@ void SensorFusion::ekf_thread() {
 				opt_mag mag_data = read_magnetometer();
 
 				SensorData sensor_data(mag_data.mag_theta,
-									   gyro_rate,
+									   controls.gyro(2),
 									   wheel_vel.vel_left,
 									   wheel_vel.vel_right);
 
@@ -73,8 +73,6 @@ void SensorFusion::ekf_thread() {
 			}
 
 			btime = bench.read_us();
-
-			previous_w = gyro_rate;
 		}
 	}
 }

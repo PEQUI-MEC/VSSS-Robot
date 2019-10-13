@@ -82,7 +82,6 @@ class SensorFusion {
 	void stop_and_wait();
 	void resume_thread();
 	float gyro_rate_y_m = 0;
-	float gyro_rate = 0;
 	int btime = 0;
 	float theta_x = 0;
 	float theta_y = 0;

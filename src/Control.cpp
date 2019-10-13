@@ -135,7 +135,7 @@ TargetVelocity Control::vector_control(float theta, float target_theta,
 }
 
 TargetVelocity Control::orientation_control(Pose pose, float theta) {
-	return {0, 15 * wrap(theta - pose.theta)};
+	return {0, 30 * wrap(theta - pose.theta)};
 }
 
 PolarPose Control::get_polar_pose(Pose pose, Target target) const {
