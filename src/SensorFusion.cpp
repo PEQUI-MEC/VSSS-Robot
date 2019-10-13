@@ -48,71 +48,13 @@ void SensorFusion::ekf_thread() {
 			float time = time_us / 1E6f;
 
 			auto controls = imu.read_gyro_acc();
-
-			ekf.model.update_rot_mats(-theta_x, -theta_y, -theta_z);
-
-			auto offset = ekf.model.robot_to_imu_rot({0, 0, gravity});
-//			controls.acc -= offset;
-
 			controls.gyro -= offsets.gyro;
-//			controls.gyro = ekf.model.imu_to_robot_rot(controls.gyro);
-			ctrl = controls;
-
-//			auto ac = model(controls, gravity);
-			theta_x = wrap(theta_x + controls.gyro(0) * time);
-			theta_y = wrap(theta_y + controls.gyro(1) * time);
-			theta_z = wrap(theta_z + controls.gyro(2) * time);
-//			theta_x = ac[0];
-//			theta_y = ac[1];
-
-			gyro_rate = imu.read_gyro() - gyro_offset;
-			float gyro_rate_y_raw = (imu.read_gyro_x() - gyro_offset_y);
-			float gyro_rate_y = gyro_rate_y_raw - gyro_yx * gyro_rate;
-//			gyro_yx_m = gyro_rate_y_raw / gyro_rate;
-			gyro_rate_y_m = gyro_rate_y;
-//			float acc = imu.read_acc_components().y - acc_offset;
-
-			auto acc = imu.read_acc_real();
-			acc_real = acc;
-
-//			auto acc = imu.read_acc();
-//			auto controls = acc_model(acc.y - acc_offset_y,
-//									  -(acc.x - acc_offset_x), gyro_rate);
-
-//			x_acc = acc.x - acc_offset_x;
-//			y_acc = acc.y - acc_offset_y;
-
-//			last_controls.lin_accel = controls.lin_accel;
-//			last_controls.ang_accel = controls.ang_accel;
-//			Controls controls(acc.x - acc_offset_x, 0);
 
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
 
-//			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.02f * std::sin(0.785398f);
-//			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.02f * std::cos(0.785398f);
-
-//			auto centripetal_x = std::pow(gyro_rate, 2.0f) * 0.01335404f;
-//			auto centripetal_y = std::pow(gyro_rate, 2.0f) * 0.01615549f;
-
-//			x_acc_fixed = x_acc + centripetal_x;
-//			y_acc_fixed = y_acc - centripetal_y;
-
-//			if (gyro_rate != 0) {
-//				float w_sq = std::pow(gyro_rate, 2.0f);
-//				A = y_acc / w_sq;
-//				B = x_acc / w_sq;
-//			}
-
-//			float acc = (wheel_vel.vel_left_accel +
-//					wheel_vel.vel_right_accel) / (2 * time);
-//			Controls controls{Controls::Vec3{0, acc.y, acc.z}, gyro};
-//			Controls controls(acc_model(acc, gyro_rate),
-//							  (gyro_rate - previous_w) / time,
-//							  gyro_rate_y);
-
 			bench.reset();
-			ekf.predict(controls, time);
+			ekf.predict(controls, WheelVelocity{wheel_vel.vel_left, wheel_vel.vel_right}, time);
 
 			if (new_vision_data) {
 				ekf.update_on_vision_data(vision.to_vec());
@@ -137,23 +79,23 @@ void SensorFusion::ekf_thread() {
 	}
 }
 
-float SensorFusion::acc_model(AccRealData &acc, float gyro_rate) {
-	float theta = get_pose().theta_y;
-	float w2 = std::pow(gyro_rate, 2.0f);
-	ax_raw = acc.x;
-	ay = acc.y - acc_offset_y;
-	ax = (acc.x + gravity * std::sin(theta))
-		 / std::cos(theta);
-
-//	alpha = (w2 * r_cos - ay) / r_sin;
-	ar = ax - w2 * r_sin;
-//	ar_alpha_fix = ax - w2 * r_sin - alpha * r_cos;
-//	if (w2 != 0) {
-//		r_sin = ax / w2;
-//		r_cos = ay / w2;
-//	}
-	return ar;
-}
+//float SensorFusion::acc_model(AccRealData &acc, float gyro_rate) {
+//	float theta = get_pose().theta_y;
+//	float w2 = std::pow(gyro_rate, 2.0f);
+//	ax_raw = acc.x;
+//	ay = acc.y - acc_offset_y;
+//	ax = (acc.x + gravity * std::sin(theta))
+//		 / std::cos(theta);
+//
+////	alpha = (w2 * r_cos - ay) / r_sin;
+//	ar = ax - w2 * r_sin;
+////	ar_alpha_fix = ax - w2 * r_sin - alpha * r_cos;
+////	if (w2 != 0) {
+////		r_sin = ax / w2;
+////		r_cos = ay / w2;
+////	}
+//	return ar;
+//}
 
 
 void SensorFusion::calib() {

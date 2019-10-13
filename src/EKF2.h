@@ -23,8 +23,8 @@ class EKF2 {
 		x.setZero();
 	}
 
-	void predict(const Controls &controls, float time) {
-		x = model.prediction(x, controls, time);
+	void predict(const Controls &controls, const WheelVelocity &wheel_vel, float time) {
+		x = model.prediction(x, controls, wheel_vel, time);
 		COV = model.F * COV * model.F.transpose() + model.R;
 	}
 

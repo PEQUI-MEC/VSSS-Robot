@@ -33,6 +33,9 @@ struct PID {
 struct WheelVelocity {
 	float left;
 	float right;
+	WheelVelocity operator-(WheelVelocity &v2) {
+		return {left - v2.left, right - v2.right};
+	}
 };
 
 class Controller {

@@ -3,6 +3,7 @@
 
 #include <Core>
 #include "helper_functions.h"
+#include "Controller.h"
 
 struct Pose {
 	float x = 0;
@@ -10,16 +11,15 @@ struct Pose {
 	float theta = 0;
 	float v = 0;
 	float w = 0;
-	float theta_y = 0;
 
-	static constexpr uint32_t SIZE = 6;
+	static constexpr uint32_t SIZE = 5;
 
 	Pose() = default;
 
 	explicit Pose(const Eigen::Matrix<float, SIZE, 1> &pose_vec) :
 			x(pose_vec(0, 0)), y(pose_vec(1, 0)),
 			theta(pose_vec(2, 0)), v(pose_vec(3, 0)),
-			w(pose_vec(4, 0)), theta_y(pose_vec(5, 0)) {}
+			w(pose_vec(4, 0)) {}
 
 	Eigen::Matrix<float, SIZE, 1> to_vec() {
 		Eigen::Matrix<float, SIZE, 1> vec;
@@ -28,7 +28,6 @@ struct Pose {
 		vec(2, 0) = theta;
 		vec(3, 0) = v;
 		vec(4, 0) = w;
-		vec(5, 0) = theta_y;
 		return vec;
 	}
 

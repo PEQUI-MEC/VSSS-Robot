@@ -63,6 +63,7 @@ class Control {
 
 	TargetVelocity pose_control(Pose pose, Target target);
 	TargetVelocity position_control(Pose pose, Target target);
+	TargetVelocity limit_accel(const TargetVelocity &target_vel);
 
 	TargetVelocity control_law(PolarPose pose, float vmax) const;
 	TargetVelocity vector_control(float theta, float target_theta, float velocity, bool enable_backwards);

@@ -3,11 +3,16 @@
 
 using EKF = EkfModel::EKF;
 
-EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
-								  const Controls &controls, float time) {
+EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x, const Controls &controls,
+		const WheelVelocity &wheel_vel, float time) {
 	Pose pose(prev_x);
 	Pose pred;
-//	update_rot_mats(pose.v, pose.theta_y, pose.theta);
+
+	auto vel = (wheel_vel.left + wheel_vel.right)/2;
+	auto ang_acc_z = controls.gyro(2) - last_gyro_z; //sem div por tempo
+	auto vel_acc_x = vel - last_vel_x; //sem div por tempo
+	last_gyro_z = controls.gyro(2);
+	last_vel_x = vel;
 
 	float delta_theta = (pose.w * time) / 2;
 	float x_direction = time * std::cos(pose.theta + delta_theta);
@@ -15,17 +20,13 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	float y_direction = time * std::sin(pose.theta + delta_theta);
 	float y_increment = pose.v * y_direction;
 
-	auto acc = robot_to_imu_rot(controls.acc);
-	auto w3 = robot_to_imu_rot(controls.gyro);
-
 	pred.x = pose.x + x_increment;
 	pred.y = pose.y + y_increment;
 
-	pred.theta = wrap(pose.theta + w3(1) * time);
-	pred.theta_y = wrap(pose.theta_y + w3(2) * time);
+	pred.theta = wrap(pose.theta + controls.gyro(2)* time);
 
-	pred.v = pose.v + acc(0, 0) * time;
-	pred.w = pose.w + ang_acc_z * time;
+	pred.v = pose.v + vel_acc_x;
+	pred.w = pose.w + ang_acc_z;
 
 	F(0, 2) = -y_increment;
 	F(1, 2) = x_increment;
@@ -38,42 +39,12 @@ EKF::PoseVec EkfModel::prediction(const EKF::PoseVec &prev_x,
 	return pred.to_vec();
 }
 
-void EkfModel::update_rot_mats(float theta_x, float theta_y, float theta_z) {
-	auto cosx = std::cos(theta_x);
-	auto sinx = std::sin(theta_x);
-	Rx(1,1) = cosx;
-	Rx(1,2) = -sinx;
-	Rx(2,1) = sinx;
-	Rx(2,2) = cosx;
-	auto cosy = std::cos(theta_y);
-	auto siny = std::sin(theta_y);
-	Ry(0,0) = cosy;
-	Ry(0,2) = siny;
-	Ry(2,0) = -siny;
-	Ry(2,2) = cosy;
-	auto cosz = std::cos(theta_z);
-	auto sinz = std::sin(theta_z);
-	Rz(0,0) = cosz;
-	Rz(0,1) = -sinz;
-	Rz(1,0) = sinz;
-	Rz(1,1) = cosz;
-}
-
-EkfModel::Vec3 EkfModel::robot_to_imu_rot(const Vec3 &x) {
-	return Rx * Ry * Rz * x;
-}
-
-EkfModel::Vec3 EkfModel::imu_to_robot_rot(const Vec3 &x) {
-	return Rz.transpose() * Ry.transpose() * Rx.transpose() * x;
-}
-
 void EkfModel::process_noise(float time) {
 	R(0, 0) = time * 0.001f;
 	R(1, 1) = time * 0.001f;
 	R(2, 2) = time * 0.00001f;
 	R(3, 3) = time * 0.0001f;
 	R(4, 4) = time * 0.0001f;
-	R(5, 5) = time * 0.00001f;
 }
 
 EKF::SensorVec EkfModel::sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z) {
@@ -155,11 +126,4 @@ EkfModel::EkfModel() {
 	Qv(0,0) = 3.44048681e-06f;
 	Qv(1,1) = 2.82211659e-06f;
 	Qv(2,2) = 9.75675349e-04f;
-
-	Rx.setZero();
-	Rx(0,0) = 1;
-	Ry.setZero();
-	Ry(1,1) = 1;
-	Rz.setZero();
-	Rz(2,2) = 1;
 }

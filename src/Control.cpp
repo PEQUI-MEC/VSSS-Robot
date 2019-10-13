@@ -52,6 +52,19 @@ TargetVelocity Control::set_stop_and_sleep() {
 	return {0, 0};
 }
 
+constexpr float MAX_VEL_DIFF = 0.2;
+TargetVelocity Control::limit_accel(const TargetVelocity &target_vel) {
+	auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+	auto wheel_vel = WheelVelocity{controller.left_wheel.velocity, controller.right_wheel.velocity};
+	auto diff = target_wheel_vel - wheel_vel;
+	if (std::abs(diff.left) > MAX_VEL_DIFF) {
+
+	}
+
+
+	return {0, 0};
+}
+
 void Control::pose_control_thread() {
 	while (true) {
 //		if (state == ControlState::None ||

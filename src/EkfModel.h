@@ -23,23 +23,16 @@ class EkfModel {
 	EKF::HVisionMat Hv;
 	EKF::VisionMat Qv;
 
-	float ang_acc_z;
-	float ang_acc_y;
-
-	RotMat Rx;
-	RotMat Ry;
-	RotMat Rz;
+	float last_gyro_z = 0;
+	float last_vel_x = 0;
 
 	EkfModel();
-	EKF::PoseVec prediction(const EKF::PoseVec &prev_x,
-							const Controls &controls, float time);
+	EKF::PoseVec prediction(const EKF::PoseVec &prev_x, const Controls &controls,
+							const WheelVelocity &wheel_vel, float time);
 	EKF::SensorVec sensor_measurement_error(const EKF::PoseVec &x, const EKF::SensorVec &z);
 	EKF::SensorVec sensor_measurement_model(const EKF::PoseVec &x);
 	EKF::VisionVec vision_measurement_error(const EKF::PoseVec &x, const EKF::VisionVec &z);
 	EKF::VisionVec vision_measurement_model(const EKF::PoseVec &x);
-	Vec3 robot_to_imu_rot(const Vec3 &x);
-	Vec3 imu_to_robot_rot(const Vec3 &x);
-	void update_rot_mats(float theta_x, float theta_y, float theta_z);
 	void use_magnetometer(bool use);
 	void use_encoders(bool use);
 };
