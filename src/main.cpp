@@ -1,85 +1,50 @@
-#include <array>
-#include "mbed.h"
-#include "Messenger.h"
+#include "QEI.h"
 #include "PIN_MAP.h"
-#include "helper_functions.h"
-#include "Control.h"
-#include "EKF2.h"
-#include "EkfModel.h"
-#define PI 3.1415926f
 
-//Serial usb(USBTX, USBRX, 115200);
+struct wheel {
+	QEI* encoder;
+	PwmOut* pwm_out1;
+	PwmOut* pwm_out2;
+	float velocity;
+	float target_velocity;
+	float error_acc;
+	float last_error;
+};
 
-void led_write(std::array<DigitalOut, 4> &LEDs, uint8_t num) {
-	LEDs[0] = ((num >> 0) & 1);
-	LEDs[1] = ((num >> 1) & 1);
-	LEDs[2] = ((num >> 2) & 1);
-	LEDs[3] = ((num >> 3) & 1);
+void init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {
+	w.encoder = new QEI(tach_pin1, tach_pin2, NC, PULSES_PER_REVOLUTION, QEI::X4_ENCODING);
+	w.pwm_out1 = new PwmOut(motor_pin1);
+	w.pwm_out1->period_ms(2);
+	w.pwm_out2 = new PwmOut(motor_pin2);
+	w.pwm_out2->period_ms(2);
+	w.error_acc = 0;
 }
 
-void bat_watcher(std::array<DigitalOut, 4> &LEDs, AnalogIn &battery_vin) {
-	double vbat = battery_vin.read() * (3.3 * 1470 / 470);
-	double threshold = (vbat - 6.6) / 1.4;
+void set_pwm(wheel &w, float pwm) {
+	if(pwm > 1) pwm = 1;
+	if(pwm < -1) pwm = -1;
+	if(std::abs(pwm) < 0.05) pwm = 0;
+//	pwm = 0;
 
-	if (threshold >= 0.75) led_write(LEDs, 0b1111);
-	else if (threshold >= 0.5) led_write(LEDs, 0b0111);
-	else if (threshold >= 0.25) led_write(LEDs, 0b0011);
-	else led_write(LEDs, 0b0001);
+	if (pwm < 0) {
+		w.pwm_out1->write(1);
+		w.pwm_out2->write(1 + pwm);
+	} else if (pwm > 0) {
+		w.pwm_out1->write(1 - pwm);
+		w.pwm_out2->write(1);
+	} else {
+		w.pwm_out1->write(1);
+		w.pwm_out2->write(1);
+	}
 }
 
-float rd(float value) {
-	return std::round(value * 100) / 100;
-}
-
-//template <typename ...T>
-//void send(T ...data) {
-//	std::string msg;
-//	append(msg, data...);
-//	usb.printf("%s\r\n", msg.c_str());
-//}
-
-float deg(float rad) {
-	return rd(rad * (180.0f/PI));
-}
 
 int main() {
-	std::array<DigitalOut, 4> LEDs = {DigitalOut(LED1), DigitalOut(LED2),
-									  DigitalOut(LED3), DigitalOut(LED4)};
-	AnalogIn battery_vin(ALL_CELLS);
-	bat_watcher(LEDs, battery_vin);
+	wheel left_wheel = {};
+	wheel right_wheel = {};
+	init_wheel(left_wheel, ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2, MOTOR_LEFT_PIN_1, MOTOR_LEFT_PIN_2);
+	init_wheel(right_wheel, ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
 
-	Control control;
-	Messenger messenger(&control);
-
-	control.start_threads();
-
-//	Serial usb(USBTX, USBRX);
-
-	auto to_orientation = [&](float degrees) {
-		control.set_target(ControlState::Orientation,
-						   {0, 0, to_rads(degrees), 0}, true);
-		wait(0.5);
-	};
-
-	to_orientation(-45);
-	to_orientation(0);
-	to_orientation(45);
-	to_orientation(0);
-
-	messenger.start_thread();
-
-//	control.set_target(ControlState::Vector,
-//					   {0, 0, to_rads(90+45), 1.4f}, true);
-
-//	auto& s = control.sensors;
-
-	while (true) {
-		if (control.state == ControlState::None) {
-			led_write(LEDs, 0);
-		} else {
-			bat_watcher(LEDs, battery_vin);
-		}
-		Thread::wait(100);
-//		messenger.send_log(deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
-	}
+	set_pwm(left_wheel, 1);
+	set_pwm(right_wheel, 1);
 }
