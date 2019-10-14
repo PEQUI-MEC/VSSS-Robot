@@ -17,7 +17,6 @@ SensorFusion::SensorFusion(Controller *controler_ptr) {
 
 void SensorFusion::ekf_thread_start() {
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-	wait(5);
 	calib();
 	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
 }
@@ -102,6 +101,7 @@ void SensorFusion::calib() {
 	acc.setZero();
 	gyro.setZero();
 
+	wait(1);
 	constexpr uint32_t sample_size = 500;
 	for (uint32_t i = 0; i < sample_size; ++i) {
 		auto read = imu.read_gyro_acc();

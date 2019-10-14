@@ -67,8 +67,8 @@ TargetVelocity Control::limit_accel(const TargetVelocity &target_vel) {
 
 void Control::pose_control_thread() {
 	while (true) {
-//		if (state == ControlState::None ||
-//				sensors.timeout.read_ms() > 500) stop_and_sleep();
+		if (state == ControlState::None ||
+				sensors.timeout.read_ms() > 500) stop_and_sleep();
 
 		auto pose = sensors.get_pose();
 
@@ -128,14 +128,14 @@ TargetVelocity Control::vector_control(float theta, float target_theta,
 	auto error = wrap(target_theta - theta);
 	if (enable_backwards && backwards_select(error)) {
 		auto backwards_error = wrap(target_theta - (theta + PI));
-		return {-velocity * std::cos(backwards_error), 10 * backwards_error};
+		return {-velocity * std::cos(1.2f * backwards_error), 7 * backwards_error};
 	} else {
-		return {velocity * std::cos(error), 10 * error};
+		return {velocity * std::cos(1.2f * error), 7 * error};
 	}
 }
 
 TargetVelocity Control::orientation_control(Pose pose, float theta) {
-	return {0, 30 * wrap(theta - pose.theta)};
+	return {0, 25 * wrap(theta - pose.theta)};
 }
 
 PolarPose Control::get_polar_pose(Pose pose, Target target) const {
