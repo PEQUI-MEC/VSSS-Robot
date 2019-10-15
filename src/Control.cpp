@@ -113,14 +113,17 @@ TargetVelocity Control::pose_control(Pose pose, Target target) {
 	}
 }
 
+constexpr float low_error_threshold = 0.3;
 TargetVelocity Control::position_control(Pose pose, Target target) {
 	float target_theta = std::atan2(target.y - pose.y,
 									target.x - pose.x);
 	float error = std::sqrt(std::pow(target.x - pose.x, 2.0f)
 							+ std::pow(target.y - pose.y, 2.0f));
-	if (error < 0.02) return set_stop_and_sleep();
-	else return vector_control(pose.theta, target_theta,
-							   target.velocity * std::sqrt(error), true);
+	float coefficient = std::log((target.velocity + 1) / low_error_threshold);
+	float low_error_velocity = std::exp(coefficient * error) - 1;
+	float velocity = (error > low_error_threshold) ? target.velocity : low_error_velocity;
+	if (error < 0.01) return set_stop_and_sleep();
+	else return vector_control(pose.theta, target_theta, velocity, true);
 }
 
 TargetVelocity Control::vector_control(float theta, float target_theta,
@@ -128,9 +131,9 @@ TargetVelocity Control::vector_control(float theta, float target_theta,
 	auto error = wrap(target_theta - theta);
 	if (enable_backwards && backwards_select(error)) {
 		auto backwards_error = wrap(target_theta - (theta + PI));
-		return {-velocity * std::cos(1.2f * backwards_error), 7 * backwards_error};
+		return {-velocity * std::cos(backwards_error), 10 * backwards_error};
 	} else {
-		return {velocity * std::cos(1.2f * error), 7 * error};
+		return {velocity * std::cos(error), 10 * error};
 	}
 }
 
