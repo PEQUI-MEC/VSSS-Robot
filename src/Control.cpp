@@ -52,17 +52,50 @@ TargetVelocity Control::set_stop_and_sleep() {
 	return {0, 0};
 }
 
-constexpr float MAX_VEL_DIFF = 0.2;
-TargetVelocity Control::limit_accel(const TargetVelocity &target_vel) {
-	auto target_wheel_vel = get_target_wheel_velocity(target_vel);
-	auto wheel_vel = WheelVelocity{controller.left_wheel.velocity, controller.right_wheel.velocity};
-	auto diff = target_wheel_vel - wheel_vel;
-	if (std::abs(diff.left) > MAX_VEL_DIFF) {
-
+constexpr float MAX_VEL_CHANGE = 0.2;
+float multiplier(float target, float vel) {
+	if (std::abs(vel) < 0.01) {
+		vel = (vel > 0) ? 0.01f : -0.01f;
+	}
+	if (std::abs(target) < 0.01) {
+		target = (target > 0) ? 0.01f : -0.01f;
 	}
 
+	auto change = (target - vel)/vel;
+	if (std::abs(change) < MAX_VEL_CHANGE) {
+		return 1;
+	} else {
+		auto new_target = (MAX_VEL_CHANGE + 1) * vel;
+		return new_target / target;
+	}
+}
 
-	return {0, 0};
+TargetVelocity Control::limit_accel2(const TargetVelocity &target_vel) {
+	auto wheel_vel = WheelVelocity{controller.left_wheel.velocity, controller.right_wheel.velocity};
+	auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+	auto left_mult = multiplier(target_wheel_vel.left, wheel_vel.left);
+	auto right_mult = multiplier(target_wheel_vel.right, wheel_vel.right);
+	if (left_mult < right_mult) {
+		return TargetVelocity(target_wheel_vel) * left_mult;
+	} else {
+		return TargetVelocity(target_wheel_vel) * right_mult;
+	}
+}
+
+constexpr float MAX_VEL_DIFF = 0.15;
+TargetVelocity Control::limit_accel(const TargetVelocity &target_vel) {
+	auto wheel_vel = WheelVelocity{controller.left_wheel.velocity, controller.right_wheel.velocity};
+	auto vel = TargetVelocity(wheel_vel);
+	auto vel_diff = target_vel.v - vel.v;
+	if (std::abs(vel_diff) > MAX_VEL_DIFF) {
+		if (vel_diff > 0) {
+			return TargetVelocity{vel.v + MAX_VEL_DIFF, target_vel.w};
+		} else {
+			return TargetVelocity{vel.v - MAX_VEL_DIFF, target_vel.w};
+		}
+	} else {
+		return target_vel;
+	}
 }
 
 void Control::pose_control_thread() {
@@ -89,11 +122,7 @@ void Control::pose_control_thread() {
 			}
 		}();
 
-//		theta_x_acc += sensors.theta_x;
-//		float deriv = sensors.theta_x - last_theta_x;
-//		last_theta_x = sensors.theta_x;
-//		TargetVelocity targ = {2 * sensors.theta_x + 0.5f * theta_x_acc + 0.3f * deriv, 0};
-		auto target_wheel_vel = get_target_wheel_velocity(target_vel);
+		auto target_wheel_vel = get_target_wheel_velocity(limit_accel(target_vel));
 		controller.set_target_velocity(target_wheel_vel);
 		Thread::wait(10);
 	}
@@ -105,12 +134,11 @@ WheelVelocity Control::get_target_wheel_velocity(TargetVelocity target) const {
 }
 
 TargetVelocity Control::pose_control(Pose pose, Target target) {
-	const PolarPose polar_pose = get_polar_pose(pose, target);
-	if(polar_pose.error < 0.02) {
-		return vector_control(pose.theta, target.theta, target.velocity, false);
-	} else {
-		return control_law(polar_pose, target.velocity);
-	}
+	float state_to_targ = std::atan2(target.y - pose.y, target.x - pose.x);
+	float state_to_ref = std::atan2(target.uvf_ref.y - pose.y, target.uvf_ref.x - pose.x);
+	float fi = wrap(state_to_ref - state_to_targ);
+	float uvf_target_theta = wrap(state_to_targ - uvf_n * fi);
+	return vector_control(pose.theta,  uvf_target_theta, target.velocity, true);
 }
 
 constexpr float low_error_threshold = 0.3;
@@ -131,9 +159,9 @@ TargetVelocity Control::vector_control(float theta, float target_theta,
 	auto error = wrap(target_theta - theta);
 	if (enable_backwards && backwards_select(error)) {
 		auto backwards_error = wrap(target_theta - (theta + PI));
-		return {-velocity * std::cos(backwards_error), 10 * backwards_error};
+		return {-velocity * std::cos(backwards_error), 7 * backwards_error};
 	} else {
-		return {velocity * std::cos(error), 10 * error};
+		return {velocity * std::cos(error), 7 * error};
 	}
 }
 

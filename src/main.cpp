@@ -68,6 +68,8 @@ int main() {
 
 	messenger.start_thread();
 
+	control.sensors.timeout.start();
+
 //	control.set_target(ControlState::Vector,
 //					   {0, 0, to_rads(90+45), 1.4f}, true);
 

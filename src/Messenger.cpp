@@ -1,4 +1,5 @@
 #include <string>
+#include <array>
 #include "Messenger.h"
 #include "PIN_MAP.h"
 #include "Control.h"
@@ -41,8 +42,9 @@ void Messenger::uvf_message(const string &msg) {
 		float y = values[3] / 100;
 		auto pose = control->sensors.get_pose();
 		float theta = std::atan2(y - pose.y, x - pose.x);
+		control->uvf_n = values[4];
 		control->set_target(ControlState::Pose,
-							{values[0] / 100, values[1] / 100, theta, values[5]},
+							{values[0] / 100, values[1] / 100, theta, values[5], Point{x, y}},
 							false);
 	}
 }
@@ -109,7 +111,7 @@ void Messenger::decode_msg(const string &msg) {
 	if (values.is_valid) {
 		float right_vel = values[0];
 		float left_vel = values[1];
-		control->set_target(ControlState::Orientation,
+		control->set_target(ControlState::AngularVel,
 							{0, 0, 0, (right_vel - left_vel) / ROBOT_SIZE},
 							true);
 	}

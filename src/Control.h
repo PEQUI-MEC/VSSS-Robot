@@ -11,8 +11,16 @@ struct PolarPose {
 };
 
 struct TargetVelocity {
-	float v;
-	float w;
+	float v = 0;
+	float w = 0;
+	TargetVelocity()  = default;
+	TargetVelocity(float v, float w) : v(v), w(w){};
+	explicit TargetVelocity(WheelVelocity vel) :
+			v((vel.right + vel.left)/2),
+			w((vel.right - vel.left)/ROBOT_SIZE){}
+	TargetVelocity operator*(float mult) {
+				return {v * mult, w * mult};
+	}
 };
 
 enum class ControlState {
@@ -24,6 +32,7 @@ struct Target {
 	float y = 0;
 	float theta = 0;
 	float velocity = 0;
+	Point uvf_ref{};
 
 	Target or_backwards_vel(bool backwards) {
 		return {x, y, theta, -velocity};
@@ -45,6 +54,7 @@ class Control {
 
 	bool sleep_enabled = true;
 
+	float uvf_n = 1;
 	float k1 = 1;
 	float k2 = 8;
 	float B = 0.006;
@@ -64,6 +74,7 @@ class Control {
 	TargetVelocity pose_control(Pose pose, Target target);
 	TargetVelocity position_control(Pose pose, Target target);
 	TargetVelocity limit_accel(const TargetVelocity &target_vel);
+	TargetVelocity limit_accel2(const TargetVelocity &target_vel);
 
 	TargetVelocity control_law(PolarPose pose, float vmax) const;
 	TargetVelocity vector_control(float theta, float target_theta, float velocity, bool enable_backwards);
