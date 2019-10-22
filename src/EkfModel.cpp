@@ -68,6 +68,7 @@ EKF::VisionVec EkfModel::vision_measurement_error(const EKF::PoseVec &x, const E
 	auto pred_z = vision_measurement_model(x);
 	EKF::VisionVec error = z - pred_z;
 	error(2,0) = wrap(error(2,0));
+	vision_error = error;
 	return error;
 }
 

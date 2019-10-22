@@ -6,10 +6,9 @@
 const float ROBOT_SIZE = 0.0675f;
 
 class EkfModel {
-	private:
+	public:
 	void process_noise(float time);
 
-	public:
 	using EKF = EKFTypes<Pose::SIZE, SensorData::SIZE, VisionData::SIZE, Controls::SIZE>;
 	using RotMat = Eigen::Matrix3f;
 	using Vec3 = Eigen::Vector3f;
@@ -25,6 +24,8 @@ class EkfModel {
 
 	float last_gyro_z = 0;
 	float last_vel_x = 0;
+
+	EKF::VisionVec vision_error{};
 
 	EkfModel();
 	EKF::PoseVec prediction(const EKF::PoseVec &prev_x, const Controls &controls,

@@ -68,20 +68,38 @@ int main() {
 
 	messenger.start_thread();
 
-	control.sensors.timeout.start();
+//	control.sensors.timeout.start();
 
 //	control.set_target(ControlState::Vector,
 //					   {0, 0, to_rads(90+45), 1.4f}, true);
 
-//	auto& s = control.sensors;
+	auto& s = control.sensors;
+	auto& c = *s.controller;
+
+	Timer t;
+	t.start();
+	constexpr int time = 1000 * 60 * 2;
+	constexpr float max = 36;
 
 	while (true) {
+		if (t.read_ms() == max) {
+			control.set_target(ControlState::None,
+							   {0, 0, 0, 0}, false);
+		} else {
+			float vel = (max * t.read_ms()) / time;
+			control.set_target(ControlState::AngularVel,
+							   {0, 0, 0, vel}, false);
+			messenger.send_log(s.imu_data.gyro(2), c.left_wheel.velocity, c.right_wheel.velocity);
+		}
+
 		if (control.state == ControlState::None) {
 			led_write(LEDs, 0);
 		} else {
 			bat_watcher(LEDs, battery_vin);
 		}
-		Thread::wait(100);
+		Thread::wait(10);
+//		EKF2::T::VisionVec & error = control.sensors.ekf.model.vision_error;
+//		messenger.send_log(error(0), error(1), error(2));
 //		messenger.send_log(deg(s.theta_x), deg(s.theta_y), deg(s.theta_z));
 	}
 }

@@ -31,6 +31,7 @@ class SensorFusion {
 
 	VisionData vision;
 	bool new_vision_data = false;
+	Controls imu_data;
 
 	float previous_w = 0;
 

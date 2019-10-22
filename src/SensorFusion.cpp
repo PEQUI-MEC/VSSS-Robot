@@ -49,6 +49,8 @@ void SensorFusion::ekf_thread() {
 			auto controls = imu.read_gyro_acc();
 			controls.gyro -= offsets.gyro;
 
+			imu_data = controls;
+
 			auto wheel_vel = controller->encoder_vel;
 			controller->encoder_vel.new_data = false;
 
