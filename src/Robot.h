@@ -38,6 +38,7 @@ class Robot {
 		float orientation_Kp = 0.8;
 		bool previously_backwards = false;
 		float calibration_velocity = 0;
+		float gyro_scale = 0;
 
 
 		/**	@brief Main control loop. Calls vector_control, position_control or orientation_control

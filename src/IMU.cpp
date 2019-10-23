@@ -85,7 +85,7 @@ float IMU::read_gyro() {
 	int16_t gyro_data;
 	read_reg(addr_gyro_acc, OUTZ_L_G, (char *) &gyro_data, 2);
 //	return (gyro_data * (MAX_GYRO/INT16_MAX) * (346722.0f/298599.0f));
-	return gyro_data * (MAX_GYRO/INT16_MAX) * (0.006934109f / 0.006106417f);
+	return gyro_data * (MAX_GYRO/INT16_MAX) * gyro_scale;
 //	return gyro_data * (MAX_GYRO/INT16_MAX);
 }
 

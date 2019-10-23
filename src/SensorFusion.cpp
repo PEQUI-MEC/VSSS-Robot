@@ -33,6 +33,13 @@ void SensorFusion::ekf_thread() {
 
 			auto wheel_vel = controller->encoder_vel;
 			float gyro_rate = imu.read_gyro() - gyro_offset;
+
+			if (reset_cov) {
+				ekf.COV(0,0) = 2;
+				ekf.COV(1,1) = 2;
+				ekf.COV(2,2) = 2;
+				reset_cov = false;
+			}
 			
 			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, gyro_rate - prev_mesure.gyro_w);
 			prev_mesure.gyro_w = gyro_rate;

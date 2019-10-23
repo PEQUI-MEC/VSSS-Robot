@@ -120,6 +120,7 @@ int main() {
 
 	sensors = new SensorFusion(&robot->controller);
 	sensors->gyro_offset = offset;
+	sensors->imu.gyro_scale = robot->gyro_scale;
 	robot->sensors = sensors;
 	sensors->ekf_thread_start();
 
@@ -139,13 +140,10 @@ int main() {
 	wait(0.5);
 
 	while (true) {
-		std::string msg = std::to_string(sensors->gyro_measured) + ", " + std::to_string(sensors->gyro_offset)
-						  + ", " + std::to_string(sensors->gyro_measured - sensors->gyro_offset);
-		messenger->send_msg(msg);
 		bat_watcher(LEDs, battery_vin);
 		if (messenger->debug_mode) {
 //			Utilizado para eviar dados p/ PC utilizando Messenger
 		}
-		Thread::wait(50);
+		Thread::wait(100);
 	}
 }

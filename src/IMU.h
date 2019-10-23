@@ -32,6 +32,7 @@ class IMU {
 		void read_comp_all(int16_t *data);
 		void read_reg(int addr, uint8_t reg, char *data, int num_bytes);
 		void write_reg(int addr, uint8_t reg, uint8_t data);
+		float gyro_scale = 1.16;
 };
 
 #endif

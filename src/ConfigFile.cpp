@@ -20,6 +20,7 @@ void ConfigFile::configure(Robot &robot, uint16_t &xbee_addr) {
 	robot.acc_rate = std::stof(get_data("acc_rate"));
 	robot.kgz = std::stof(get_data("kgz"));
 	robot.max_theta_error = std::stof(get_data("kgz"));
+	robot.gyro_scale = std::stof(get_data("gyro_scale"));
 }
 
 string ConfigFile::get_data(const string &name, bool optional) {

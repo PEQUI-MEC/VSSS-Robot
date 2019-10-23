@@ -37,6 +37,7 @@ class SensorFusion {
 
 	public:
 		bool no_vision = true;
+		volatile bool reset_cov = false;
 
 		float gyro_offset = 0;
 		float gyro_offset_cov = 0.0001;

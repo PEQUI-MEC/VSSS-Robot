@@ -17,6 +17,9 @@ void Robot::start_thread() {
 
 void Robot::control_loop() {
 	while(true) {
+		if(msg_timeout_timer.read_ms() > msg_timeout_limit) {
+			sensors->reset_cov = true;
+		}
 		if(msg_timeout_timer.read_ms() > msg_timeout_limit
 		   && target.command != ORIENTATION_CONTROL) stop_and_wait();
 
