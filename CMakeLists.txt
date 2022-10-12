@@ -44,6 +44,8 @@ set(SOURCE_FILES
 	${SRC_DIR}/ConfigFile.cpp
 	${SRC_DIR}/BatteryWatcher.cpp
 	${SRC_DIR}/helper_functions.h
+	${SRC_DIR}/Wheel.cpp
+	${SRC_DIR}/Wheel.h
 
 	${MBED_SRC}
 	${XBEELIB_SRC}

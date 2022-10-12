@@ -11,6 +11,8 @@
 #include <array>
 #include <BatteryWatcher.h>
 
+#include <Wheel.h>
+
 #define PI 3.141592f
 
 // void mag_calibration() {
