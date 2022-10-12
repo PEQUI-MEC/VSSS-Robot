@@ -1,55 +1,49 @@
 #include <cmath>
-#include "Robot.h"
+#include "RobotController.h"
 #include "PIN_MAP.h"
 
 #define PI 3.1415926f
 #define ROBOT_LOOP_MS 10
 
-Robot::Robot() {
+RobotController::RobotController() {
 	target.command = NO_CONTROL;
-}
-
-void Robot::start_thread() {
-	controller.start_thread();
-	control_thread.start(callback(this, &Robot::control_loop));
 	backwards_timer.start();
 }
 
-void Robot::control_loop() {
-	while(true) {
-		if(msg_timeout_timer.read_ms() > msg_timeout_limit) {
-			sensors->reset_cov = true;
-		}
-		if(msg_timeout_timer.read_ms() > msg_timeout_limit
-		   && target.command != ORIENTATION_CONTROL) stop_and_wait();
-
-		switch (target.command) {
-			case VECTOR_CONTROL:
-				vector_control();
-				break;
-			case POSITION_CONTROL:
-				position_control();
-				break;
-			case ORIENTATION_CONTROL:
-				orientation_control();
-				break;
-			case UVF_CONTROL:
-				uvf_control();
-				break;
-			case NO_CONTROL:
-//				Robot não faz nada, controle de velocidade é feito em Controller
-				break;
-			case SENSOR_CALIBRATION:
-				sensor_calibration();
-				break;
-			default:
-				break;
-		}
-		Thread::wait(ROBOT_LOOP_MS);
+void RobotController::control_loop() {
+	if(msg_timeout_timer.read_ms() > msg_timeout_limit) {
+		sensors->reset_cov = true;
 	}
+	if(msg_timeout_timer.read_ms() > msg_timeout_limit
+		&& target.command != ORIENTATION_CONTROL) stop_and_wait();
+
+	switch (target.command) {
+		case VECTOR_CONTROL:
+			vector_control();
+			break;
+		case POSITION_CONTROL:
+			position_control();
+			break;
+		case ORIENTATION_CONTROL:
+			orientation_control();
+			break;
+		case UVF_CONTROL:
+			uvf_control();
+			break;
+		case NO_CONTROL:
+//		Robot não faz nada, controle de velocidade é feito em Controller
+			break;
+		case SENSOR_CALIBRATION:
+			sensor_calibration();
+			break;
+		default:
+			break;
+	}
+
+	controller.control_loop();
 }
 
-void Robot::uvf_control() {
+void RobotController::uvf_control() {
 	auto pose = sensors->get_pose();
 
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
@@ -85,7 +79,7 @@ void Robot::uvf_control() {
 	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
-void Robot::vector_control() {
+void RobotController::vector_control() {
 	if(vel_acelerada < 0.3) vel_acelerada = 0.3;
 	if(target.velocity == 0) {
 		stop_and_wait();
@@ -117,7 +111,7 @@ void Robot::vector_control() {
 	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
 }
 
-void Robot::position_control() {
+void RobotController::position_control() {
 	auto pose = sensors->get_pose();
 //	Stops after arriving at destination
 	float position_error = std::sqrt(std::pow(pose.x - target.x, 2.0f) + std::pow(pose.y - target.y, 2.0f));
@@ -158,7 +152,7 @@ void Robot::position_control() {
 }
 
 
-void Robot::orientation_control() {
+void RobotController::orientation_control() {
 	auto pose = sensors->get_pose();
 	float target_theta = target.theta;
 
@@ -175,7 +169,7 @@ void Robot::orientation_control() {
 	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, target.velocity);
 }
 
-void Robot::set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards) {
+void RobotController::set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards) {
 	float m = 1;
 	if(backwards) m = -1;
 
@@ -188,7 +182,7 @@ void Robot::set_wheel_velocity_nonlinear_controller(float theta_error, float vel
 	controller.set_target_velocity(left_wheel_velocity, right_wheel_velocity, velocity);
 }
 
-void Robot::start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity) {
+void RobotController::start_uvf_control(float x, float y, float x_ref, float y_ref, float n, float velocity) {
 	target.x = x;
 	target.y = y;
 	target.ref_x = x_ref;
@@ -196,40 +190,40 @@ void Robot::start_uvf_control(float x, float y, float x_ref, float y_ref, float 
 	uvf_n = n;
 	target.velocity = velocity;
 	target.command = UVF_CONTROL;
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::start_vector_control(float theta, float velocity) {
+void RobotController::start_vector_control(float theta, float velocity) {
 //	target.theta is computed before each vector control loop, in direction of {target.x, target.y}
 	target.x = 10*std::cos(theta * PI/180);
 	target.y = 10*std::sin(theta * PI/180);
 	target.velocity = velocity;
 	target.command = VECTOR_CONTROL;
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::start_position_control(float x, float y, float velocity) {
+void RobotController::start_position_control(float x, float y, float velocity) {
 	target.x = x;
 	target.y = y;
 	target.velocity = velocity;
 	target.command = POSITION_CONTROL;
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::start_orientation_control(float theta, float velocity) {
+void RobotController::start_orientation_control(float theta, float velocity) {
 	target.theta = round_angle(theta * PI/180);
 	target.velocity = velocity;
 	target.command = ORIENTATION_CONTROL;
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::start_velocity_control(float vel_left, float vel_right) {
+void RobotController::start_velocity_control(float vel_left, float vel_right) {
 	target.command = NO_CONTROL;
 	controller.set_target_velocity(vel_left, vel_right, 1);
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::sensor_calibration() {
+void RobotController::sensor_calibration() {
 	#define sample_size_gyro_s 10000
 	#define max_velocity 1.17f
 	for (int i = 0; i < sample_size_gyro_s; ++i) {
@@ -243,53 +237,43 @@ void Robot::sensor_calibration() {
 	stop_and_wait();
 }
 
-void Robot::start_calibration(float v) {
+void RobotController::start_calibration(float v) {
 	calibration_velocity = v;
 	sensors->wait = true;
 	target.command = SENSOR_CALIBRATION;
-	continue_threads();
+	reset_timers();
 }
 
-void Robot::continue_threads() {
+void RobotController::reset_timers() {
 	msg_timeout_timer.reset();
 	msg_timeout_timer.start();
-//	Resumes Robot::control_loop thread
-	if(control_thread.get_state() == Thread::WaitingThreadFlag) {
-		control_thread.signal_set(CONTINUE_SIGNAL);
-	}
-//	Resumes Controller::control_loop thread
-	controller.continue_thread();
 }
 
-void Robot::stop_and_wait() {
-//	Flag tells Controller to stop robot and pause thread
+void RobotController::stop_and_wait() {
+//	Flag tells Controller to stop robot
 	controller.stop = true;
 	vel_acelerada = 0;
 	target.command = NO_CONTROL;
-	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
-		Thread::signal_wait(CONTINUE_SIGNAL);
-		Thread::signal_clr(CONTINUE_SIGNAL);
-	}
 }
 
-float Robot::round_angle(float angle) {
+float RobotController::round_angle(float angle) {
 	float theta = std::fmod(angle, 2*PI);
 	if(theta > PI) theta = theta - 2*PI;
 	else if(theta < -PI) theta = theta + 2*PI;
 	return theta;
 }
 
-float Robot::saturate(float value, float limit) {
+float RobotController::saturate(float value, float limit) {
 	if(value > limit) value = limit;
 	if(value < -limit) value = -limit;
 	return value;
 }
 
-void Robot::set_max_theta_error(float error) {
+void RobotController::set_max_theta_error(float error) {
 	max_theta_error = round_angle(error * PI/180);
 }
 
-bool Robot::backwards_select(float target, float orientation) {
+bool RobotController::backwards_select(float target, float orientation) {
 	if(backwards_timer.read_ms() > 25) {
 		bool backwards = std::abs(round_angle(target - orientation)) > PI/2;
 		if(previously_backwards != backwards) {

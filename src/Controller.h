@@ -34,9 +34,6 @@ class Controller {
 	private:
 		Timer timer;
 
-		/**	@brief Wheel velocity control loop. Also updates odometry data */
-		void control_loop();
-
 		/**	@brief Sets PWM output for selected wheel.
 		 *	@param w Wheel struct containing PwmOut object
 		 *	@param pwm Desired PWM output. If abs(pwm) &lt 1, pwm is saturated to 1 or -1 */
@@ -71,7 +68,6 @@ class Controller {
 						PinName motor_pin1, PinName motor_pin2);
 
 	public:
-		Thread control_thread;
 		bool stop = true;
 
 		PID pid = {1.26,0.0481,0};
@@ -81,6 +77,9 @@ class Controller {
 
 		/**	@brief Constructor. Initializes left_wheel and right_wheel, creating PwmOut and QEI objects for them */
 		Controller();
+
+		/**	@brief Wheel velocity control loop. Also updates odometry data */
+		void control_loop();
 
 		/**	@brief Sets target velocity for both wheels, computed by (left * total) or (right * total)
 		 *	@param left Desired left wheel velocity
@@ -93,12 +92,6 @@ class Controller {
 		 *	@param ki Constant multiplied by the integrated error
 		 *	@param kd Constant multiplied by the derivative of the error */
 		void set_pid_constants(float kp, float ki, float kd);
-
-		/**	@brief Sets signal CONTINUE_SIGNAL, resuming wheel velocity control thread */
-		void continue_thread();
-
-		/**	@brief Starts wheel velocity control thread */
-		void start_thread();
 };
 
 #endif //VSSS_CONTROLLER2_H

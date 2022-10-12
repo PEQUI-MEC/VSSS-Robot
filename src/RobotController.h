@@ -25,9 +25,8 @@ struct target_state {
 	float ref_y;
 };
 
-class Robot {
+class RobotController {
 	public:
-		Thread control_thread;
 		Timer msg_timeout_timer;
 		Timer backwards_timer;
 
@@ -64,12 +63,9 @@ class Robot {
 		 * 	@param backwards True for backwards movement, false for forwards movement */
 		void set_wheel_velocity_nonlinear_controller(float theta_error, float velocity, bool backwards);
 
-		/**	@brief Pauses threads control_thread and controller.control_thread and waits for the signal CONTINUE_SIGNAL.
-		 *	Signal is sent by continue_threads */
 		void stop_and_wait();
 
-		/**	@brief Sets signal CONTINUE_SIGNAL, resuming control_thread and controller.control_thread */
-		void continue_threads();
+		void reset_timers();
 
 		/** @brief Angle is converted to a value between -PI and PI
 		 *	@param angle Input angle in radians
@@ -101,7 +97,7 @@ class Robot {
 
 		/**	@brief Constructor
 		 * 	@param msgr Pointer to Messenger, can be used to send logs */
-		explicit Robot();
+		explicit RobotController();
 
 		/**	@brief Executes vector command. Configures Robot::target used on the main control loop
 		 *	@param x X component of the desired position
@@ -137,8 +133,6 @@ class Robot {
 		 *	@param error Maximum allowed theta_error, in degrees */
 		void set_max_theta_error(float error);
 
-		/**	@brief Starts main control loop thread */
-		void start_thread();
 		void sensor_calibration();
 		void start_calibration(float v);
 };

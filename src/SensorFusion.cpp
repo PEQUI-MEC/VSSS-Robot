@@ -14,11 +14,7 @@ SensorFusion::SensorFusion(Controller *controler_ptr) {
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
 }
 
-void SensorFusion::ekf_thread_start() {
-	thread_ekf.start(callback(this, &SensorFusion::ekf_thread));
-}
-
-void SensorFusion::ekf_thread() {
+void SensorFusion::update_estimation() {
 	Timer timer_ekf;
 	timer_ekf.start();
 	timer_mag.start();

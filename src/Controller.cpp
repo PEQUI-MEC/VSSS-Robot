@@ -10,25 +10,17 @@ Controller::Controller() {
 	init_wheel(right_wheel, ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2, MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2);
 }
 
-void Controller::start_thread() {
-	timer.start();
-	control_thread.start(callback(this, &Controller::control_loop));
-}
-
 void Controller::control_loop() {
-	while (true) {
-		update_wheel_velocity();
+	update_wheel_velocity();
 
-		float pid_left  = get_pid_output(left_wheel);
-		float pid_right = get_pid_output(right_wheel);
+	float pid_left  = get_pid_output(left_wheel);
+	float pid_right = get_pid_output(right_wheel);
 
-		set_pwm(left_wheel, pid_left);
-		set_pwm(right_wheel, pid_right);
+	set_pwm(left_wheel, pid_left);
+	set_pwm(right_wheel, pid_right);
 
 //		Stop flag is set on Robot after a timeout or arriving at destination
-		if(stop) stop_and_wait();
-		Thread::wait(CONTROL_LOOP_MS);
-	}
+	if(stop) stop_and_wait();
 }
 
 void Controller::set_pwm(wheel &w, float pwm) {
@@ -80,12 +72,6 @@ void Controller::set_target_velocity(float left, float right, float total) {
 	right_wheel.target_velocity = right * total;
 };
 
-void Controller::continue_thread() {
-	if(control_thread.get_state() == Thread::WaitingThreadFlag) {
-		control_thread.signal_set(CONTINUE_SIGNAL);
-	}
-}
-
 void Controller::stop_and_wait() {
 	set_target_velocity(0, 0, 0);
 	set_pwm(left_wheel, 0);
@@ -93,10 +79,6 @@ void Controller::stop_and_wait() {
 	reset(left_wheel);
 	reset(right_wheel);
 	stop = false;
-	if(control_thread.get_state() != Thread::WaitingThreadFlag) {
-		Thread::signal_wait(CONTINUE_SIGNAL);
-		Thread::signal_clr(CONTINUE_SIGNAL);
-	}
 }
 
 void Controller::init_wheel(wheel& w, PinName tach_pin1, PinName tach_pin2, PinName motor_pin1, PinName motor_pin2) {

@@ -23,7 +23,6 @@ class SensorFusion {
 		Controller* controller;
 
 		EKF ekf;
-		Thread thread_ekf;
 		Timer timer_mag;
 
 		vision_data vision{};
@@ -32,7 +31,7 @@ class SensorFusion {
 		volatile bool wait = false;
 		measurement_data prev_mesure{};
 
-		void ekf_thread();
+		void update_estimation();
 		opt_mag read_magnetometer();
 
 	public:
@@ -45,7 +44,6 @@ class SensorFusion {
 		Timer offset_update_timer;
 
 		explicit SensorFusion(Controller *controler_ptr);
-		void ekf_thread_start();
 		pose_data get_pose();
 		void set_vision_data(float x, float y, float theta);
 };

@@ -13,7 +13,7 @@ ConfigFile::~ConfigFile() {
 	fclose(file);
 }
 
-void ConfigFile::configure(Robot &robot, uint16_t &xbee_addr) {
+void ConfigFile::configure(RobotController &robot, uint16_t &xbee_addr) {
 	xbee_addr = (uint16_t) std::stoul(get_data("addr"), nullptr, 16);
 	robot.MY_ID = get_data("my_id")[0];
 	robot.msg_timeout_limit = std::stoi(get_data("msg_timeout"));
@@ -63,7 +63,7 @@ void ConfigFile::set_data(const string &name, const string &data) {
 	file = fopen(filename.c_str(), "r");
 }
 
-void ConfigFile::save_configs(const string &path, Robot &robot,
+void ConfigFile::save_configs(const string &path, RobotController &robot,
 						   uint16_t &xbee_addr) {
 	fprintf(file, "addr:%04x\n", xbee_addr);
 	fprintf(file, "my_id:%c\n", robot.MY_ID);

@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "ranges": "cpp",
+        "string": "cpp",
+        "hash_map": "cpp",
+        "*.tcc": "cpp",
+        "unordered_map": "cpp",
+        "unordered_set": "cpp",
+        "string_view": "cpp",
+        "array": "cpp",
+        "initializer_list": "cpp",
+        "utility": "cpp",
+        "optional": "cpp",
+        "cmath": "cpp"
+    }
+}
