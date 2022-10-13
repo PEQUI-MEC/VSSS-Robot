@@ -2,16 +2,16 @@
 #define VSSS_ROBOT2_H
 
 #include <mbed.h>
-#include "Controller.h"
 #include "Messenger.h"
 #include <string>
 #include "SensorFusion.h"
+#include "Wheel.h"
 class Messenger;
 
 #define VECTOR_CONTROL 0
 #define POSITION_CONTROL 1
 #define ORIENTATION_CONTROL 2
-#define NO_CONTROL 3
+#define WHEEL_VELOCITY_CONTROL 3
 #define UVF_CONTROL 4
 #define SENSOR_CALIBRATION 5
 
@@ -23,6 +23,8 @@ struct target_state {
 	int command;
 	float ref_x;
 	float ref_y;
+	float left_wheel_vel;
+	float right_wheel_vel;
 };
 
 class RobotController {
@@ -30,6 +32,7 @@ class RobotController {
 		Timer msg_timeout_timer;
 		Timer backwards_timer;
 
+		pose_data pose;
 		target_state target = {};
 
 		float uvf_n = 2;
@@ -39,6 +42,10 @@ class RobotController {
 		float calibration_velocity = 0;
 		float gyro_scale = 0;
 
+		bool stopped = true;
+
+		WheelController left_wheel_controller;
+		WheelController right_wheel_controller;
 
 		/**	@brief Main control loop. Calls vector_control, position_control or orientation_control
 		 *	depending on state.command. Controller can be selected by calling start_vector_control,
@@ -86,14 +93,15 @@ class RobotController {
 		bool backwards_select(float target, float orientation);
 
 	public:
-		Controller controller;
-		SensorFusion* sensors;
-
 		float max_theta_error;
 		float acc_rate;
 		float kgz;
 		int msg_timeout_limit;
 		char MY_ID;
+
+		void set_pose(pose_data new_pose) {
+			pose = new_pose;
+		}
 
 		/**	@brief Constructor
 		 * 	@param msgr Pointer to Messenger, can be used to send logs */
@@ -135,6 +143,8 @@ class RobotController {
 
 		void sensor_calibration();
 		void start_calibration(float v);
+
+		void set_wheels_controller_velocity(float left, float right, float total);
 };
 
 #endif //VSSS_ROBOT2_H

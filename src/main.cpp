@@ -60,14 +60,12 @@ int main() {
 	// 	xbee->process_rx_frames();
 	// });
 
-	robot_controller.controller.set_target_velocity(0,0,0);
 	// float offset = gyro_calib();
 	float offset = 0;
 
-	SensorFusion sensors(&robot_controller.controller);
+	SensorFusion sensors;
 	sensors.gyro_offset = offset;
 	sensors.imu.gyro_scale = robot_controller.gyro_scale;
-	robot_controller.sensors = &sensors;
 
 	Messenger messenger(robot_controller.MY_ID, xbee_addr);
 
@@ -89,8 +87,14 @@ int main() {
 		messenger.update_by_messages(sensors, robot_controller);
 
 		sensors.update_estimation();
-		
+
+		robot_controller.set_pose(sensors.get_pose());
+
 		robot_controller.control_loop();
+
+		if (robot_controller.stopped) {
+			sensors.reset_local_sensors();
+		}
 
 		battery_watcher.update_battery_leds();
 

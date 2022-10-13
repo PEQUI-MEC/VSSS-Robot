@@ -11,6 +11,8 @@
         "initializer_list": "cpp",
         "utility": "cpp",
         "optional": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "memory": "cpp",
+        "random": "cpp"
     }
 }

@@ -8,7 +8,7 @@
 #include <lib/QEI/QEI.h>
 #include "IMU.h"
 #include "EKF.h"
-#include "Controller.h"
+#include "Wheel.h"
 
 #define EKF_PERIOD_US 1000
 
@@ -20,7 +20,8 @@ struct opt_mag {
 class SensorFusion {
 	public:
 		IMU imu;
-		Controller* controller;
+		WheelEncoder left_encoder;
+		WheelEncoder right_encoder;
 
 		EKF ekf;
 		Timer timer_mag;
@@ -36,16 +37,16 @@ class SensorFusion {
 
 	public:
 		bool no_vision = true;
-		volatile bool reset_cov = false;
 
 		float gyro_offset = 0;
 		float gyro_offset_cov = 0.0001;
 		float gyro_measured = 0;
 		Timer offset_update_timer;
 
-		explicit SensorFusion(Controller *controler_ptr);
+		SensorFusion();
 		pose_data get_pose();
 		void set_vision_data(float x, float y, float theta);
+		void reset_local_sensors();
 };
 
 #endif //VSSS_SENSORFUSION_H

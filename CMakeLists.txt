@@ -36,7 +36,6 @@ set(SOURCE_FILES
 	${SRC_DIR}/RobotController.cpp
 	${SRC_DIR}/Messenger.cpp
 	${SRC_DIR}/IMU.cpp
-	${SRC_DIR}/Controller.cpp
 	${SRC_DIR}/PIN_MAP.h
 	${SRC_DIR}/IMU_regs.h
 	${SRC_DIR}/EKF.cpp

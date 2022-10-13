@@ -3,14 +3,14 @@
 //
 
 #include "SensorFusion.h"
-#include "Controller.h"
 
 #define MOTOR_REVOLUTION_PER_WHEEL_REV 75.8126f
 #define PULSES_PER_REVOLUTION 12
 #define PI 3.141592f
 
-SensorFusion::SensorFusion(Controller *controler_ptr) {
-	controller = controler_ptr;
+SensorFusion::SensorFusion() :
+		left_encoder(ENCODER_LEFT_PIN_1, ENCODER_LEFT_PIN_2),
+		right_encoder(ENCODER_RIGHT_PIN_1, ENCODER_RIGHT_PIN_2) {
 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
 }
 
@@ -27,17 +27,9 @@ void SensorFusion::update_estimation() {
 			timer_ekf.reset();
 			float time = time_us/1E6f; // Time in seconds
 
-			auto wheel_vel = controller->encoder_vel;
 			float gyro_rate = imu.read_gyro() - gyro_offset;
-
-			if (reset_cov) {
-				ekf.COV(0,0) = 2;
-				ekf.COV(1,1) = 2;
-				ekf.COV(2,2) = 2;
-				reset_cov = false;
-			}
 			
-			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, gyro_rate - prev_mesure.gyro_w);
+			ekf.predict(time, left_encoder.get_acceleration(), right_encoder.get_acceleration(), gyro_rate - prev_mesure.gyro_w);
 			prev_mesure.gyro_w = gyro_rate;
 			ekf.update_camera(vision);
 
@@ -48,10 +40,9 @@ void SensorFusion::update_estimation() {
 			float gyro_rate = imu.read_gyro();
 			gyro_measured = gyro_rate;
 
-			auto wheel_vel = controller->encoder_vel;
-			controller->encoder_vel.new_data = false;
-
-			if(std::abs(gyro_rate - gyro_offset) < 0.01 && wheel_vel.vel_left == 0 && wheel_vel.vel_right == 0) {
+			if(std::abs(gyro_rate - gyro_offset) < 0.01 &&
+					left_encoder.get_velocity() == 0 &&
+					right_encoder.get_velocity() == 0) {
 //				Predict
 				auto offset_pred = gyro_offset;
 				auto cov_pred = gyro_offset_cov + 0.00001f * offset_update_timer.read_us()/1E6f;
@@ -66,12 +57,12 @@ void SensorFusion::update_estimation() {
 
 			measurement_data data = {mag_data.mag_theta,
 									 gyro_rate - gyro_offset,
-									 wheel_vel.vel_left,
-									 wheel_vel.vel_right};
+									 left_encoder.get_velocity(),
+									 right_encoder.get_velocity()};
 
-			ekf.predict(time, wheel_vel.vel_left_accel, wheel_vel.vel_right_accel, data.gyro_w - prev_mesure.gyro_w);
+			ekf.predict(time, left_encoder.get_acceleration(), right_encoder.get_acceleration(), data.gyro_w - prev_mesure.gyro_w);
 			prev_mesure = data;
-			ekf.update(data, mag_data.valid, wheel_vel.new_data);
+			ekf.update(data, mag_data.valid, true);
 		}
 	}
 }
@@ -97,4 +88,12 @@ opt_mag SensorFusion::read_magnetometer() {
 
 pose_data SensorFusion::get_pose() {
 	return ekf.pose;
+}
+
+void SensorFusion::reset_local_sensors() {
+	left_encoder.reset();
+	right_encoder.reset();
+	ekf.COV(0,0) = 2;
+	ekf.COV(1,1) = 2;
+	ekf.COV(2,2) = 2;
 }

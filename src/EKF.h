@@ -24,6 +24,9 @@ struct pose_data {
 	float theta;
 	float v;
 	float w;
+
+	float left_wheel_vel;
+	float right_wheel_vel;
 };
 
 struct measurement_data {
