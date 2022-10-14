@@ -2,6 +2,7 @@
 #include "Messenger.h"
 #include "PIN_MAP.h"
 #include "SensorFusion.h"
+#include "helper_functions.h"
 
 #define PI 3.1415926f
 
@@ -24,6 +25,8 @@ void Messenger::send_info(SensorFusion& sensors, RobotController& robot) {
 		send_battery();
 		battery_requested = false;
 	}
+	//std::string msg = str(robot.theta_error);
+	//send_msg(msg);
 }
 
 void Messenger::update_by_messages(SensorFusion& sensors, RobotController& robot) {
@@ -101,13 +104,13 @@ Message Messenger::parse(const std::string &msg) {
 
 	unsigned int current_position = first_char_pos;
 	int i = 0;
-	do {
+	while (current_position < msg.size()) {
 		size_t delimiter_posision = msg.find(';', current_position);
 		size_t last_position = (delimiter_posision == std::string::npos) ? msg.size() - 1 : delimiter_posision;
 		parsed_message.data[i] = std::stof(msg.substr(current_position, last_position - current_position));
 		i += 1;
 		current_position = last_position + 1;
-	} while (current_position < msg.size());
+	}
 
 	parsed_message.data_size = i;
 
@@ -125,7 +128,7 @@ Messenger * messenger = nullptr;
 static void receive_cb(const XBeeLib::RemoteXBee802 &remote, bool broadcast,
 					   const uint8_t *const data, uint16_t len) {
 	if (len != 0) {
-		std::string msg = std::string((const char *) data, len);
+		//std::string msg = std::string((const char *) data, len);
 		messenger->parse_and_add_to_buffer(data, len);
 	}
 }

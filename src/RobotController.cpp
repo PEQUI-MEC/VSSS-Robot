@@ -10,37 +10,40 @@ RobotController::RobotController() :
 		right_wheel_controller(MOTOR_RIGHT_PIN_1, MOTOR_RIGHT_PIN_2) {
 	set_wheels_controller_velocity(0, 0, 0);
 	backwards_timer.start();
+	control_timer.start();
 }
 
 void RobotController::control_loop() {
 	// if(msg_timeout_timer.read_ms() > msg_timeout_limit) {
 	// 	sensors->reset_cov = true;
 	// }
-	if(msg_timeout_timer.read_ms() > msg_timeout_limit
-		&& target.command != ORIENTATION_CONTROL) stop_and_wait();
-
-	switch (target.command) {
-		case VECTOR_CONTROL:
-			vector_control();
-			break;
-		case POSITION_CONTROL:
-			position_control();
-			break;
-		case ORIENTATION_CONTROL:
-			orientation_control();
-			break;
-		case UVF_CONTROL:
-			uvf_control();
-			break;
-		case WHEEL_VELOCITY_CONTROL:
-			set_wheels_controller_velocity(target.left_wheel_vel, target.right_wheel_vel, 1);
-			break;
-		case SENSOR_CALIBRATION:
-			sensor_calibration();
-			break;
-		default:
-			break;
-	}
+	//if(msg_timeout_timer.read_ms() > msg_timeout_limit
+	//	&& target.command != ORIENTATION_CONTROL) stop_and_wait();
+	//if (control_timer.read_us() > 10000) {
+		//control_timer.reset();
+		switch (target.command) {
+			case VECTOR_CONTROL:
+				vector_control();
+				break;
+			case POSITION_CONTROL:
+				position_control();
+				break;
+			case ORIENTATION_CONTROL:
+				orientation_control();
+				break;
+			case UVF_CONTROL:
+				uvf_control();
+				break;
+			case WHEEL_VELOCITY_CONTROL:
+				set_wheels_controller_velocity(target.left_wheel_vel, target.right_wheel_vel, 1);
+				break;
+			case SENSOR_CALIBRATION:
+				sensor_calibration();
+				break;
+			default:
+				break;
+		}
+	//}
 }
 
 void RobotController::uvf_control() {
@@ -152,10 +155,10 @@ void RobotController::orientation_control() {
 	float target_theta = target.theta;
 
 //	Activates backwards movement if theta_error > PI/2
-	if(backwards_select(target_theta, pose.theta))
-		target_theta = round_angle(target_theta + PI);
+	//if(backwards_select(target_theta, pose.theta))
+	//	target_theta = round_angle(target_theta + PI);
 
-	float theta_error = round_angle(target_theta - pose.theta);
+	theta_error = round_angle(target_theta - pose.theta);
 
 //	Wheel velocities are always between 1 and -1
 	float right_wheel_velocity = saturate(orientation_Kp * theta_error, 1);
@@ -287,5 +290,5 @@ bool RobotController::backwards_select(float target, float orientation) {
 
 void RobotController::set_wheels_controller_velocity(float left, float right, float total) {
 	left_wheel_controller.set_pwm_by_pid(pose.left_wheel_vel, left * total);
-	right_wheel_controller.set_pwm_by_pid(pose.left_wheel_vel, right * total);
+	right_wheel_controller.set_pwm_by_pid(pose.right_wheel_vel, right * total);
 };

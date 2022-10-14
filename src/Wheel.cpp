@@ -7,15 +7,14 @@
 #define CONTROL_LOOP_MS 10
 
 void WheelEncoder::update_wheel_velocity() {
-	int pulses = encoder.getPulses();
-	float time = timer.read_us()/1E6f; // Time in seconds
-
-	encoder.reset();
-	timer.reset();
-
-	if(time != 0) {
-//		0.06f*PI: m/s conversion
+	int time_us = timer.read_us();
+	if(time_us = 0) {
+		int pulses = encoder.getPulses();
+		encoder.reset();
+		timer.reset();
+		float time = time_us/1E6f; // Time in seconds
 		float previous_velocity = velocity;
+//		0.06f*PI: m/s conversion
 		velocity = (pulses*0.06f*PI)/(PULSES_PER_REVOLUTION * MOTOR_REVOLUTION_PER_WHEEL_REV * time);
 		acceleration = velocity - previous_velocity;
 	}
@@ -47,7 +46,7 @@ void PID::set_constants(float kp, float ki, float kd) {
 }
 
 void WheelController::set_pwm_by_pid(float velocity, float target_velocity) {
-	float pid_output  = pid.get_output(velocity, target_velocity);
+	float pid_output = pid.get_output(velocity, target_velocity);
 	set_pwm(pid_output);
 }
 

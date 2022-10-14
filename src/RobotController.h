@@ -31,6 +31,7 @@ class RobotController {
 	public:
 		Timer msg_timeout_timer;
 		Timer backwards_timer;
+		Timer control_timer;
 
 		pose_data pose;
 		target_state target = {};
@@ -41,6 +42,8 @@ class RobotController {
 		bool previously_backwards = false;
 		float calibration_velocity = 0;
 		float gyro_scale = 0;
+
+		float theta_error = 0;
 
 		bool stopped = true;
 

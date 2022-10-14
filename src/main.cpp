@@ -30,19 +30,6 @@
 // 	}
 // }
 
-// float gyro_calib() {
-// 	IMU imu{};
-// 	imu.init(IMU_SDA_PIN, IMU_SCL_PIN);
-// 	float acc = 0;
-
-// 	#define sample_size_gyro 500
-// 	for (int i = 0; i < sample_size_gyro; ++i) {
-// 		acc += imu.read_gyro();
-// 		wait_ms(5);
-// 	}
-// 	return acc/sample_size_gyro;
-// }
-
 int main() {
 	BatteryWatcher battery_watcher;
 	battery_watcher.update_battery_leds();
@@ -64,21 +51,25 @@ int main() {
 	float offset = 0;
 
 	SensorFusion sensors;
-	sensors.gyro_offset = offset;
-	sensors.imu.gyro_scale = robot_controller.gyro_scale;
+	//sensors.gyro_offset = offset;
+	//sensors.imu.gyro_scale = robot_controller.gyro_scale;
 
 	Messenger messenger(robot_controller.MY_ID, xbee_addr);
 
+	// robot_controller.start_orientation_control(0, 0.8);
+	// wait(0.1);
+	//robot_controller.start_orientation_control(-45, 0.8);
+	//wait(0.5);
+	//robot_controller.start_orientation_control(0, 0.8);
+	//wait(0.5);
+	//robot_controller.start_orientation_control(45, 0.8);
+	//wait(0.5);
+	//robot_controller.start_orientation_control(0, 0.8);
+	wait(0.5);
+	sensors.measure_initial_gyro_bias();
+
+	//robot_controller.start_velocity_control(0.2, 0.5);
 	robot_controller.start_orientation_control(0, 0.8);
-	wait(0.1);
-	robot_controller.start_orientation_control(-45, 0.8);
-	wait(0.5);
-	robot_controller.start_orientation_control(0, 0.8);
-	wait(0.5);
-	robot_controller.start_orientation_control(45, 0.8);
-	wait(0.5);
-	robot_controller.start_orientation_control(0, 0.8);
-	wait(0.5);
 
 	while (true) {
 
@@ -86,20 +77,22 @@ int main() {
 
 		messenger.update_by_messages(sensors, robot_controller);
 
-		sensors.update_estimation();
+		bool updated_encoder = sensors.update_estimation();
 
 		robot_controller.set_pose(sensors.get_pose());
 
-		robot_controller.control_loop();
-
-		if (robot_controller.stopped) {
-			sensors.reset_local_sensors();
+		if (updated_encoder) {
+			robot_controller.control_loop();
 		}
 
-		battery_watcher.update_battery_leds();
+		//if (robot_controller.stopped) {
+		//	sensors.reset_local_sensors();
+		//}
 
-		messenger.send_info(sensors, robot_controller);
+		//battery_watcher.update_battery_leds();
 
-		Thread::wait(10);
+		//messenger.send_info(sensors, robot_controller);
+
+		//Thread::wait(10);
 	}
 }

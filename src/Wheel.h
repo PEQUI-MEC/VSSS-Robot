@@ -13,7 +13,9 @@ class WheelEncoder {
 
     public:
     WheelEncoder(PinName tach_pin1, PinName tach_pin2) : 
-        encoder(tach_pin1, tach_pin2, NC, PULSES_PER_REVOLUTION, QEI::X4_ENCODING) {};
+        encoder(tach_pin1, tach_pin2, NC, PULSES_PER_REVOLUTION, QEI::X4_ENCODING) {
+        timer.start();
+    }
 
     void update_wheel_velocity();
     void reset();

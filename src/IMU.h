@@ -17,12 +17,12 @@ struct mag_components {
 };
 
 class IMU {
-		I2C *i2c;
+		I2C i2c;
 		int addr_gyro_acc;
 		int addr_comp;
 
 	public:
-		void init(PinName sda, PinName scl);
+		IMU(PinName sda, PinName scl);
 		imu_data read_imu_data(bool use_mag);
 		float read_mag();
 		mag_components read_mag_components();

@@ -25,12 +25,11 @@
 #define MAG_Y_MAX_b 0.2118146f
 
 // Configura os sensores
-void IMU::init(PinName sda, PinName scl) {
+IMU::IMU(PinName sda, PinName scl) : i2c(sda, scl) {
 	addr_gyro_acc = 0b1101011 << 1;
 	addr_comp = 0b0011110 << 1;
 
-	i2c = new I2C(sda, scl);
-	i2c->frequency(400*1000);
+	i2c.frequency(400*1000);
 	// Habilita acelerometro nos 3 eixos
 //	write_reg(addr_gyro_acc, CTRL9_XL, 0x38);
 
@@ -126,8 +125,8 @@ void IMU::read_comp_all(int16_t *data) {
 
 // Preenche o vetor data com os valores lidos do registrador, num_bytes indica quantos bytes devem ser lidos
 void IMU::read_reg(int addr, uint8_t reg, char *data, int num_bytes) {
-	i2c->write(addr, (char *) &reg, 1, true);
-	i2c->read(addr, data, num_bytes);
+	i2c.write(addr, (char *) &reg, 1, true);
+	i2c.read(addr, data, num_bytes);
 }
 
 // Escreve em um registrador
@@ -135,6 +134,6 @@ void IMU::write_reg(int addr, uint8_t reg, uint8_t data) {
 	uint8_t cmd[2];
 	cmd[0] = reg;
 	cmd[1] = data;
-	i2c->write(addr, (char *) cmd, 2);
+	i2c.write(addr, (char *) cmd, 2);
 }
 
