@@ -89,10 +89,10 @@ int main() {
 		//	sensors.reset_local_sensors();
 		//}
 
-		//battery_watcher.update_battery_leds();
+		battery_watcher.update_battery_leds();
 
 		//messenger.send_info(sensors, robot_controller);
 
-		//Thread::wait(10);
+		//Thread::wait(5);
 	}
 }

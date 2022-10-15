@@ -57,6 +57,8 @@ bool SensorFusion::update_encoder_estimation() {
 		ekf.pose.right_wheel_vel = right_encoder.get_velocity();
 		return true;
 	} else {
+		ekf.pose.left_wheel_vel = left_encoder.get_velocity();
+		ekf.pose.right_wheel_vel = right_encoder.get_velocity();
 		return false;
 	}
 }
@@ -77,9 +79,9 @@ bool SensorFusion::update_estimation() {
 			gyro_rate - prev_mesure.gyro_w);
 		ekf.update_camera(vision);
 	} else if (time_us > EKF_PERIOD_US) {
-		if (is_stopped(gyro_rate)) {
-			update_gyro_bias(gyro_rate_with_offset);
-		}
+		//if (is_stopped(gyro_rate)) {
+		//	update_gyro_bias(gyro_rate_with_offset);
+		//}
 		opt_mag mag_data = read_magnetometer();
 		measurement_data data = {mag_data.mag_theta,
 								gyro_rate,

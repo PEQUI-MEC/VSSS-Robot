@@ -19,32 +19,32 @@
 #define ROBOT_SIZE 0.0675f
 
 struct pose_data {
-	float x;
-	float y;
-	float theta;
-	float v;
-	float w;
+	float x = 0;
+	float y = 0;
+	float theta = 0;
+	float v = 0;
+	float w = 0;
 
-	float left_wheel_vel;
-	float right_wheel_vel;
+	float left_wheel_vel = 0;
+	float right_wheel_vel = 0;
 };
 
 struct measurement_data {
-	float mag_theta;
-	float gyro_w;
-	float vel_left;
-	float vel_right;
+	float mag_theta = 0;
+	float gyro_w = 0;
+	float vel_left = 0;
+	float vel_right = 0;
 };
 
 struct vision_data {
-	float x;
-	float y;
-	float theta;
+	float x = 0;
+	float y = 0;
+	float theta = 0;
 };
 
 class EKF {
 	public:
-		pose_data pose{};
+		pose_data pose;
 
 		Eigen::Matrix<float, POSE_SIZE, POSE_SIZE> F;
 		Eigen::Matrix<float, POSE_SIZE, 1> x;

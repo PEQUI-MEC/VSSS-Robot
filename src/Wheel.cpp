@@ -8,7 +8,7 @@
 
 void WheelEncoder::update_wheel_velocity() {
 	int time_us = timer.read_us();
-	if(time_us = 0) {
+	if(time_us != 0) {
 		int pulses = encoder.getPulses();
 		encoder.reset();
 		timer.reset();
