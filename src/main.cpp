@@ -54,7 +54,7 @@ int main() {
 	//sensors.gyro_offset = offset;
 	//sensors.imu.gyro_scale = robot_controller.gyro_scale;
 
-	Messenger messenger(robot_controller.MY_ID, xbee_addr);
+	// Messenger messenger(robot_controller.MY_ID, xbee_addr);
 
 	// robot_controller.start_orientation_control(0, 0.8);
 	// wait(0.1);
@@ -68,14 +68,14 @@ int main() {
 	wait(0.5);
 	sensors.measure_initial_gyro_bias();
 
-	//robot_controller.start_velocity_control(0.2, 0.5);
-	robot_controller.start_orientation_control(0, 0.8);
+	robot_controller.start_velocity_control(-0.2, -0.2);
+	// robot_controller.start_orientation_control(0, 0.8);
 
 	while (true) {
 
-		messenger.process_xbee_msgs();
+		// messenger.process_xbee_msgs();
 
-		messenger.update_by_messages(sensors, robot_controller);
+		// messenger.update_by_messages(sensors, robot_controller);
 
 		bool updated_encoder = sensors.update_estimation();
 
@@ -93,6 +93,6 @@ int main() {
 
 		//messenger.send_info(sensors, robot_controller);
 
-		//Thread::wait(5);
+		Thread::wait(10);
 	}
 }

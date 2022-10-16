@@ -46,8 +46,9 @@ void PID::set_constants(float kp, float ki, float kd) {
 }
 
 void WheelController::set_pwm_by_pid(float velocity, float target_velocity) {
-	float pid_output = pid.get_output(velocity, target_velocity);
-	set_pwm(pid_output);
+	set_pwm(target_velocity);
+	// float pid_output = pid.get_output(velocity, target_velocity);
+	// set_pwm(pid_output);
 }
 
 void WheelController::set_pwm(float pwm) {
