@@ -25,14 +25,21 @@ void Messenger::send_info(SensorFusion& sensors, RobotController& robot) {
 		send_battery();
 		battery_requested = false;
 	}
-	//std::string msg = str(robot.theta_error);
-	//send_msg(msg);
+	std::string msg = str(robot.theta_error);
+	send_msg(msg);
+}
+
+bool Messenger::is_delaying() {
+	return delay_time > 0 && delay_timer.read() < delay_time;
 }
 
 void Messenger::update_by_messages(SensorFusion& sensors, RobotController& robot) {
-	while (!message_buffer.empty()) {
+	// send_msg("ok!");
+	if (!message_buffer.empty()) {
+		// send_msg("got msg");
 		Message msg;
 		message_buffer.pop(msg);
+		send_msg(msg.to_str());
 
 		switch (msg.type) {
 			case 'E':
@@ -40,7 +47,7 @@ void Messenger::update_by_messages(SensorFusion& sensors, RobotController& robot
 					sensors.set_vision_data(msg.data[0], msg.data[1], msg.data[2]);
 					break;
 				} else {
-					continue;
+					break;
 				}
 			case 'U':
 				if (msg.data_size == 6) {
@@ -48,35 +55,43 @@ void Messenger::update_by_messages(SensorFusion& sensors, RobotController& robot
 						msg.data[2]/100, msg.data[3]/100, msg.data[4], msg.data[5]);
 					break;
 				} else {
-					continue;
+					break;
 				}
 			case 'O':
 				if (msg.data_size == 2) {
 					robot.start_orientation_control(msg.data[0], msg.data[1]);
 					break;
 				} else {
-					continue;
+					break;
 				}
 			case 'P':
 				if (msg.data_size == 3) {
 					robot.start_position_control(msg.data[0]/100, msg.data[1]/100, msg.data[2]);
 					break;
 				} else {
-					continue;
+					break;
 				}
 			case 'V':
 				if (msg.data_size == 2) {
 					robot.start_vector_control(msg.data[0], msg.data[1]);
 					break;
 				} else {
-					continue;
+					break;
 				}
 			case 'W':
 				if (msg.data_size == 2) {
 					robot.start_velocity_control(msg.data[1], msg.data[0]);
 					break;
 				} else {
-					continue;
+					break;
+				}
+			case 'D':
+				if (msg.data_size == 1) {
+					delay_time = msg.data[0];
+					delay_timer.reset();
+					break;
+				} else {
+					break;
 				}
 			case 'B':
 				battery_requested = true;
@@ -105,11 +120,17 @@ Message Messenger::parse(const std::string &msg) {
 	unsigned int current_position = first_char_pos;
 	int i = 0;
 	while (current_position < msg.size()) {
+		// send_msg(str(i) + ":");
 		size_t delimiter_posision = msg.find(';', current_position);
-		size_t last_position = (delimiter_posision == std::string::npos) ? msg.size() - 1 : delimiter_posision;
+		// send_msg(str(delimiter_posision));
+		size_t last_position = (delimiter_posision == std::string::npos) ? msg.size() : delimiter_posision;
+		// send_msg(str(last_position));
 		parsed_message.data[i] = std::stof(msg.substr(current_position, last_position - current_position));
+		// send_msg(msg.substr(current_position, last_position - current_position));
+		// send_msg(str(parsed_message.data[i]));
 		i += 1;
 		current_position = last_position + 1;
+		// send_msg(str(current_position));
 	}
 
 	parsed_message.data_size = i;
@@ -137,6 +158,8 @@ Messenger::Messenger(char id, uint16_t xbee_addr)
 		:  ID(id), xbee(RADIO_TX, RADIO_RX, RADIO_RESET, NC, NC, 115200) {
 
 	messenger = this;
+
+	delay_timer.start();
 
 	setlocale(LC_ALL, "C");
 

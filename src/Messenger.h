@@ -8,6 +8,7 @@
 #include <string>
 #include <array>
 #include <sstream>
+#include "helper_functions.h"
 
 class RobotController;
 
@@ -15,6 +16,14 @@ struct Message {
 	char type = ' ';
 	int data_size = 0;
 	std::array<float, 6> data;
+	std::string to_str() {
+		std::string msg = std::string(1, type) + " " + str(data_size) + " ";
+		for (int i = 0; i < data_size; i++) {
+			msg += str(data[i]);
+			msg += " ";
+		}
+		return msg;
+	}
 };
 
 class Messenger {
@@ -25,7 +34,10 @@ class Messenger {
 
 		bool battery_requested = false;
 
-		CircularBuffer<Message, 5> message_buffer;
+		Timer delay_timer;
+		float delay_time = 0;
+
+		CircularBuffer<Message, 10> message_buffer;
 		Message parse(const std::string &msg);
 		void parse_and_add_to_buffer(const uint8_t *const data, uint16_t len);
 		void update_by_messages(SensorFusion& sensors, RobotController& robot);
@@ -49,6 +61,7 @@ class Messenger {
 		 *	@param msg Message to be sent
 		 *	@param addr 16-bit address of the receiving xbee */
 		void send_msg(const std::string &msg, uint16_t addr = 0x35D0);
+		bool is_delaying();
 };
 
 #endif /* MESSENGER_H_ */

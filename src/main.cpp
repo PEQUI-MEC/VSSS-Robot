@@ -69,13 +69,22 @@ int main() {
 	sensors.measure_initial_gyro_bias();
 
 	//robot_controller.start_velocity_control(0.2, 0.5);
-	robot_controller.start_orientation_control(0, 0.8);
+	// robot_controller.start_orientation_control(0, 0.8);
+
+	messenger.message_buffer.push(messenger.parse("O-45;0.8"));
+	messenger.message_buffer.push(messenger.parse("D0.5"));
+	messenger.message_buffer.push(messenger.parse("O0;0.8"));
+	messenger.message_buffer.push(messenger.parse("D0.5"));
+	messenger.message_buffer.push(messenger.parse("O45;0.8"));
+	messenger.message_buffer.push(messenger.parse("D0.5"));
+	messenger.message_buffer.push(messenger.parse("O0;0.8"));
 
 	while (true) {
 
-		messenger.process_xbee_msgs();
-
-		messenger.update_by_messages(sensors, robot_controller);
+		if (!messenger.is_delaying()) {
+			messenger.process_xbee_msgs();
+			messenger.update_by_messages(sensors, robot_controller);
+		}
 
 		bool updated_encoder = sensors.update_estimation();
 
@@ -91,8 +100,8 @@ int main() {
 
 		battery_watcher.update_battery_leds();
 
-		//messenger.send_info(sensors, robot_controller);
+		// messenger.send_info(sensors, robot_controller);
 
-		//Thread::wait(5);
+		Thread::wait(10);
 	}
 }

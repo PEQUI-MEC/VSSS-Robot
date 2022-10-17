@@ -14,6 +14,7 @@ class Messenger;
 #define WHEEL_VELOCITY_CONTROL 3
 #define UVF_CONTROL 4
 #define SENSOR_CALIBRATION 5
+#define DELAYING 6
 
 struct target_state {
 	float x;
@@ -25,6 +26,7 @@ struct target_state {
 	float ref_y;
 	float left_wheel_vel;
 	float right_wheel_vel;
+	float time;
 };
 
 class RobotController {
