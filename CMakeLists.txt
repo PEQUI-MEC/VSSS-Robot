@@ -27,7 +27,7 @@ set(CMAKE_CXX_FLAGS "-std=c++14 -faligned-new -fno-rtti -Wvla ${COMMON_FLAGS} -i
 set(CMAKE_EXE_LINKER_FLAGS "-Wl,--no-wchar-size-warning -Wl,--gc-sections -Wl,--wrap,main -Wl,--wrap,_malloc_r \
  -Wl,--wrap,_free_r -Wl,--wrap,_realloc_r -Wl,--wrap,_memalign_r -Wl,--wrap,_calloc_r -Wl,--wrap,exit \
  -Wl,--wrap,atexit -Wl,-n -mcpu=cortex-m3 -mthumb -T ${PROJECT_SOURCE_DIR}/LPC1768.ld -Wl,--start-group \
- -u _printf_float -lstdc++ -lsupc++ -lm -lc -lgcc -lg -lrdimon -lnosys -Wl,--end-group -static --specs=nano.specs")
+ -u _printf_float -lstdc++ -lsupc++ -lm -lc -lgcc -lg -Wl,--end-group -static --specs=nano.specs")
 
 set(CMAKE_ASM_FLAGS "-x assembler-with-cpp ${COMMON_FLAGS}")
 
