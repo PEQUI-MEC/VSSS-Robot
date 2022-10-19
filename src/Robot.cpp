@@ -121,7 +121,7 @@ void Robot::position_control() {
 	auto pose = sensors->get_pose();
 //	Stops after arriving at destination
 	float position_error = std::sqrt(std::pow(pose.x - target.x, 2.0f) + std::pow(pose.y - target.y, 2.0f));
-	if(target.velocity == 0 || position_error < 0.01) {
+	if(target.velocity == 0) {
 		stop_and_wait();
 		return;
 	}
@@ -154,7 +154,7 @@ void Robot::position_control() {
 		}
 	}
 
-	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada, move_backwards);
+	set_wheel_velocity_nonlinear_controller(theta_error, vel_acelerada * std::tanh(18 * position_error), move_backwards);
 }
 
 
