@@ -25,6 +25,10 @@ class Messenger {
 
 		bool battery_requested = false;
 
+		float left_acm = 0;
+		float right_acm = 0;
+		int acm_count = 1;
+
 		CircularBuffer<Message, 5> message_buffer;
 		Message parse(const std::string &msg);
 		void parse_and_add_to_buffer(const uint8_t *const data, uint16_t len);

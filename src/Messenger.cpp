@@ -25,8 +25,15 @@ void Messenger::send_info(SensorFusion& sensors, RobotController& robot) {
 		send_battery();
 		battery_requested = false;
 	}
-	//std::string msg = str(robot.theta_error);
-	//send_msg(msg);
+	auto vel_left = sensors.left_encoder.get_velocity();
+	auto vel_right = sensors.right_encoder.get_velocity();
+	left_acm += vel_left;
+	right_acm += vel_right;
+	acm_count += 1;
+	float left_avg = left_acm/acm_count;
+	float right_avg = right_acm/acm_count;
+	std::string msg = str(sensors.left_encoder.get_velocity()) + ", " + str(sensors.right_encoder.get_velocity());
+	send_msg(msg);
 }
 
 void Messenger::update_by_messages(SensorFusion& sensors, RobotController& robot) {
