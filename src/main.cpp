@@ -48,9 +48,9 @@ int main() {
 	// });
 
 	// float offset = gyro_calib();
-	float offset = 0;
+	// float offset = 0;
 
-	SensorFusion sensors;
+	// SensorFusion sensors;
 	//sensors.gyro_offset = offset;
 	//sensors.imu.gyro_scale = robot_controller.gyro_scale;
 
@@ -65,10 +65,10 @@ int main() {
 	//robot_controller.start_orientation_control(45, 0.8);
 	//wait(0.5);
 	//robot_controller.start_orientation_control(0, 0.8);
-	wait(0.5);
-	sensors.measure_initial_gyro_bias();
+	// wait(0.5);
+	// sensors.measure_initial_gyro_bias();
 
-	robot_controller.start_velocity_control(-0.2, -0.2);
+	robot_controller.start_velocity_control(0.2, 0.2);
 	// robot_controller.start_orientation_control(0, 0.8);
 
 	while (true) {
@@ -77,13 +77,13 @@ int main() {
 
 		// messenger.update_by_messages(sensors, robot_controller);
 
-		bool updated_encoder = sensors.update_estimation();
+		// bool updated_encoder = sensors.update_estimation();
 
-		robot_controller.set_pose(sensors.get_pose());
+		// robot_controller.set_pose(sensors.get_pose());
 
-		if (updated_encoder) {
+		// if (updated_encoder) {
 			robot_controller.control_loop();
-		}
+		// }
 
 		//if (robot_controller.stopped) {
 		//	sensors.reset_local_sensors();
